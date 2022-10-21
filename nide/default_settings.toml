@@ -45,3 +45,4 @@ ignore_names = [
 ignore_match = [
     ".egg-info/",
 ]
+tree_depth = 5 # how deep to look in the directory tree

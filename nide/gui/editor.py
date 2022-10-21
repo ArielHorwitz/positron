@@ -6,16 +6,15 @@ import arrow
 from pathlib import Path
 from . import kex as kx, FONTS_DIR
 from .. import settings
+from ..util.directory import format_dir_tree
 from nide.session import Session
 
 
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
-FILE_TYPES = set(settings.get("project.file_types"))
-IGNORE_PATH_NAMES = settings.get("project.ignore_names")
-IGNORE_PATH_MATCHES = settings.get("project.ignore_match")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
+DIR_TREE_DEPTH = settings.get("project.tree_depth")
 
 
 class CodeEditor(kx.Box):
@@ -133,13 +132,12 @@ class CodeEditor(kx.Box):
             nearest_parent = self.file_path
             while not nearest_parent.exists():
                 nearest_parent = nearest_parent.parent
-            files = "\n".join(_dirtree_list(nearest_parent, 4))
             s = "\n".join(
                 [
                     "No such file:",
                     f"{self.file_path}",
                     "Existing files:",
-                    files,
+                    format_dir_tree(nearest_parent, DIR_TREE_DEPTH),
                 ]
             )
             self.app.set_panel(s)
@@ -192,42 +190,3 @@ class CodeEditor(kx.Box):
         self.status_left.text = error_summary
         self._on_cursor()
         kx.schedule_once(self._on_scroll, 0)
-
-
-def _recursive_files(dir: Path, recursive_index: int = 100):
-    children = sorted(dir.iterdir(), key=_file_sort)
-    for child in children:
-        name = child.name
-        if name in IGNORE_PATH_NAMES:
-            continue
-        s = str(child)
-        if any(match in s for match in IGNORE_PATH_MATCHES):
-            continue
-        if child.is_dir():
-            if recursive_index == 0:
-                yield child
-            else:
-                yield from _recursive_files(child, recursive_index=recursive_index - 1)
-        elif child.is_file():
-            if FILE_TYPES and child.suffix[1:] not in FILE_TYPES:
-                continue
-            yield child
-
-
-def _dirtree_list(dir: Path, recursive_index: int = 100) -> list[str]:
-    all_paths = [
-        file.relative_to(dir)
-        for file in _recursive_files(dir, recursive_index)
-    ]
-    path_strs = [str(dir)]
-    for path in all_paths:
-        if path.is_dir():
-            ps = f"  {path}/"
-        else:
-            ps = f"  {path}"
-        path_strs.append(ps)
-    return path_strs
-
-
-def _file_sort(path: Path) -> int:
-    return f"{int(not path.is_dir())}{path}"
