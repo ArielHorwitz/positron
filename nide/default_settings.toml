@@ -1,0 +1,47 @@
+
+[window]
+maximize = true
+size = [1280, 800]
+offset = [-1, -1]
+fps = 10
+
+
+[ui]
+font = "firacode-mono.ttf"
+font_size = 14
+panel_width = 450
+
+
+[editor]
+font = "firacode-mono.ttf"
+font_size = 16
+gutter_padding = 4
+
+
+[project]
+# On startup, open an editor panel for each of the following files
+open = [
+    "main.py",
+    "",
+]
+# Ignore any file without one of the following extensions
+file_types = [
+    "py",
+    "txt",
+    "md",
+    "toml",
+    "json",
+    # For files without extensions (like .gitignore)
+    "",
+]
+# Ignore any file with the following names found anywhere in the path
+ignore_names = [
+    ".git",
+    "venv",
+    "build",
+    "__pycache__",
+]
+# Ignore any file with the following strings found anywhere in the path
+ignore_match = [
+    ".egg-info/",
+]
