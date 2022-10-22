@@ -8,21 +8,26 @@ import sys
 import traceback
 import arrow
 from pathlib import Path
+from itertools import islice
 from .. import kex as kx, FONTS_DIR
-from ... import settings
-from ...util.directory import format_dir_tree, search_files
-from ...session import Session
+from ...util import settings
+from ...util.file import format_dir_tree, search_files
 from .code import CodeEditor
 
 
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
+BREADTH_FIRST = settings.get("project.breadth_first")
 DIR_TREE_DEPTH = settings.get("project.tree_depth")
+FILE_TYPES = set(settings.get("project.file_types"))
+IGNORE_NAMES = set(settings.get("project.ignore_names"))
+IGNORE_MATCHES = set(settings.get("project.ignore_match"))
+MAX_FILES = 25
 
 
 class EditorPanel(kx.Anchor):
-    def __init__(self, uid: int, session: Session, file: str, **kwargs):
+    def __init__(self, uid: int, session, file: str, **kwargs):
         super().__init__(**kwargs)
         self.__uid = uid
         self.code_editor = self.add(CodeEditor(session, file))
@@ -58,7 +63,7 @@ class EditorPanel(kx.Anchor):
 class ProjectTreeModal(kx.Modal):
     files = kx.ListProperty()
 
-    def __init__(self, session: Session, **kwargs):
+    def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
         self.set_size(hx=0.8, hy=0.8)
@@ -121,8 +126,16 @@ class ProjectTreeModal(kx.Modal):
         self.tree_label.text = format_dir_tree(files, relative_dir=project_path)
 
     def _on_search_text(self, w, text):
-        session_path = self.session.project_path
-        self.files = list(search_files(session_path, text))
+        file_gen = search_files(
+            dir=self.session.project_path,
+            pattern=text,
+            ignore_names=IGNORE_NAMES,
+            ignore_matches=IGNORE_MATCHES,
+            file_types=FILE_TYPES,
+            breadth_first=BREADTH_FIRST,
+            depth=DIR_TREE_DEPTH,
+        )
+        self.files = list(islice(file_gen, MAX_FILES))
 
     def _on_search_focus(self, w, focus):
         if not focus:

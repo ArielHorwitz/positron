@@ -3,9 +3,8 @@
 from pathlib import Path
 from . import kex as kx, FONTS_DIR
 from .editor.editor import EditorPanel
-from ..session import Session
-from ..file import open_path, USER_DIR, PROJ_DIR
-from .. import settings
+from ..util.file import open_path, USER_DIR, PROJ_DIR
+from ..util import settings
 
 
 FPS = settings.get("window.fps")
@@ -18,7 +17,7 @@ DEFAULT_FILES = settings.get("project.open")
 
 
 class App(kx.App):
-    def __init__(self, session: Session):
+    def __init__(self, session):
         print("Starting GUI.")
         super().__init__()
         self.icon = str(PROJ_DIR / "icon.png")
@@ -56,7 +55,7 @@ class App(kx.App):
         self.im.register(
             "Open user dir",
             lambda: open_path(USER_DIR),
-            "^+ f",
+            "f9",
         )
 
         for editor in self.editors:

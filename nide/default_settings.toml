@@ -21,7 +21,7 @@ gutter_padding = 4
 # On startup, open an editor panel for each of the following files
 open = [
     "main.py",
-    "",
+    "__init__.py",
 ]
 # Ignore any file without one of the following extensions
 file_types = [
@@ -44,4 +44,7 @@ ignore_names = [
 ignore_match = [
     ".egg-info/",
 ]
-tree_depth = 5 # how deep to look in the directory tree
+# How to sort directory tree
+breadth_first = false
+# How deep to look in the directory tree
+tree_depth = 10

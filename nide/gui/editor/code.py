@@ -6,19 +6,18 @@ import traceback
 import arrow
 from pathlib import Path
 from .. import kex as kx, FONTS_DIR
-from ... import settings
-from ...session import Session
+from ...util import settings
+from ...util.file import file_load, file_dump, try_relative, USER_DIR
 
 
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
-DIR_TREE_DEPTH = settings.get("project.tree_depth")
 
 
 class CodeEditor(kx.Box):
-    def __init__(self, session: Session, file: Path = Path("__init__.py")):
+    def __init__(self, session, file: Path = Path("__init__.py")):
         super().__init__(orientation="vertical")
         self.session = session
         self._current_file = file
@@ -77,7 +76,8 @@ class CodeEditor(kx.Box):
         self.add(control_frame, main_frame, status_bar)
         # Controls
         for action, callback, hotkey in [
-            ("Load", self.load, "^ l"),
+            ("Open settings", self._open_settings, "f8"),
+            ("Load", lambda: self.load(reset_cursor=False), "^ l"),
             ("Save", self.save, "^ s"),
             ("Analyze", self.analyze, "^+ a"),
             ("Find", self.find_entry.set_focus, "^ f"),
@@ -94,8 +94,7 @@ class CodeEditor(kx.Box):
         self._current_file = file
         self._on_cursor()
         file.parent.mkdir(parents=True, exist_ok=True)
-        with open(file, "w", encoding="utf-8") as f:
-            f.write(self.code_entry.text)
+        file_dump(file, self.code_entry.text)
         ts = arrow.now().format("HH:mm:ss")
         print(f"Saved @ {ts} to: {file}")
 
@@ -109,11 +108,13 @@ class CodeEditor(kx.Box):
         else:
             ts = arrow.now().format("HH:mm:ss")
             print(f"Loaded @ {ts} from: {file}")
-            with open(file) as f:
-                text = f.read()
+            text = file_load(file)
         self.code_entry.text = text
         if reset_cursor:
             kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
+
+    def _open_settings(self):
+        self.load(file=USER_DIR / "settings.toml")
 
     # Cursor management
     @property
@@ -124,7 +125,7 @@ class CodeEditor(kx.Box):
 
     def cursor_full(self, sep: str = "::"):
         line, column = self.cursor
-        path = self._current_file.relative_to(self.session.project_path)
+        path = try_relative(self._current_file, self.session.project_path)
         return f"{path}{sep}{line},{column}"
 
     # Code inspection

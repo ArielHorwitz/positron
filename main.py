@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 from nide.gui.app import App
-from nide.session import Session
+from nide.util.session import Session
 
 
 PROJ_PATH = Path.cwd()
