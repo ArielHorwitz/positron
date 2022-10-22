@@ -1,13 +1,13 @@
 """Code editor widget."""
 
+from typing import Optional
 import sys
 import traceback
 import arrow
 from pathlib import Path
-from . import kex as kx, FONTS_DIR
-from .. import settings
-from ..util.directory import format_dir_tree
-from nide.session import Session
+from .. import kex as kx, FONTS_DIR
+from ... import settings
+from ...session import Session
 
 
 FONT = str(FONTS_DIR / settings.get("editor.font"))
@@ -18,24 +18,15 @@ DIR_TREE_DEPTH = settings.get("project.tree_depth")
 
 
 class CodeEditor(kx.Box):
-    def __init__(self, session: Session, file: str):
+    def __init__(self, session: Session, file: Path = Path("__init__.py")):
         super().__init__(orientation="vertical")
         self.session = session
+        self._current_file = file
         # Widgets
         self.im = kx.InputManager(
             default_controls=False,
             logger=kx.consume_args,
         )
-        self.file_entry = kx.CodeEntry(
-            text=file,
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
-            write_tab=False,
-            style_name="solarized-dark",
-            background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
-            multiline=False,
-        )
-        self.file_entry.bind(focus=self._on_focus)
         self.find_entry = kx.CodeEntry(
             font_name=FONT,
             font_size=UI_FONT_SIZE,
@@ -45,10 +36,9 @@ class CodeEditor(kx.Box):
             background_color=kx.XColor(0.6, 0.2, 1, v=0.2).rgba,
             multiline=False,
         )
-        self.find_entry.bind(focus=self._on_focus)
         control_frame = kx.Box()
         control_frame.set_size(y=40)
-        control_frame.add(self.file_entry, self.find_entry)
+        control_frame.add(self.find_entry)
         main_frame = kx.Box()
         self.code_entry = kx.CodeEntry(
             font_name=FONT,
@@ -90,71 +80,42 @@ class CodeEditor(kx.Box):
             ("Load", self.load, "^ l"),
             ("Save", self.save, "^ s"),
             ("Analyze", self.analyze, "^+ a"),
-            ("Open", self.file_entry.set_focus, "^ o"),
-            ("Edit", self.code_entry.set_focus, "^ e"),
             ("Find", self.find_entry.set_focus, "^ f"),
             ("Find next", self.find_next, "f3"),
             ("Find previous", self.find_prev, "+ f3"),
         ]:
             self.im.register(action, callback, hotkey)
-
         self.load()
-        kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
 
-    def find_next(self, *args):
-        self.code_entry.focus = True
-        self.code_entry.find_next(self.find_entry.text)
-
-    def find_prev(self, *args):
-        self.code_entry.focus = True
-        self.code_entry.find_prev(self.find_entry.text)
-
-    def set_focus(self, *args):
-        self.code_entry.focus = True
-
-    def _on_focus(self, *args):
-        has_focus = any((
-            self.code_entry.focus,
-            self.file_entry.focus,
-            self.find_entry.focus,
-        ))
-        self.im.active = has_focus
-
-    def save(self, *args):
-        ts = arrow.now().format("HH:mm:ss")
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.file_path, "w", encoding="utf-8") as f:
+    # File management
+    def save(self, file: Optional[Path] = None):
+        if file is None:
+            file = self._current_file
+        self._current_file = file
+        self._on_cursor()
+        file.parent.mkdir(parents=True, exist_ok=True)
+        with open(file, "w", encoding="utf-8") as f:
             f.write(self.code_entry.text)
-        self.app.set_panel(f"Saved @ {ts} to:\n{self.file_path}")
-
-    def load(self, *args):
-        if not self.file_path.is_file():
-            nearest_parent = self.file_path
-            while not nearest_parent.exists():
-                nearest_parent = nearest_parent.parent
-            s = "\n".join(
-                [
-                    "No such file:",
-                    f"{self.file_path}",
-                    "Existing files:",
-                    format_dir_tree(nearest_parent, DIR_TREE_DEPTH),
-                ]
-            )
-            self.app.set_panel(s)
-            return
         ts = arrow.now().format("HH:mm:ss")
-        with open(self.file_path) as f:
-            self.code_entry.text = f.read()
-        self.app.set_panel(f"Loaded @ {ts} from:\n{self.file_path}")
+        print(f"Saved @ {ts} to: {file}")
 
-    @property
-    def file_path(self):
-        parts = self.file_entry.text.split("/")
-        if parts[-1] == "__":
-            parts[-1] = "__init__.py"
-        file_path = self.session.project_path.joinpath(*parts)
-        return file_path
+    def load(self, file: Optional[Path] = None, reset_cursor: bool = True):
+        if file is None:
+            file = self._current_file
+        self._current_file = file
+        if not file.exists():
+            print(f"New unsaved file: {file}")
+            text = ""
+        else:
+            ts = arrow.now().format("HH:mm:ss")
+            print(f"Loaded @ {ts} from: {file}")
+            with open(file) as f:
+                text = f.read()
+        self.code_entry.text = text
+        if reset_cursor:
+            kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
 
+    # Cursor management
     @property
     def cursor(self):
         column, line = self.code_entry.cursor
@@ -163,8 +124,17 @@ class CodeEditor(kx.Box):
 
     def cursor_full(self, sep: str = "::"):
         line, column = self.cursor
-        path = self.file_path.relative_to(self.session.project_path)
+        path = self._current_file.relative_to(self.session.project_path)
         return f"{path}{sep}{line},{column}"
+
+    # Code inspection
+    def find_next(self, *args):
+        self.code_entry.focus = True
+        self.code_entry.find_next(self.find_entry.text)
+
+    def find_prev(self, *args):
+        self.code_entry.focus = True
+        self.code_entry.find_prev(self.find_entry.text)
 
     def analyze(self, *a):
         code = self.code_entry.text
@@ -173,7 +143,11 @@ class CodeEditor(kx.Box):
         except Exception:
             tb = "".join(traceback.format_exception(*sys.exc_info()))
             info_str = f"Failed to retrieve info:\n{tb}"
-        self.app.set_panel(f"{self.cursor_full()}\n{info_str}")
+        print(f"{self.cursor_full()}\n{info_str}")
+
+    # Events
+    def set_focus(self, *args):
+        kx.schedule_once(self.code_entry.set_focus, 0)
 
     def _on_cursor(self, *a):
         self.status_right.text = self.cursor_full(" :: ")
@@ -184,6 +158,9 @@ class CodeEditor(kx.Box):
         self.line_gutter.text = "\n".join(
             f"{i:>4}" for i in range(start, finish)
         )
+
+    def _on_focus(self, w, focus):
+        self.im.active = focus
 
     def _on_text(self, *a):
         error_summary = self.session.get_error_summary(self.code_entry.text)

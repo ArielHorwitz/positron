@@ -1,0 +1,137 @@
+"""Code editor panel widget.
+
+Contains the code editor and modals.
+"""
+
+from typing import Optional
+import sys
+import traceback
+import arrow
+from pathlib import Path
+from .. import kex as kx, FONTS_DIR
+from ... import settings
+from ...util.directory import format_dir_tree, search_files
+from ...session import Session
+from .code import CodeEditor
+
+
+FONT = str(FONTS_DIR / settings.get("editor.font"))
+FONT_SIZE = settings.get("editor.font_size")
+UI_FONT_SIZE = settings.get("ui.font_size")
+DIR_TREE_DEPTH = settings.get("project.tree_depth")
+
+
+class EditorPanel(kx.Anchor):
+    def __init__(self, uid: int, session: Session, file: str, **kwargs):
+        super().__init__(**kwargs)
+        self.__uid = uid
+        self.code_editor = self.add(CodeEditor(session, file))
+        self.project_tree = ProjectTreeModal(session=session, container=self)
+        self.im = kx.InputManager(
+            name=f"Editor {uid} IM",
+            default_controls=False,
+        )
+        self.im.register(
+            "Open project tree",
+            self.project_tree.toggle,
+            "^ o",
+        )
+        self.code_editor.code_entry.bind(focus=self._on_code_focus)
+        self.project_tree.bind(parent=self._on_project_modal)
+        self.set_focus = self.code_editor.code_entry.set_focus
+
+    @property
+    def uid(self):
+        return self.__uid
+
+    def _on_code_focus(self, w, focus):
+        self.im.active = focus
+
+    def _on_project_modal(self, w, parent):
+        if parent is None:
+            self.code_editor.set_focus()
+
+    def load(self, file: Path):
+        self.code_editor.load(file=file)
+
+
+class ProjectTreeModal(kx.Modal):
+    files = kx.ListProperty()
+
+    def __init__(self, session: Session, **kwargs):
+        super().__init__(**kwargs)
+        self.session = session
+        self.set_size(hx=0.8, hy=0.8)
+        self.make_bg(kx.get_color("cyan", v=0.2))
+        self.title = kx.Label(text="Project Tree")
+        self.title.set_size(y=40)
+
+        # Search
+        self.search_entry = kx.CodeEntry(
+            font_name=FONT,
+            font_size=UI_FONT_SIZE,
+            write_tab=False,
+            style_name="solarized-dark",
+            background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
+            multiline=False,
+        )
+        self.search_entry.set_size(y=40)
+        self.search_entry.bind(text=self._on_search_text)
+
+        # Tree
+        self.tree_label = kx.Label(
+            font_name=FONT,
+            font_size=UI_FONT_SIZE,
+            halign="left",
+            valign="top",
+        )
+
+        # Assemble
+        panel_frame = kx.Box(orientation="vertical")
+        panel_frame.add(self.search_entry, self.tree_label)
+        main_frame = kx.Box(orientation="vertical")
+        main_frame.add(self.title, panel_frame)
+        self.add(main_frame)
+
+        # Events
+        self.bind(parent=self._on_parent, files=self._on_files)
+        self.search_entry.bind(focus=self._on_search_focus)
+        self._on_search_text(self.search_entry, "")
+        self.im.register("Load", self._do_load, "enter")
+        self.im.register("Load (2)", self._do_load, "numpadenter")
+        self.im.register("Scroll down", self._scroll_down, "down")
+        self.im.register("Scroll up", self._scroll_up, "up")
+
+    def _do_load(self):
+        if not self.files:
+            file = self.session.project_path / Path(self.search_entry.text)
+        else:
+            file = self.files[0]
+        self.container.load(file)
+        self.toggle(set_as=False)
+
+    def _scroll_down(self):
+        self.files.append(self.files.pop(0))
+
+    def _scroll_up(self):
+        self.files.insert(0, self.files.pop())
+
+    def _on_files(self, w, files):
+        project_path = self.session.project_path
+        self.tree_label.text = format_dir_tree(files, relative_dir=project_path)
+
+    def _on_search_text(self, w, text):
+        session_path = self.session.project_path
+        self.files = list(search_files(session_path, text))
+
+    def _on_search_focus(self, w, focus):
+        if not focus:
+            kx.schedule_once(self.dismiss, 0)
+
+    def _on_parent(self, w, parent):
+        super()._on_parent(w, parent)
+        if parent is None:
+            return
+        self.search_entry.set_focus()
+        self.search_entry.select_all()
+        self._on_search_text(self.search_entry, self.search_entry.text)

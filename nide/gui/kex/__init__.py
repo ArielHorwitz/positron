@@ -28,6 +28,15 @@ from .kivy import (  # noqa: E402,F401
     Rotate,
     PushMatrix,
     PopMatrix,
+    ObjectProperty,
+    AliasProperty,
+    StringProperty,
+    NumericProperty,
+    BooleanProperty,
+    ListProperty,
+    DictProperty,
+    OptionProperty,
+    ReferenceListProperty,
 )
 from .util import (  # noqa: E402,F401
     XWindow as Window,
@@ -71,6 +80,7 @@ from .widgets.uix import (  # noqa: E402,F401
     XScreenManager as ScreenManager,
     XScreen as Screen,
     XModalView as ModalView,
+    XModal as Modal,
 )
 from .widgets.input_manager import XInputManager as InputManager  # noqa: E402,F401,F402
 from .widgets.app import XApp as App  # noqa: E402,F401,F402

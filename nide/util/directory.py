@@ -1,5 +1,6 @@
 """Utility for browsing the project directory."""
 
+from typing import Optional, Iterable
 from pathlib import Path
 from .. import settings
 
@@ -32,17 +33,25 @@ def _recursive_files(dir: Path, depth: int):
             yield child
 
 
-def format_dir_tree(dir: Path, depth: int = 10) -> str:
-    """Multiline string for *dir* contents to *depth* as a tree."""
-    all_paths = [
-        file.relative_to(dir)
-        for file in _recursive_files(dir, depth)
-    ]
-    path_strs = [str(dir)]
-    for path in all_paths:
+def format_dir_tree(
+    files: Iterable[Path],
+    relative_dir: Optional[Path] = None,
+) -> str:
+    """Multiline string for *dir* contents as a tree matching *pattern* to *depth*."""
+    if relative_dir is None:
+        relative_dir = Path("/")
+    path_strs = [str(relative_dir)]
+    for path in (file.relative_to(relative_dir) for file in files):
         if path.is_dir():
             ps = f"  {path}/"
         else:
             ps = f"  {path}"
         path_strs.append(ps)
     return "\n".join(path_strs)
+
+
+def search_files(dir: Path, pattern: str, max_depth: int = 10):
+    """Generator of files in *dir* using *pattern*."""
+    for child in _recursive_files(dir, max_depth):
+        if pattern in str(child):
+            yield(child)

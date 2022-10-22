@@ -11,6 +11,7 @@ PROJ_PATH = Path.cwd()
 
 def run():
     """Main script entry point."""
+    print("\n".join(["\n", "="*50, "Starting up NIDE...", "="*50, "\n"]))
     project_path = PROJ_PATH
     if len(sys.argv) > 1:
         project_path = Path(sys.argv[1])

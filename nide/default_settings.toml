@@ -9,7 +9,6 @@ fps = 10
 [ui]
 font = "firacode-mono.ttf"
 font_size = 14
-panel_width = 450
 
 
 [editor]
