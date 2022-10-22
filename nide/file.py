@@ -56,3 +56,4 @@ def get_usr_dir(dir_name: str) -> Path:
 
 
 USER_DIR = get_usr_dir("nide")
+PROJ_DIR = Path.cwd()

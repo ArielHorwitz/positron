@@ -3,7 +3,7 @@
 from . import kex as kx, FONTS_DIR
 from .editor import CodeEditor
 from ..session import Session
-from ..file import open_path, USER_DIR
+from ..file import open_path, USER_DIR, PROJ_DIR
 from .. import settings
 
 
@@ -21,6 +21,7 @@ class App(kx.App):
     def __init__(self, session: Session):
         print("Starting GUI.")
         super().__init__()
+        self.icon = str(PROJ_DIR / "icon.png")
         self._init_window()
         self.session = session
         self.im = kx.InputManager(logger=kx.consume_args)
