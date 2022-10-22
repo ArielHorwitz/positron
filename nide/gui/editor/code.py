@@ -42,6 +42,7 @@ class CodeEditor(kx.Box):
         self.code_entry = kx.CodeEntry(
             font_name=FONT,
             font_size=FONT_SIZE,
+            auto_indent=True,
             do_wrap=False,
             style_name="one-dark",
             background_color=kx.XColor(0.7, 0.85, 1, v=0.075).rgba,
