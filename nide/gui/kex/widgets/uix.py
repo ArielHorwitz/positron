@@ -150,11 +150,22 @@ class XEntryMixin:
         self._focus_background_color(False)
 
     def _on_textinput_focused(self, w, focus):
-        """Overrides base method to select all text when focused."""
+        """Overrides base method to handle changing focus.
+
+        Selects all text when focused, changes brightness, and
+        fixes base class bugs relating to modifiers.
+        """
+        self._fix_textinput_modifiers()
         super()._on_textinput_focused(w, focus)
+        self._focus_background_color(focus)
         if focus and self.select_on_focus:
             self.select_all()
-        self._focus_background_color(focus)
+
+    def _fix_textinput_modifiers(self):
+        self._ctrl_l = False
+        self._ctrl_r = False
+        self._alt_l = False
+        self._alt_r = False
 
     def _focus_background_color(self, focus):
         if not self.focus_brighter:
