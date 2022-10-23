@@ -82,7 +82,7 @@ class ProjectTreeModal(kx.Modal):
             font_name=FONT,
             font_size=UI_FONT_SIZE,
             write_tab=False,
-            background_color=kx.XColor(0.2, 0.6, 1, v=0.2),
+            background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
             multiline=False,
         )
         self.search_entry.set_size(y=40)

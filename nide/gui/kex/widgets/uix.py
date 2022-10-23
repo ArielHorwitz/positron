@@ -145,11 +145,18 @@ class XEntryMixin:
     _background_color_unfocused = kv.ObjectProperty(None)
     deselect_on_escape = kv.BooleanProperty(False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._focus_background_color(False)
+
     def _on_textinput_focused(self, w, focus):
         """Overrides base method to select all text when focused."""
         super()._on_textinput_focused(w, focus)
         if focus and self.select_on_focus:
             self.select_all()
+        self._focus_background_color(focus)
+
+    def _focus_background_color(self, focus):
         if self.focus_brighter:
             if self._background_color_focused is None:
                 self._background_color_focused = self.background_color
@@ -186,8 +193,8 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
     def __init__(
         self,
         multiline: bool = False,
-        background_color: XColor = XColor(0.2, 0.2, 0.2, 1),
-        foreground_color: XColor = XColor(1, 1, 1, 1),
+        background_color: list[float] = (0.2, 0.2, 0.2, 1),
+        foreground_color: list[float] = (1, 1, 1, 1),
         text_validate_unfocus: bool = True,
         write_tab: bool = False,
         **kwargs,
@@ -203,8 +210,8 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
             kwargs: keyword arguments for TextInput.
         """
         super().__init__(
-            background_color=background_color.rgba,
-            foreground_color=foreground_color.rgba,
+            background_color=background_color,
+            foreground_color=foreground_color,
             multiline=multiline,
             text_validate_unfocus=text_validate_unfocus,
             write_tab=write_tab,
