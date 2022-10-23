@@ -397,7 +397,9 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             text: str,
             move_cursor: bool = True,
     ) -> Optional[tuple[int, int]]:
-        cursor = self.cursor_index() + 1
+        if not text:
+            return None
+        cursor = self.cursor_index()
         match = re.search(text, self.text[cursor:])
         wrap_offset = 0
         if match is None:
@@ -407,18 +409,19 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
                 return None
         start, end = match.span()
         start, end = start + cursor - wrap_offset, end + cursor - wrap_offset
-        col, row = self.get_cursor_from_index(start)
         if move_cursor:
-            self.cursor = col, row
+            self.cursor = self.get_cursor_from_index(end)
             self.select_text(start, end)
-        return row + 1, col
+        return start, end
 
     def find_prev(
         self,
         text: str,
         move_cursor: bool = True,
     ) -> Optional[tuple[int, int]]:
-        cursor = self.cursor_index()
+        if not text:
+            return None
+        cursor = self.cursor_index() - 1
         wrap_offset = 0
         matches = list(re.finditer(text, self.text[:cursor]))
         if not matches:
@@ -430,11 +433,10 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         start, end = match.span()
         start += wrap_offset
         end += wrap_offset
-        col, row = self.get_cursor_from_index(start)
         if move_cursor:
-            self.cursor = col, row
+            self.cursor = self.get_cursor_from_index(end)
             self.select_text(start, end)
-        return row + 1, col
+        return start, end
 
 
 class XSlider(XWidget, kv.Slider):
