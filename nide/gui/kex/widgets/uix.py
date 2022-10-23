@@ -371,10 +371,14 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     ) -> Optional[tuple[int, int]]:
         cursor = self.cursor_index() + 1
         match = re.search(text, self.text[cursor:])
+        wrap_offset = 0
         if match is None:
-            return None
+            wrap_offset = cursor
+            match = re.search(text, self.text[:cursor])
+            if match is None:
+                return None
         start, end = match.span()
-        start, end = start + cursor, end + cursor
+        start, end = start + cursor - wrap_offset, end + cursor - wrap_offset
         col, row = self.get_cursor_from_index(start)
         if move_cursor:
             self.cursor = col, row
@@ -387,11 +391,17 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         move_cursor: bool = True,
     ) -> Optional[tuple[int, int]]:
         cursor = self.cursor_index()
+        wrap_offset = 0
         matches = list(re.finditer(text, self.text[:cursor]))
         if not matches:
-            return None
+            wrap_offset = cursor
+            matches = list(re.finditer(text, self.text[cursor:]))
+            if not matches:
+                return None
         match = matches[-1]
         start, end = match.span()
+        start += wrap_offset
+        end += wrap_offset
         col, row = self.get_cursor_from_index(start)
         if move_cursor:
             self.cursor = col, row
