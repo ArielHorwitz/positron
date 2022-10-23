@@ -112,13 +112,13 @@ class CodeEditor(kx.Box):
         if file is None:
             file = self._current_file
         self._current_file = file
-        self.__disk_modified_time = None
-        self.__disk_diff = False
         text = self.code_entry.text
         file.parent.mkdir(parents=True, exist_ok=True)
         file_dump(file, text)
-        self.__disk_cache = text
         print(f"Saved  @ {timestamp()} to: {file}")
+        self.__disk_modified_time = self._get_disk_mod_date(self._current_file)
+        self.__disk_cache = text
+        self.__disk_diff = False
         self._on_cursor()
 
     def load(self, file: Optional[Path] = None, reset_cursor: bool = True):
