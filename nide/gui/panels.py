@@ -49,7 +49,7 @@ class PanelContainer(kx.Anchor):
 
     def reload_all(self):
         for editor in self.editors:
-            editor.load(reset_cursor=False)
+            editor.reload()
 
     def clean_up(self):
         files = [editor.file for editor in self.editors]

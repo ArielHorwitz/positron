@@ -97,7 +97,7 @@ class CodeEditor(kx.Box):
         # Controls
         for reg_args in [
             ("Open settings", self._open_settings, "f8"),
-            ("Load", lambda: self.load(reset_cursor=False), "^ l"),
+            ("Reload", self.reload, "^ l"),
             ("Save", self.save, "^ s"),
             ("Delete file", self.delete_file, "^+ delete"),
             ("Analyze", self.analyze, "^+ a"),
@@ -147,6 +147,9 @@ class CodeEditor(kx.Box):
         self.code_entry.text = text
         if reset_cursor:
             kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
+
+    def reload(self, *args):
+        self.load(reset_cursor=False)
 
     def delete_file(self):
         if self._current_file.exists():

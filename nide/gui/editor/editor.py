@@ -65,6 +65,10 @@ class EditorPanel(kx.Anchor):
     def load(self):
         return self.code_editor.load
 
+    @property
+    def reload(self):
+        return self.code_editor.reload
+
 
 class ProjectTreeModal(kx.Modal):
     files = kx.ListProperty()
