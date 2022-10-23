@@ -219,6 +219,15 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
 
     soft_tab = kv.BooleanProperty(True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        kv.Window.bind(focus=self._on_window_focus)
+        self.cursor_width = "2sp"
+        self.cursor_color = 1, 1, 0, 1
+
+    def _on_window_focus(self, w, focus):
+        self.cursor_blink = focus
+
     def visible_line_range(self):
         top_line = round(self.scroll_y / self.line_height)
         bot_line = top_line + round(self.height / self.line_height)
