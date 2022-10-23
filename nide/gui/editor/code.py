@@ -7,13 +7,19 @@ import traceback
 import arrow
 from pathlib import Path
 from pygments.util import ClassNotFound as LexerClassNotFound
-from pygments.lexers.markup import MarkdownLexer
+from pygments.styles import get_style_by_name, STYLE_MAP
 from pygments.lexers import get_lexer_for_filename
+from pygments.lexers.markup import MarkdownLexer
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 from ...util.file import file_load, file_dump, try_relative, USER_DIR
 
 
+STYLE_NAME = settings.get("editor.style")
+print(f"Available styles: {list(STYLE_MAP.keys())}")
+if STYLE_NAME not in STYLE_MAP:
+    STYLE_NAME = "default"
+print(f"Chosen style: {STYLE_NAME}")
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
@@ -56,7 +62,7 @@ class CodeEditor(kx.Box):
             font_size=FONT_SIZE,
             auto_indent=True,
             do_wrap=False,
-            style_name="one-dark",
+            style_name=STYLE_NAME,
             background_color=kx.XColor(0.7, 0.85, 1, v=0.075).rgba,
             scroll_distance=750,
         )

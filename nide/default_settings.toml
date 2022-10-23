@@ -14,6 +14,7 @@ font_size = 14
 [editor]
 font = "firacode-mono.ttf"
 font_size = 16
+style = "one-dark"
 # Number of pixels to vertically offset line gutter
 gutter_padding = 4
 # Number of seconds between checking difference from disk
