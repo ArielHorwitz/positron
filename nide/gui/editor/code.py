@@ -48,9 +48,10 @@ class CodeEditor(kx.Box):
             font_name=FONT,
             font_size=UI_FONT_SIZE,
             on_text_validate=self.find_next,
+            select_on_focus=True,
             write_tab=False,
             style_name="solarized-dark",
-            background_color=kx.XColor(0.6, 0.2, 1, v=0.2).rgba,
+            background_color=kx.XColor(0.12, 0.04, 0.2).rgba,
             multiline=False,
         )
         control_frame = kx.Box()
@@ -63,7 +64,7 @@ class CodeEditor(kx.Box):
             auto_indent=True,
             do_wrap=False,
             style_name=STYLE_NAME,
-            background_color=kx.XColor(0.7, 0.85, 1, v=0.075).rgba,
+            background_color=kx.XColor(0.025, 0.045, 0.05).rgba,
             scroll_distance=750,
         )
         self.code_entry.focus = True

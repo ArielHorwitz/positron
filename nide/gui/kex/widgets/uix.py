@@ -136,7 +136,50 @@ class XImageButton(XWidget, kv.ButtonBehavior, kv.Image):
     pass
 
 
-class XEntry(XWidget, kv.TextInput):
+class XEntryMixin:
+
+    select_on_focus = kv.BooleanProperty(False)
+    focus_brighter = kv.BooleanProperty(True)
+    _background_color_focused = kv.ObjectProperty(None)
+    _background_color_unfocused = kv.ObjectProperty(None)
+    deselect_on_escape = kv.BooleanProperty(False)
+
+    def _on_textinput_focused(self, w, focus):
+        """Overrides base method to select all text when focused."""
+        super()._on_textinput_focused(w, focus)
+        if focus and self.select_on_focus:
+            self.select_all()
+        if self.focus_brighter:
+            if self._background_color_focused is None:
+                self._background_color_focused = self.background_color
+            if self._background_color_unfocused is None:
+                unfbg = XColor(*self._background_color_focused, v=0.5).rgba
+                self._background_color_unfocused = unfbg
+            if focus:
+                self.background_color = self._background_color_focused
+            else:
+                self.background_color = self._background_color_unfocused
+
+    def reset_cursor_selection(self, *a):
+        """Resets the cursor position and selection."""
+        self.cancel_selection()
+        self.cursor = 0, 0
+        self.scroll_x = 0
+        self.scroll_y = 0
+
+    def keyboard_on_key_down(self, window, keycode, text, modifiers):
+        """Override base method to deselect instead of defocus on escape."""
+        key, _ = keycode
+        r = super().keyboard_on_key_down(window, keycode, text, modifiers)
+        # Handle escape
+        if key == 27:
+            if not self.deselect_on_escape:
+                self.cancel_selection()
+                self.focus = True
+        return r
+
+
+class XEntry(XEntryMixin, XWidget, kv.TextInput):
     """TextInput with sane defaults."""
 
     def __init__(
@@ -169,22 +212,8 @@ class XEntry(XWidget, kv.TextInput):
         if not multiline:
             self.set_size(y=35)
 
-    def _on_textinput_focused(self, *args, **kwargs):
-        """Overrides base method to select all text when focused."""
-        value = args[1]
-        super()._on_textinput_focused(*args, **kwargs)
-        if value:
-            self.select_all()
 
-    def reset_cursor_selection(self, *a):
-        """Resets the cursor position and selection."""
-        self.cancel_selection()
-        self.cursor = 0, 0
-        self.scroll_x = 0
-        self.scroll_y = 0
-
-
-class XCodeEntry(XWidget, kv.CodeInput):
+class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     """CodeInput with modifications."""
 
     soft_tab = kv.BooleanProperty(True)
@@ -198,13 +227,6 @@ class XCodeEntry(XWidget, kv.CodeInput):
         if substring == "\t" and self.soft_tab:
             substring = " " * self.tab_width
         super().insert_text(substring, *args, **kwargs)
-
-    def reset_cursor_selection(self, *a):
-        """Resets the cursor position and selection."""
-        self.cancel_selection()
-        self.cursor = 0, 0
-        self.scroll_x = 0
-        self.scroll_y = 0
 
     def find_next(
             self,
