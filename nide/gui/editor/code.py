@@ -6,6 +6,9 @@ import sys
 import traceback
 import arrow
 from pathlib import Path
+from pygments.util import ClassNotFound as LexerClassNotFound
+from pygments.lexers.markup import MarkdownLexer
+from pygments.lexers import get_lexer_for_filename
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 from ...util.file import file_load, file_dump, try_relative, USER_DIR
@@ -116,6 +119,7 @@ class CodeEditor(kx.Box):
         if file is None:
             file = self._current_file
         self._current_file = file
+        self._update_lexer()
         text = self._get_disk_content(file)
         if text:
             print(f"Loaded @ {timestamp()} from: {file}")
@@ -151,6 +155,13 @@ class CodeEditor(kx.Box):
                 print(f"Cached @ {timestamp()} for: {self._current_file}")
             self.__disk_diff = self.__disk_cache != self.code_entry.text
         self._on_cursor()
+
+    def _update_lexer(self):
+        try:
+            lexer = get_lexer_for_filename(self._current_file.name)
+        except LexerClassNotFound:
+            lexer = MarkdownLexer()
+        self.code_entry.lexer = lexer
 
     def _open_settings(self):
         self.load(file=USER_DIR / "settings.toml")
