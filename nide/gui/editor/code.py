@@ -98,6 +98,7 @@ class CodeEditor(kx.Box):
             ("Open settings", self._open_settings, "f8"),
             ("Load", lambda: self.load(reset_cursor=False), "^ l"),
             ("Save", self.save, "^ s"),
+            ("Delete file", self.delete_file, "^+ delete"),
             ("Analyze", self.analyze, "^+ a"),
             ("Find", self.find_entry.set_focus, "^ f"),
             ("Find next", self.find_next, "f3"),
@@ -138,6 +139,11 @@ class CodeEditor(kx.Box):
         self.code_entry.text = text
         if reset_cursor:
             kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
+
+    def delete_file(self):
+        if self._current_file.exists():
+            self._current_file.unlink()
+            self.load()
 
     def _get_disk_content(self, file: Path) -> str:
         if not file.exists():
