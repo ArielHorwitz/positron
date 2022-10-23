@@ -35,7 +35,9 @@ class CodeEditor(kx.Box):
     def __init__(self, session, file: Optional[Path] = None):
         super().__init__(orientation="vertical")
         self.session = session
-        self._current_file = USER_DIR / "settings.toml" if file is None else file
+        if file is None:
+            file = USER_DIR / "settings.toml"
+        self._current_file = file.expanduser().resolve()
         self.__disk_modified_time = None
         self.__disk_diff = False
         self.__disk_cache = None
@@ -106,6 +108,10 @@ class CodeEditor(kx.Box):
         kx.schedule_interval(self._check_disk_diff, DISK_DIFF_INTERVAL)
 
     # File management
+    @property
+    def file(self):
+        return self._current_file
+
     def save(self, file: Optional[Path] = None):
         if file is None:
             file = self._current_file

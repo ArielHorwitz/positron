@@ -123,4 +123,4 @@ def search_files(
 
 
 USER_DIR = get_usr_dir("nide")
-PROJ_DIR = Path.cwd()
+PROJ_DIR = Path(__file__).parent.parent.parent

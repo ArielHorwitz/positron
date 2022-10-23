@@ -1,13 +1,26 @@
 """CLI for testing the prototype."""
+
 from typing import Optional
+from pathlib import Path
+import json
+from .file import USER_DIR, file_dump, file_load
 import jedi
 from jedi.api.classes import Name, Signature
-from pathlib import Path
+
+
+SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
+SESSION_FILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
+if not SESSION_FILES_CACHE.exists():
+    file_dump(SESSION_FILES_CACHE, "{}")
 
 
 class Session:
     def __init__(self, project_path: Path, env_path: Optional[Path] = None):
-        self.project_path = project_path
+        self.__file_mode = None
+        if not project_path.is_dir():
+            self.__file_mode = project_path
+            project_path = project_path.parent
+        self.project_path = project_path.expanduser().resolve()
         if env_path is None:
             all_venvs = list(jedi.find_virtualenvs(paths=[project_path]))
             print(f"Available environments:")
@@ -17,6 +30,29 @@ class Session:
         self._project = jedi.Project(project_path, environment_path=env_path)
         print(f"Created project:     {project_path}")
         print(f"Project environment: {env_path}")
+
+    def get_session_files(self) -> list[Path]:
+        """List of files opened for this session in cache."""
+        if self.__file_mode:
+            return [self.__file_mode]
+        files_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        files = [Path(f) for f in files_cache.get(str(self.project_path), [])]
+        filestr = "\n".join(f"  {f}" for f in files)
+        print(f"Session {self.project_path} cached files:\n{filestr}")
+        return files
+
+    def save_session_files(self, files: list[Path]):
+        """Cache list of open files for this session."""
+        if self.__file_mode:
+            print(f"Skipping caching session files for single-file mode.")
+        filestr = "\n".join(f"  {f}" for f in files)
+        print(f"Session {self.project_path} caching files:\n{filestr}")
+        if SESSION_FILES_CACHE.exists():
+            files_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        else:
+            files_cache = {}
+        files_cache[str(self.project_path)] = [str(f) for f in files]
+        file_dump(SESSION_FILES_CACHE, json.dumps(files_cache, indent=4))
 
     def search_project(
         self,

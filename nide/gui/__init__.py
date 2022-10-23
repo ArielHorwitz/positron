@@ -1,6 +1,6 @@
 """GUI package."""
 
-from pathlib import Path
+from ..util.file import PROJ_DIR
 
 
-FONTS_DIR = Path.cwd() / "nide" / "gui" / "fonts"
+FONTS_DIR = PROJ_DIR / "nide" / "gui" / "fonts"

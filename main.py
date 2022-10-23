@@ -8,13 +8,18 @@ def run():
 
     import sys
     from pathlib import Path
+    from nide.util.file import PROJ_DIR
+    from nide.util import settings
+    from nide.util.session import Session
     from nide.gui.app import App
     from nide.gui.kex import restart_script
-    from nide.util.session import Session
 
-    project_path = Path.cwd()
-    if len(sys.argv) > 1:
-        project_path = Path(sys.argv[1])
+    if len(sys.argv) <= 1:
+        # Default session
+        project_path = Path(settings.get("project.default")).expanduser().resolve()
+    else:
+        # Session from command args
+        project_path = Path(sys.argv[1]).expanduser().resolve()
     app_session = Session(project_path)
     app = App(app_session)
     returncode = app.run()

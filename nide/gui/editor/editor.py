@@ -43,6 +43,10 @@ class EditorPanel(kx.Anchor):
         self.set_focus = self.code_editor.code_entry.set_focus
 
     @property
+    def file(self):
+        return self.code_editor.file
+
+    @property
     def uid(self):
         return self.__uid
 

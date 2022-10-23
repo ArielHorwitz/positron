@@ -23,7 +23,9 @@ disk_diff_interval = 0.1
 
 
 [project]
-# On startup, open an editor panel for each of the following files
+# Default project to open
+default = "~"
+# For new projects open the following files
 open = [
     "README.md",
 ]
@@ -34,6 +36,7 @@ file_types = [
     "md",
     "toml",
     "json",
+    "sh",
     # For files without extensions (like .gitignore)
     "",
 ]
