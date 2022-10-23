@@ -23,7 +23,7 @@ DIR_TREE_DEPTH = settings.get("project.tree_depth")
 FILE_TYPES = set(settings.get("project.file_types"))
 IGNORE_NAMES = set(settings.get("project.ignore_names"))
 IGNORE_MATCHES = set(settings.get("project.ignore_match"))
-MAX_FILES = 25
+MAX_FILES = settings.get("project.max_tree_size")
 
 
 class EditorPanel(kx.Anchor):
