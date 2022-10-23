@@ -1,6 +1,7 @@
 """Code editor widget."""
 
 from typing import Optional
+import os.path
 import sys
 import traceback
 import arrow
@@ -14,6 +15,11 @@ FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
+DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
+
+
+def timestamp():
+    return arrow.now().format("HH:mm:ss")
 
 
 class CodeEditor(kx.Box):
@@ -21,6 +27,9 @@ class CodeEditor(kx.Box):
         super().__init__(orientation="vertical")
         self.session = session
         self._current_file = file
+        self.__disk_modified_time = None
+        self.__disk_diff = False
+        self.__disk_cache = None
         # Widgets
         self.im = kx.InputManager(
             default_controls=False,
@@ -87,32 +96,61 @@ class CodeEditor(kx.Box):
         ]:
             self.im.register(action, callback, hotkey)
         self.load()
+        kx.schedule_interval(self._check_disk_diff, DISK_DIFF_INTERVAL)
 
     # File management
     def save(self, file: Optional[Path] = None):
         if file is None:
             file = self._current_file
         self._current_file = file
-        self._on_cursor()
+        self.__disk_modified_time = None
+        self.__disk_diff = False
+        text = self.code_entry.text
         file.parent.mkdir(parents=True, exist_ok=True)
-        file_dump(file, self.code_entry.text)
-        ts = arrow.now().format("HH:mm:ss")
-        print(f"Saved @ {ts} to: {file}")
+        file_dump(file, text)
+        self.__disk_cache = text
+        print(f"Saved  @ {timestamp()} to: {file}")
+        self._on_cursor()
 
     def load(self, file: Optional[Path] = None, reset_cursor: bool = True):
         if file is None:
             file = self._current_file
         self._current_file = file
-        if not file.exists():
-            print(f"New unsaved file: {file}")
-            text = ""
+        text = self._get_disk_content(file)
+        if text:
+            print(f"Loaded @ {timestamp()} from: {file}")
         else:
-            ts = arrow.now().format("HH:mm:ss")
-            print(f"Loaded @ {ts} from: {file}")
-            text = file_load(file)
+            text = ""
+            print(f"New unsaved file: {file}")
+        self.__disk_modified_time = self._get_disk_mod_date(file)
+        self.__disk_cache = text
+        self.__disk_diff = False
         self.code_entry.text = text
         if reset_cursor:
             kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
+
+    def _get_disk_content(self, file: Path) -> str:
+        if not file.exists():
+            return None
+        return file_load(file)
+
+    def _get_disk_mod_date(self, file: Path):
+        return os.path.getmtime(file) if file.exists() else None
+
+    def _check_disk_diff(self, *args):
+        if not self._current_file.exists():
+            self.__disk_modified_time = None
+            self.__disk_cache = None
+            self.__disk_diff = True
+        else:
+            # Update disk cache if file has changed on disk
+            modified_time = self._get_disk_mod_date(self._current_file)
+            if modified_time != self.__disk_modified_time:
+                self.__disk_cache = self._get_disk_content(self._current_file)
+                self.__disk_modified_time = modified_time
+                print(f"Cached @ {timestamp()} for: {self._current_file}")
+            self.__disk_diff = self.__disk_cache != self.code_entry.text
+        self._on_cursor()
 
     def _open_settings(self):
         self.load(file=USER_DIR / "settings.toml")
@@ -152,7 +190,8 @@ class CodeEditor(kx.Box):
         kx.schedule_once(self.code_entry.set_focus, 0)
 
     def _on_cursor(self, *a):
-        self.status_right.text = self.cursor_full(" :: ")
+        diff = "*" if self.__disk_diff else ""
+        self.status_right.text = self.cursor_full(f"{diff} :: ")
 
     def _on_scroll(self, *a):
         start, finish = self.code_entry.get_line_range()
