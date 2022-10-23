@@ -151,6 +151,7 @@ class CodeEditor(kx.Box):
     def delete_file(self):
         if self._current_file.exists():
             self._current_file.unlink()
+            print(f"Deleted @ {timestamp()} file: {self._current_file}")
             self.load()
 
     def _get_disk_content(self, file: Path) -> str:
