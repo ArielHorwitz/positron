@@ -157,16 +157,17 @@ class XEntryMixin:
         self._focus_background_color(focus)
 
     def _focus_background_color(self, focus):
-        if self.focus_brighter:
-            if self._background_color_focused is None:
-                self._background_color_focused = self.background_color
-            if self._background_color_unfocused is None:
-                unfbg = XColor(*self._background_color_focused, v=0.5).rgba
-                self._background_color_unfocused = unfbg
-            if focus:
-                self.background_color = self._background_color_focused
-            else:
-                self.background_color = self._background_color_unfocused
+        if not self.focus_brighter:
+            return
+        if self._background_color_focused is None:
+            self._background_color_focused = self.background_color
+        if self._background_color_unfocused is None:
+            unfbg = XColor(*self._background_color_focused, v=0.5).rgba
+            self._background_color_unfocused = unfbg
+        if focus:
+            self.background_color = self._background_color_focused
+        else:
+            self.background_color = self._background_color_unfocused
 
     def reset_cursor_selection(self, *a):
         """Resets the cursor position and selection."""
