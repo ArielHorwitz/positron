@@ -61,8 +61,9 @@ class EditorPanel(kx.Anchor):
         if parent is None:
             self.code_editor.set_focus()
 
-    def load(self, file: Path):
-        self.code_editor.load(file=file)
+    @property
+    def load(self):
+        return self.code_editor.load
 
 
 class ProjectTreeModal(kx.Modal):

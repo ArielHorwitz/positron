@@ -73,24 +73,24 @@ class App(kx.App):
 
     def register_hotkeys(self):
         self.im.remove_all()
-        self.im.register("app.quit", self.stop, "^+ q")
-        self.im.register("app.restart", self.restart, "^+ w")
-        self.im.register(
-            "Open session dir",
-            self._open_project_dir,
-            "^+ f",
-        )
-        self.im.register(
-            "Open user dir",
-            lambda: open_path(USER_DIR),
-            "f9",
-        )
+        for a, c, hk in [
+            ("app.quit", self.stop, "^+ q"),
+            ("app.restart", self.restart, "^+ w"),
+            ("Reload all", self.reload_all, "f5"),
+            ("Open user dir", lambda: open_path(USER_DIR), "f9"),
+            ("Open session dir", self._open_project_dir, "^+ f"),
+        ]:
+            self.im.register(a, c, hk)
         for editor in self.editors:
             self.im.register(
                 f"Focus Editor {editor.uid}",
                 editor.set_focus,
                 f"f{editor.uid+1}",
             )
+
+    def reload_all(self):
+        for editor in self.editors:
+            editor.load(reset_cursor=False)
 
     def update(self, dt: float):
         fps = round(1 / dt)
