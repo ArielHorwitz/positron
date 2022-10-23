@@ -102,6 +102,8 @@ class CodeEditor(kx.Box):
             ("Delete file", self.delete_file, "^+ delete"),
             ("Analyze", self.analyze, "^+ a"),
             ("Duplicate lines", self.code_entry.duplicate, "^ d"),
+            ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up"),
+            ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down"),
             ("Find", self.find_entry.set_focus, "^ f"),
             ("Find next", self.find_next, "f3"),
             ("Find previous", self.find_prev, "+ f3"),
