@@ -131,7 +131,6 @@ class XInputManager(XWidget, kv.Widget):
     def __init__(
         self,
         name: str = "Unnamed",
-        default_controls: bool = True,
         logger: Callable[[str], None] = print,
         **kwargs,
     ):
@@ -139,7 +138,6 @@ class XInputManager(XWidget, kv.Widget):
 
         Args:
             name: Arbitrary name of the object. Used for debugging.
-            default_controls: If True, will call `XInputManager.register_defaults`.
             logger: Function to be used for logging.
         """
         self.name = name
@@ -149,8 +147,6 @@ class XInputManager(XWidget, kv.Widget):
         self.__last_down_ping = _ping() - self.min_cooldown
         self.logger = logger
         kv.Window.bind(on_key_down=self._on_key_down, on_key_up=self._on_key_up)
-        if default_controls:
-            self.register_defaults()
 
     # Control management
     def register(
@@ -207,11 +203,6 @@ class XInputManager(XWidget, kv.Widget):
         for kf in kc.keys:
             self.control_keys[kf].remove(kc)
         del self.controls[kc.name]
-
-    def register_defaults(self):
-        """Register default controls (quit and restart)."""
-        self.register("app.quit", lambda: quit(), "^+ q")
-        self.register("app.restart", restart_script, "^+ w")
 
     # Properties
     @property

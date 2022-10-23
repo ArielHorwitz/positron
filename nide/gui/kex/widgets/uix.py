@@ -489,10 +489,7 @@ class XModal(XAnchor):
     def __init__(self, container: XAnchor, **kwargs):
         super().__init__(**kwargs)
         self.container = container
-        self.im = XInputManager(
-            active=False,
-            default_controls=False,
-        )
+        self.im = XInputManager(active=False)
         self.im.register("Dismiss", self.dismiss, "escape")
         self.bind(parent=self._on_parent)
 

@@ -32,10 +32,7 @@ class EditorPanel(kx.Anchor):
         self.__uid = uid
         self.code_editor = self.add(CodeEditor(session, file))
         self.project_tree = ProjectTreeModal(session=session, container=self)
-        self.im = kx.InputManager(
-            name=f"Editor {uid} IM",
-            default_controls=False,
-        )
+        self.im = kx.InputManager(name=f"Editor {uid} IM")
         self.im.register(
             "Open project tree",
             self.project_tree.toggle,

@@ -40,10 +40,7 @@ class CodeEditor(kx.Box):
         self.__disk_diff = False
         self.__disk_cache = None
         # Widgets
-        self.im = kx.InputManager(
-            default_controls=False,
-            logger=kx.consume_args,
-        )
+        self.im = kx.InputManager()
         self.find_entry = kx.CodeEntry(
             font_name=FONT,
             font_size=UI_FONT_SIZE,

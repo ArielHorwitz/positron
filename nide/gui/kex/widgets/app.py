@@ -64,6 +64,7 @@ class XApp(XWidget, kv.App):
         XWindow.enable_escape_exit(escape_exits)
         self.root = XRoot()
         self.keyboard = kv.Window.request_keyboard(consume_args, self.root)
+        self.__restart_flag = False
         self.__last_focused = None
         self.__overlay = None
         self.__enable_multitouch = enable_multitouch
@@ -74,6 +75,14 @@ class XApp(XWidget, kv.App):
             on_touch_up=self._is_touch_blocked,
             on_touch_move=self._is_touch_blocked,
         )
+
+    def run(self, *args, **kwargs):
+        super().run(*args, **kwargs)
+        return -1 if self.__restart_flag else 0
+
+    def restart(self, *args):
+        self.__restart_flag = True
+        self.stop()
 
     def logger(self, message: str):
         """Log a message in the app's logger."""

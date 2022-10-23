@@ -56,14 +56,13 @@ class App(kx.App):
 
     def register_hotkeys(self):
         self.im.remove_all()
-        self.im.register_defaults()
-
+        self.im.register("app.quit", self.stop, "^+ q")
+        self.im.register("app.restart", self.restart, "^+ w")
         self.im.register(
             "Open user dir",
             lambda: open_path(USER_DIR),
             "f9",
         )
-
         for editor in self.editors:
             self.im.register(
                 f"Focus Editor {editor.uid}",
