@@ -32,9 +32,10 @@ def timestamp():
 
 
 class CodeEditor(kx.Box):
-    def __init__(self, session, file: Optional[Path] = None):
+    def __init__(self, session, uid: int, file: Optional[Path] = None):
         super().__init__(orientation="vertical")
         self.session = session
+        self.__uid = uid
         if file is None:
             file = USER_DIR / "settings.toml"
         self._current_file = file.expanduser().resolve()
@@ -42,7 +43,7 @@ class CodeEditor(kx.Box):
         self.__disk_diff = False
         self.__disk_cache = None
         # Widgets
-        self.im = kx.InputManager()
+        self.im = kx.InputManager(name=f"Code editor {uid}")
         self.find_entry = kx.CodeEntry(
             font_name=FONT,
             font_size=UI_FONT_SIZE,

@@ -170,23 +170,23 @@ class XInputManager(XWidget, kv.Widget):
         if kc.name in self.controls:
             if not self.allow_overwrite:
                 raise ValueError(
-                    f"{kc.name} already exists, enable allow_overwrite "
+                    f"{kc.name} in {self.name} already exists, enable allow_overwrite "
                     "or use a unique name."
                 )
             old_kc = self.controls[kc.name]
-            self.logger(f"Replacing {old_kc} -> {kc}")
+            self.logger(f"{self.name} rplacing {old_kc} -> {kc}")
             self._remove_kc(old_kc)
         else:
-            self.logger(f"Registering {kc}")
+            self.logger(f"{self.name} registering {kc}")
         self._register_kc(kc)
 
     def remove(self, name: str):
         """Remove a control by *name*."""
         if name not in self.controls:
-            self.logger(f"{self} cannot remove non-existant control: {name}")
+            self.logger(f"{self.name} cannot remove non-existant control: {name}")
             return
         kc = self.controls[name]
-        self.logger(f"Removing {kc}")
+        self.logger(f"{self.name} removing {kc}")
         self._remove_kc(kc)
 
     def remove_all(self):

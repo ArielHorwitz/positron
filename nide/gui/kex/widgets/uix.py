@@ -486,10 +486,10 @@ class XModalView(XWidget, kv.ModalView):
 class XModal(XAnchor):
     """A XAnchor with an XInputManager that can de/attach to a container."""
 
-    def __init__(self, container: XAnchor, **kwargs):
+    def __init__(self, container: XAnchor, name: str = "Unnamed", **kwargs):
         super().__init__(**kwargs)
         self.container = container
-        self.im = XInputManager(active=False)
+        self.im = XInputManager(name=name, active=False)
         self.im.register("Dismiss", self.dismiss, "escape")
         self.bind(parent=self._on_parent)
 

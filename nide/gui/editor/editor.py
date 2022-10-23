@@ -30,9 +30,13 @@ class EditorPanel(kx.Anchor):
     def __init__(self, uid: int, session, file: str, **kwargs):
         super().__init__(**kwargs)
         self.__uid = uid
-        self.code_editor = self.add(CodeEditor(session, file))
-        self.project_tree = ProjectTreeModal(session=session, container=self)
-        self.im = kx.InputManager(name=f"Editor {uid} IM")
+        self.im = kx.InputManager(name=f"Editor panel {uid}")
+        self.code_editor = self.add(CodeEditor(session, uid, file))
+        self.project_tree = ProjectTreeModal(
+            session=session,
+            container=self,
+            name=f"Project modal {uid}",
+        )
         self.im.register(
             "Open project tree",
             self.project_tree.toggle,
