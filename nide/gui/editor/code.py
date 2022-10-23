@@ -95,20 +95,20 @@ class CodeEditor(kx.Box):
         status_bar.add(self.status_left, self.status_right)
         self.add(control_frame, main_frame, status_bar)
         # Controls
-        for action, callback, hotkey in [
+        for reg_args in [
             ("Open settings", self._open_settings, "f8"),
             ("Load", lambda: self.load(reset_cursor=False), "^ l"),
             ("Save", self.save, "^ s"),
             ("Delete file", self.delete_file, "^+ delete"),
             ("Analyze", self.analyze, "^+ a"),
-            ("Duplicate lines", self.code_entry.duplicate, "^ d"),
-            ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up"),
-            ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down"),
+            ("Duplicate lines", self.code_entry.duplicate, "^+ d", True),
+            ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up", True),
+            ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
             ("Find", self.find_entry.set_focus, "^ f"),
-            ("Find next", self.find_next, "f3"),
-            ("Find previous", self.find_prev, "+ f3"),
+            ("Find next", self.find_next, "f3", True),
+            ("Find previous", self.find_prev, "+ f3", True),
         ]:
-            self.im.register(action, callback, hotkey)
+            self.im.register(*reg_args)
         self.load()
         kx.schedule_interval(self._check_disk_diff, DISK_DIFF_INTERVAL)
 
