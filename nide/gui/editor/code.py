@@ -101,6 +101,7 @@ class CodeEditor(kx.Box):
             ("Save", self.save, "^ s"),
             ("Delete file", self.delete_file, "^+ delete"),
             ("Analyze", self.analyze, "^+ a"),
+            ("Duplicate lines", self.code_entry.duplicate, "^ d"),
             ("Find", self.find_entry.set_focus, "^ f"),
             ("Find next", self.find_next, "f3"),
             ("Find previous", self.find_prev, "+ f3"),
@@ -222,10 +223,10 @@ class CodeEditor(kx.Box):
         self.status_right.text = self.cursor_full(f"{diff} :: ")
 
     def _on_scroll(self, *a):
-        start, finish = self.code_entry.get_line_range()
-        finish = min(finish, len(self.code_entry._lines)+1)
+        start, finish = self.code_entry.visible_line_range()
+        finish = min(finish, len(self.code_entry._lines))
         self.line_gutter.text = "\n".join(
-            f"{i:>4}" for i in range(start, finish)
+            f"{i+1:>4}" for i in range(start, finish)
         )
 
     def _on_focus(self, w, focus):

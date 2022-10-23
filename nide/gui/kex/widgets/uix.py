@@ -218,15 +218,38 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
 
     soft_tab = kv.BooleanProperty(True)
 
-    def get_line_range(self):
-        top_line = 1 + round(self.scroll_y / self.line_height)
+    def visible_line_range(self):
+        top_line = round(self.scroll_y / self.line_height)
         bot_line = top_line + round(self.height / self.line_height)
-        return top_line, bot_line
+        return top_line, bot_line + 1
+
+    def selected_line_range(self):
+        if not self._selection:
+            return self.cursor_row, self.cursor_row
+        _, row_from = self.get_cursor_from_index(self._selection_from)
+        _, row_to = self.get_cursor_from_index(self._selection_to)
+        start, end = min(row_from, row_to), max(row_from, row_to)
+        return start, end
 
     def insert_text(self, substring, *args, **kwargs):
         if substring == "\t" and self.soft_tab:
             substring = " " * self.tab_width
         super().insert_text(substring, *args, **kwargs)
+
+    def duplicate(self):
+        start, end = self.selected_line_range()
+        line_count = end - start
+        new_end = end + line_count
+        lines = [""] + self._lines[start:end + 1]
+        substring = "\n".join(lines)
+        # Move cursor to end of last line
+        self.cursor = len(self._lines[end]), end
+        select_from = self.cursor_index() + 1
+        # Paste
+        self.insert_text(substring)
+        select_to = self.cursor_index()
+        # Select pasted lines
+        self.select_text(select_from, select_to)
 
     def find_next(
             self,
