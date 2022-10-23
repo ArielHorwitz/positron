@@ -9,6 +9,7 @@ fps = 10
 [ui]
 font = "firacode-mono.ttf"
 font_size = 14
+editors = 2
 
 
 [editor]
@@ -24,8 +25,7 @@ disk_diff_interval = 0.1
 [project]
 # On startup, open an editor panel for each of the following files
 open = [
-    "main.py",
-    "__init__.py",
+    "README.md",
 ]
 # Ignore any file without one of the following extensions
 file_types = [

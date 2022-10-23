@@ -32,10 +32,10 @@ def timestamp():
 
 
 class CodeEditor(kx.Box):
-    def __init__(self, session, file: Path = Path("__init__.py")):
+    def __init__(self, session, file: Optional[Path] = None):
         super().__init__(orientation="vertical")
         self.session = session
-        self._current_file = file
+        self._current_file = USER_DIR / "settings.toml" if file is None else file
         self.__disk_modified_time = None
         self.__disk_diff = False
         self.__disk_cache = None

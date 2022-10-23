@@ -13,6 +13,7 @@ WINDOW_POS = settings.get("window.offset")
 START_MAXIMIZED = settings.get("window.maximize")
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
+EDITOR_COUNT = settings.get("ui.editors")
 DEFAULT_FILES = settings.get("project.open")
 
 
@@ -37,12 +38,17 @@ class App(kx.App):
 
     def build_widgets(self):
         self.root.clear_widgets()
-        files = (self.session.project_path / Path(file) for file in DEFAULT_FILES)
-        self.editors = [
-            EditorPanel(i, self.session, file)
-            for i, file in enumerate(files)
-        ]
-        main_frame = kx.Box()
+        files = [self.session.project_path / Path(file) for file in DEFAULT_FILES]
+        editor_count = EDITOR_COUNT
+        kw = {"cols": editor_count}
+        if editor_count > 3:
+            editor_count += editor_count % 2
+            kw = {"rows": 2}
+        self.editors = []
+        for i in range(editor_count):
+            file = files.pop(0) if files else None
+            self.editors.append(EditorPanel(i, self.session, file))
+        main_frame = kx.Grid(**kw)
         main_frame.add(*self.editors)
         self.root.add(main_frame)
         self.editors[0].set_focus()
