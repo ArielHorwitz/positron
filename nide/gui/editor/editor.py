@@ -104,8 +104,8 @@ class ProjectTreeModal(kx.Modal):
         self._on_search_text(self.search_entry, "")
         self.im.register("Load", self._do_load, "enter")
         self.im.register("Load (2)", self._do_load, "numpadenter")
-        self.im.register("Scroll down", self._scroll_down, "down")
-        self.im.register("Scroll up", self._scroll_up, "up")
+        self.im.register("Scroll down", self._scroll_down, "down", allow_repeat=True)
+        self.im.register("Scroll up", self._scroll_up, "up", allow_repeat=True)
 
     def _do_load(self):
         if not self.files:
