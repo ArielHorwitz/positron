@@ -73,12 +73,11 @@ class ProjectTreeModal(kx.Modal):
         self.title.set_size(y=40)
 
         # Search
-        self.search_entry = kx.CodeEntry(
+        self.search_entry = kx.Entry(
             font_name=FONT,
             font_size=UI_FONT_SIZE,
             write_tab=False,
-            style_name="solarized-dark",
-            background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
+            background_color=kx.XColor(0.2, 0.6, 1, v=0.2),
             multiline=False,
         )
         self.search_entry.set_size(y=40)
@@ -107,6 +106,8 @@ class ProjectTreeModal(kx.Modal):
         self.im.register("Load (2)", self._do_load, "numpadenter")
         self.im.register("Scroll down", self._scroll_down, "down", allow_repeat=True)
         self.im.register("Scroll up", self._scroll_up, "up", allow_repeat=True)
+        self.im.register("Page down", lambda: self._scroll_down(10), "pagedown", allow_repeat=True)
+        self.im.register("Page up", lambda: self._scroll_up(10), "pageup", allow_repeat=True)
 
     def _do_load(self):
         if not self.files:
@@ -116,11 +117,13 @@ class ProjectTreeModal(kx.Modal):
         self.container.load(file)
         self.toggle(set_as=False)
 
-    def _scroll_down(self):
-        self.files.append(self.files.pop(0))
+    def _scroll_down(self, count=1):
+        for i in range(count):
+            self.files.append(self.files.pop(0))
 
-    def _scroll_up(self):
-        self.files.insert(0, self.files.pop())
+    def _scroll_up(self, count=1):
+        for i in range(count):
+            self.files.insert(0, self.files.pop())
 
     def _on_files(self, w, files):
         project_path = self.session.project_path
