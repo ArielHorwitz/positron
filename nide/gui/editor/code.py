@@ -93,7 +93,7 @@ class CodeEditor(kx.Box):
         self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
         self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
         status_bar.add(self.status_left, self.status_right)
-        self.add(control_frame, main_frame, status_bar)
+        self.add(control_frame, status_bar, main_frame)
         # Controls
         for reg_args in [
             ("Open settings", self._open_settings, "f8"),
