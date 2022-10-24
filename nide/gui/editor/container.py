@@ -6,8 +6,10 @@ from ...util import settings
 from .panel import Panel
 
 
-EDITOR_COUNT = settings.get("ui.editors")
+LAYOUT_COLS = settings.get("ui.cols")
+LAYOUT_ROWS = settings.get("ui.rows")
 DEFAULT_FILES = settings.get("project.open")
+MAX_EDITOR_HOTKEYS = 4
 
 
 class Container(kx.Anchor):
@@ -20,18 +22,13 @@ class Container(kx.Anchor):
         if not open_files:
             open_files = DEFAULT_FILES
         files = [self.session.project_path / Path(file) for file in open_files]
-        # Collect number of files
-        editor_count = EDITOR_COUNT
-        kw = {"cols": editor_count}
-        if editor_count > 3:
-            editor_count += editor_count % 2
-            kw = {"rows": 2}
         # Create widgets
         self.editors = []
-        for i in range(editor_count):
+        for i in range(LAYOUT_COLS * LAYOUT_ROWS):
             file = files.pop(0) if files else None
             self.editors.append(Panel(i, self.session, file))
-        main_frame = kx.Grid(**kw)
+        # Assemble
+        main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_COLS)
         main_frame.add(*self.editors)
         self.add(main_frame)
         self.editors[0].set_focus()
@@ -39,7 +36,7 @@ class Container(kx.Anchor):
 
     def register_hotkeys(self):
         self.im.remove_all()
-        for editor in self.editors:
+        for editor in self.editors[:MAX_EDITOR_HOTKEYS]:
             self.im.register(
                 f"Focus Editor {editor.uid}",
                 editor.set_focus,
