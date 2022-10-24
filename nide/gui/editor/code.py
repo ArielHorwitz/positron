@@ -55,9 +55,7 @@ class CodeEditor(kx.Box):
             background_color=kx.XColor(0.12, 0.04, 0.2).rgba,
             multiline=False,
         )
-        control_frame = kx.Box()
-        control_frame.set_size(y=40)
-        control_frame.add(self.find_entry)
+        self.find_entry.set_size(y=30)
         main_frame = kx.Box()
         self.code_entry = kx.CodeEntry(
             font_name=FONT,
@@ -89,12 +87,14 @@ class CodeEditor(kx.Box):
         line_gutter_frame.set_size(x=50)
         line_gutter_frame.add(line_gutter_top_padding, self.line_gutter)
         main_frame.add(line_gutter_frame, self.code_entry)
-        status_bar = kx.Box()
-        status_bar.set_size(y=25, hx=0.95)
+        status_bar_frame = kx.Anchor()
+        status_bar_frame.set_size(y=25)
+        status_bar = status_bar_frame.add(kx.Box())
+        status_bar.set_size(hx=0.95)
         self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
         self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
         status_bar.add(self.status_left, self.status_right)
-        self.add(control_frame, status_bar, main_frame)
+        self.add(self.find_entry, status_bar_frame, main_frame)
         # Controls
         for reg_args in [
             ("Open settings", self._open_settings, "f8"),
