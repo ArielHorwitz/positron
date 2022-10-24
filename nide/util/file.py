@@ -4,6 +4,7 @@ import os
 import subprocess
 import platform
 from pathlib import Path
+from itertools import islice
 import tomli
 
 
@@ -85,6 +86,7 @@ def search_files(
     ignore_matches: Optional[set[str]] = None,
     file_types: Optional[set[str]] = None,
     breadth_first: bool = True,
+    max_branching: int = 100,
     depth: int = 10,
 ) -> Iterable[Path]:
     """Generator of files in *dir* using *pattern*."""
@@ -95,7 +97,8 @@ def search_files(
         dir_val = child.is_dir() if breadth_first else not child.is_dir()
         return f"{int(dir_val)}{child}"
 
-    for child in sorted(dir.iterdir(), key=child_sort):
+    children = islice(dir.iterdir(), max_branching)
+    for child in sorted(children, key=child_sort):
         name = child.name
         if name in ignore_names:
             continue

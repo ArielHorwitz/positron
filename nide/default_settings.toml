@@ -53,9 +53,16 @@ ignore_names = [
 ignore_match = [
     ".egg-info/",
 ]
+# Folders and files available in every project
+global_folders = [
+  # "~/.local/share/nide/",
+]
+global_files = [
+  # "~/.local/share/nide/settings.toml",
+]
 # How to sort directory tree
 breadth_first = false
 # How many results to show in the directory tree
-max_tree_size = 150
+max_tree_size = 100
 # How deep to look in the directory tree
 tree_depth = 10

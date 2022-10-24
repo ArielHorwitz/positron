@@ -8,7 +8,7 @@ import sys
 import traceback
 import arrow
 from pathlib import Path
-from itertools import islice
+from itertools import islice, chain
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 from ...util.file import format_dir_tree, search_files
@@ -24,6 +24,14 @@ FILE_TYPES = set(settings.get("project.file_types"))
 IGNORE_NAMES = set(settings.get("project.ignore_names"))
 IGNORE_MATCHES = set(settings.get("project.ignore_match"))
 MAX_FILES = settings.get("project.max_tree_size")
+GLOBAL_DIRS = [
+    Path(p).expanduser().resolve()
+    for p in settings.get("project.global_folders")
+]
+GLOBAL_FILES = [
+    Path(p).expanduser().resolve()
+    for p in settings.get("project.global_files")
+]
 
 
 class EditorPanel(kx.Anchor):
@@ -113,13 +121,18 @@ class ProjectTreeModal(kx.Modal):
         self._on_search_text(self.search_entry, "")
         self.im.register("Load", self._do_load, "enter")
         self.im.register("Load (2)", self._do_load, "numpadenter")
+        self.im.register("New", self._do_new, "^ enter")
+        self.im.register("New (2)", self._do_new, "^ numpadenter")
         self.im.register("Scroll down", self._scroll_down, "down", allow_repeat=True)
         self.im.register("Scroll up", self._scroll_up, "up", allow_repeat=True)
         self.im.register("Page down", lambda: self._scroll_down(10), "pagedown", allow_repeat=True)
         self.im.register("Page up", lambda: self._scroll_up(10), "pageup", allow_repeat=True)
 
-    def _do_load(self):
-        if not self.files:
+    def _do_new(self):
+        self._do_load(force_new=True)
+
+    def _do_load(self, force_new: bool = False):
+        if not self.files or force_new:
             file = self.session.project_path / Path(self.search_entry.text)
         else:
             file = self.files[0]
@@ -139,16 +152,19 @@ class ProjectTreeModal(kx.Modal):
         self.tree_label.text = format_dir_tree(files, relative_dir=project_path)
 
     def _on_search_text(self, w, text):
-        file_gen = search_files(
-            dir=self.session.project_path,
-            pattern=text,
-            ignore_names=IGNORE_NAMES,
-            ignore_matches=IGNORE_MATCHES,
-            file_types=FILE_TYPES,
-            breadth_first=BREADTH_FIRST,
-            depth=DIR_TREE_DEPTH,
-        )
-        self.files = list(islice(file_gen, MAX_FILES))
+        gens = []
+        for directory in [self.session.project_path] + GLOBAL_DIRS:
+            gens.append(search_files(
+                dir=directory,
+                pattern=text,
+                ignore_names=IGNORE_NAMES,
+                ignore_matches=IGNORE_MATCHES,
+                file_types=FILE_TYPES,
+                breadth_first=BREADTH_FIRST,
+                depth=DIR_TREE_DEPTH,
+            ))
+        gens.append((p for p in GLOBAL_FILES if text in str(p)))
+        self.files = list(islice(chain(*gens), MAX_FILES))
 
     def _on_search_focus(self, w, focus):
         if not focus:
