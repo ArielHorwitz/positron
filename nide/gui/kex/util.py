@@ -149,6 +149,12 @@ class XWindow:
         kv.Window.fullscreen = set_to
 
     @classmethod
+    def toggle_borderless(cls, set_to: Optional[bool] = None):
+        """Toggle window border."""
+        set_to = not kv.Window.borderless if set_to is None else set_to
+        kv.Window.borderless = set_to
+
+    @classmethod
     def set_position(cls, x: float, y: float):
         """Reposition the window's top left position."""
         kv.Window.left, kv.Window.top = x, y

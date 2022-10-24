@@ -10,6 +10,7 @@ from ..util import settings
 FPS = settings.get("window.fps")
 WINDOW_SIZE = settings.get("window.size")
 WINDOW_POS = settings.get("window.offset")
+WINDOW_BORDERLESS = not settings.get("window.border")
 START_MAXIMIZED = settings.get("window.maximize")
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
@@ -31,9 +32,10 @@ class App(kx.App):
         print("Finished initialization.")
 
     def _init_window(self):
-        kx.Window.set_size(*WINDOW_SIZE)
+        kx.Window.toggle_borderless(WINDOW_BORDERLESS)
+        kx.schedule_once(lambda _: kx.Window.set_size(*WINDOW_SIZE))
         if any(c >= 0 for c in WINDOW_POS):
-            kx.Window.set_position(*WINDOW_POS)
+            kx.schedule_once(lambda _: kx.Window.set_position(*WINDOW_POS))
         if START_MAXIMIZED:
             kx.schedule_once(kx.Window.maximize)
 
