@@ -1,16 +1,16 @@
-"""GUI panels."""
+"""Container for code editor panels."""
 
 from pathlib import Path
-from . import kex as kx
-from ..util import settings
-from .editor.panel import Panel
+from .. import kex as kx
+from ...util import settings
+from .panel import Panel
 
 
 EDITOR_COUNT = settings.get("ui.editors")
 DEFAULT_FILES = settings.get("project.open")
 
 
-class PanelContainer(kx.Anchor):
+class Container(kx.Anchor):
     def __init__(self, session):
         super().__init__()
         self.im = kx.InputManager(name="Panel container")

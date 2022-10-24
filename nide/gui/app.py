@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from . import kex as kx, FONTS_DIR
-from .panels import PanelContainer
+from .editor.container import Container as EditorContainer
 from ..util.file import open_path, USER_DIR, PROJ_DIR
 from ..util import settings
 
@@ -24,7 +24,7 @@ class App(kx.App):
         self._init_window()
         self.session = session
         self.im = kx.InputManager(name="App root")
-        self.panels = PanelContainer(session)
+        self.panels = EditorContainer(session)
         self.root.add(self.panels)
         self.register_hotkeys()
         self.hook(self.update, FPS)
