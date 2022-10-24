@@ -144,9 +144,12 @@ class CodeEditor(kx.Box):
         self.__disk_modified_time = self._get_disk_mod_date(file)
         self.__disk_cache = text
         self.__disk_diff = False
+        cursor = self.code_entry.cursor
         self.code_entry.text = text
         if reset_cursor:
-            kx.schedule_once(self.code_entry.reset_cursor_selection, 0)
+            kx.schedule_once(self.code_entry.reset_cursor_selection)
+        else:
+            self.code_entry.cursor = cursor
 
     def reload(self, *args):
         self.load(reset_cursor=False)
