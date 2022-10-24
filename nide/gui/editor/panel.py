@@ -34,7 +34,7 @@ GLOBAL_FILES = [
 ]
 
 
-class EditorPanel(kx.Anchor):
+class Panel(kx.Anchor):
     def __init__(self, uid: int, session, file: str, **kwargs):
         super().__init__(**kwargs)
         self.__uid = uid

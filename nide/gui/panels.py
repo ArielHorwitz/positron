@@ -3,7 +3,7 @@
 from pathlib import Path
 from . import kex as kx
 from ..util import settings
-from .editor.editor import EditorPanel
+from .editor.panel import Panel
 
 
 EDITOR_COUNT = settings.get("ui.editors")
@@ -30,7 +30,7 @@ class PanelContainer(kx.Anchor):
         self.editors = []
         for i in range(editor_count):
             file = files.pop(0) if files else None
-            self.editors.append(EditorPanel(i, self.session, file))
+            self.editors.append(Panel(i, self.session, file))
         main_frame = kx.Grid(**kw)
         main_frame.add(*self.editors)
         self.add(main_frame)
