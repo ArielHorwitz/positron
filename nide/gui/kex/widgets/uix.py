@@ -404,7 +404,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         wrap_offset = 0
         if match is None:
             wrap_offset = cursor
-            match = re.search(text, self.text[:cursor])
+            match = re.search(text, self.text)
             if match is None:
                 return None
         start, end = match.span()
@@ -422,17 +422,13 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         if not text:
             return None
         cursor = self.cursor_index() - 1
-        wrap_offset = 0
         matches = list(re.finditer(text, self.text[:cursor]))
         if not matches:
-            wrap_offset = cursor
-            matches = list(re.finditer(text, self.text[cursor:]))
+            matches = list(re.finditer(text, self.text))
             if not matches:
                 return None
         match = matches[-1]
         start, end = match.span()
-        start += wrap_offset
-        end += wrap_offset
         if move_cursor:
             self.cursor = self.get_cursor_from_index(end)
             self.select_text(start, end)
