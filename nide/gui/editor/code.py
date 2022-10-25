@@ -45,17 +45,6 @@ class CodeEditor(kx.Box):
         self.__disk_cache = None
         # Widgets
         self.im = kx.InputManager(name=f"Code editor {uid}")
-        self.find_entry = kx.CodeEntry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
-            on_text_validate=self.find_next,
-            select_on_focus=True,
-            write_tab=False,
-            style_name="solarized-dark",
-            background_color=kx.XColor(0.12, 0.04, 0.2).rgba,
-            multiline=False,
-        )
-        self.find_entry.set_size(y=30)
         main_frame = kx.Box()
         self.code_entry = kx.CodeEntry(
             font_name=FONT,
@@ -94,8 +83,9 @@ class CodeEditor(kx.Box):
         self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
         self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
         status_bar.add(self.status_left, self.status_right)
-        self.add(self.find_entry, status_bar_frame, main_frame)
+        self.add(status_bar_frame, main_frame)
         # Controls
+        self.set_focus = self.code_entry.set_focus
         for reg_args in [
             ("Open settings", self._open_settings, "f8"),
             ("Reload", self.reload, "^ l"),
@@ -105,7 +95,6 @@ class CodeEditor(kx.Box):
             ("Duplicate lines", self.code_entry.duplicate, "^+ d", True),
             ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up", True),
             ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
-            ("Find", self.find_entry.set_focus, "^ f"),
             ("Find next", self.find_next, "^ ]", True),
             ("Find previous", self.find_prev, "^ [", True),
         ]:
@@ -226,9 +215,6 @@ class CodeEditor(kx.Box):
         print(f"{self.cursor_full()}\n{info_str}")
 
     # Events
-    def set_focus(self, *args):
-        kx.schedule_once(self.code_entry.set_focus, 0)
-
     def _on_cursor(self, *a):
         diff = "*" if self.__disk_diff else ""
         self.status_right.text = self.cursor_full(f"{diff} :: ")

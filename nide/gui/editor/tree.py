@@ -1,7 +1,4 @@
-"""Code editor panel widget.
-
-Contains the code editor and modals.
-"""
+"""Project tree for listing and opening files."""
 
 from pathlib import Path
 from itertools import islice, chain
