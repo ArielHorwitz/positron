@@ -106,8 +106,8 @@ class CodeEditor(kx.Box):
             ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up", True),
             ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
             ("Find", self.find_entry.set_focus, "^ f"),
-            ("Find next", self.find_next, "f3", True),
-            ("Find previous", self.find_prev, "+ f3", True),
+            ("Find next", self.find_next, "^ ]", True),
+            ("Find previous", self.find_prev, "^ [", True),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:
