@@ -42,6 +42,7 @@ class Panel(kx.Anchor):
             hk = modal_hotkeys.get(name)
             if hk:
                 self.im.register(f"Toggle {name} modal", modal.toggle, hk)
+        self.im.register("Reload", self.reload, "f5")
 
     def _on_modal(self, modal, parent):
         assert parent is self or parent is None

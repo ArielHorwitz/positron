@@ -66,7 +66,7 @@ class Container(kx.Anchor):
                 editor.set_focus,
                 f"f{editor.uid+1}",
             )
-        self.im.register("Reload all", self.reload_all, "f5")
+        self.im.register("Reload all", self.reload_all, "^ f5")
 
     def reload_all(self):
         for editor in self.editors:
