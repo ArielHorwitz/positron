@@ -23,6 +23,7 @@ print(f"Chosen style: {STYLE_NAME}")
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
+AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 
@@ -109,7 +110,8 @@ class CodeEditor(kx.Box):
             ("Find previous", self.find_prev, "+ f3", True),
         ]:
             self.im.register(*reg_args)
-        self.load()
+        if AUTO_LOAD:
+            self.load()
         kx.schedule_interval(self._check_disk_diff, DISK_DIFF_INTERVAL)
 
     # File management
