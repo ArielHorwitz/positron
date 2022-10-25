@@ -43,6 +43,7 @@ class CodeEditor(kx.Box):
         self.__disk_modified_time = None
         self.__disk_diff = False
         self.__disk_cache = None
+        self.__find_text = ""
         # Widgets
         self.im = kx.InputManager(name=f"Code editor {uid}")
         main_frame = kx.Box()
@@ -197,13 +198,17 @@ class CodeEditor(kx.Box):
         return f"{path}{sep}{line},{column}"
 
     # Code inspection
-    def find_next(self, *args):
+    def find_next(self, text: Optional[str] = None):
+        if text is not None:
+            self.__find_text = text
         self.code_entry.focus = True
-        self.code_entry.find_next(self.find_entry.text)
+        self.code_entry.find_next(self.__find_text)
 
-    def find_prev(self, *args):
+    def find_prev(self, text: Optional[str] = None):
         self.code_entry.focus = True
-        self.code_entry.find_prev(self.find_entry.text)
+        if text is not None:
+            self.__find_text = text
+        self.code_entry.find_prev(self.__find_text)
 
     def analyze(self, *a):
         code = self.code_entry.text
