@@ -52,6 +52,7 @@ from .util import (  # noqa: E402,F401
     schedule_interval,
     queue_around_frame,
 )
+from .widgets import XBaseWidget as Widget  # noqa: E402,F401
 from .widgets.layouts import (  # noqa: E402,F401
     XBox as Box,
     XZBox as ZBox,
