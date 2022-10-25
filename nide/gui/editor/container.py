@@ -13,6 +13,9 @@ MAX_EDITOR_HOTKEYS = 4
 
 
 class Container(kx.Anchor):
+
+    current_focus = kx.NumericProperty(None)
+
     def __init__(self, session):
         super().__init__()
         self.im = kx.InputManager(name="Panel container")
@@ -33,6 +36,27 @@ class Container(kx.Anchor):
         self.add(main_frame)
         self.editors[0].set_focus()
         self.register_hotkeys()
+        self.app.bind(current_focus=self._check_focus)
+
+    def _check_focus(self, w, current_focus):
+        panel = current_focus
+        while panel:
+            if isinstance(panel, Panel):
+                assert self._check_descendent(panel)
+                self.current_focus = panel.uid
+                print(f"Focused panel uid: {self.current_focus}")
+                return
+            if panel is kx.Window.kivy:
+                break
+            panel = panel.parent
+        return
+
+    def _check_descendent(self, widget):
+        while widget:
+            if widget is self:
+                return True
+            widget = widget.parent
+        return False
 
     def register_hotkeys(self):
         self.im.remove_all()

@@ -43,6 +43,8 @@ class XRoot(kv.FocusBehavior, XAnchor):
 class XApp(XWidget, kv.App):
     """See module documentation for details."""
 
+    current_focus = kv.ObjectProperty(None)
+    """Currently focused widget."""
     block_input = kv.BooleanProperty(False)
     """If all user input should be blocked."""
 
@@ -75,6 +77,10 @@ class XApp(XWidget, kv.App):
             on_touch_up=self._is_touch_blocked,
             on_touch_move=self._is_touch_blocked,
         )
+        kv.Clock.schedule_interval(self._check_focus, 1 / 60)
+
+    def _check_focus(self, dt):
+        self.current_focus = self.keyboard.target
 
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs)
@@ -108,11 +114,6 @@ class XApp(XWidget, kv.App):
     def add(self, *args, **kwargs):
         """Add a widget to the root widget."""
         return self.root.add(*args, **kwargs)
-
-    @property
-    def current_focus(self) -> kv.Widget:
-        """The widget currently in focus."""
-        return self.keyboard.target
 
     @property
     def overlay(self) -> Optional[XOverlay]:
