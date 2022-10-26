@@ -31,7 +31,7 @@ def _flatten_dict(d: dict) -> dict[str, Any]:
 
 def _load_settings() -> dict[str, Any]:
     # Resolve paths
-    defaults_file = file.PROJ_DIR / "nide" / "default_settings.toml"
+    defaults_file = file.PROJ_DIR / "positron" / "default_settings.toml"
     settings_file = file.USER_DIR / "settings.toml"
     # Create missing
     assert defaults_file.is_file()

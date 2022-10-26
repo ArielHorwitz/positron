@@ -125,5 +125,5 @@ def search_files(
             yield child
 
 
-USER_DIR = get_usr_dir("nide")
+USER_DIR = get_usr_dir("positron")
 PROJ_DIR = Path(__file__).parent.parent.parent

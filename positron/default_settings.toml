@@ -58,10 +58,10 @@ ignore_match = [
 ]
 # Folders and files available in every project
 global_folders = [
-  # "~/.local/share/nide/",
+  # "~/.local/share/positron/",
 ]
 global_files = [
-  # "~/.local/share/nide/settings.toml",
+  # "~/.local/share/positron/settings.toml",
 ]
 # How to sort directory tree
 breadth_first = false

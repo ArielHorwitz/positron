@@ -60,4 +60,4 @@ class App(kx.App):
 
     def update(self, dt: float):
         winsize = f"{kx.Window.kivy.width}×{kx.Window.kivy.height}"
-        self.title = f"NIDE :: {self.session.project_path} :: {winsize}"
+        self.title = f"Positron :: {self.session.project_path} :: {winsize}"
