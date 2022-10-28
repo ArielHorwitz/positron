@@ -29,24 +29,26 @@ class Container(kx.Anchor):
         self.editors = []
         for i in range(LAYOUT_COLS * LAYOUT_ROWS):
             file = files.pop(0) if files else None
-            self.editors.append(Panel(i, self.session, file))
+            self.editors.append(Panel(i, self, self.session, file))
         # Assemble
         main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_COLS)
         main_frame.add(*self.editors)
         self.add(main_frame)
-        self.editors[0].set_focus()
         self.register_hotkeys()
         self.app.bind(current_focus=self._check_focus)
+        kx.schedule_once(self.editors[0].set_focus)
 
     def _check_focus(self, w, current_focus):
         panel = current_focus
         while panel:
             if isinstance(panel, Panel):
                 assert self._check_descendent(panel)
-                self.current_focus = panel.uid
-                print(f"Focused panel uid: {self.current_focus}")
+                puid = panel.uid
+                if self.current_focus != puid:
+                    print(f"Focused panel uid: {puid}")
+                    self.current_focus = puid
                 return
-            if panel is kx.Window.kivy:
+            if panel is panel.parent:
                 break
             panel = panel.parent
         return

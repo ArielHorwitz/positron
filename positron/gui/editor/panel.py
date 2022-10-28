@@ -13,14 +13,13 @@ class Panel(kx.Anchor):
 
     modal = kx.ObjectProperty(None)
 
-    def __init__(self, uid: int, session, file: str, **kwargs):
+    def __init__(self, uid: int, container, session, file: str, **kwargs):
         super().__init__(**kwargs)
         self.__uid = uid
         self.im = kx.InputManager(name=f"Editor panel {uid}", active=False)
         # Code
         self.code_editor = self.add(CodeEditor(session, uid, file))
         self.set_focus = self.code_editor.set_focus
-        self.code_editor.code_entry.bind(focus=self._on_code_focus)
         # Modals
         self.project_tree = ProjectTree(
             session=session,
@@ -43,6 +42,7 @@ class Panel(kx.Anchor):
             if hk:
                 self.im.register(f"Toggle {name} modal", modal.toggle, hk)
         self.im.register("Reload", self.reload, "f5")
+        container.bind(current_focus=self._on_panel_focus)
 
     def _on_modal(self, modal, parent):
         assert parent is self or parent is None
@@ -55,8 +55,8 @@ class Panel(kx.Anchor):
             if m_ is not modal:
                 m_.dismiss()
 
-    def _on_code_focus(self, w, focus):
-        self.im.active = focus
+    def _on_panel_focus(self, w, uid):
+        self.im.active = uid == self.__uid
 
     @property
     def file(self):
