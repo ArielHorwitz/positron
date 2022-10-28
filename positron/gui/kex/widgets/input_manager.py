@@ -59,6 +59,8 @@ class KeyControl:
     """The keybind of this control."""
     allow_repeat: bool = field(default=False, compare=False, repr=True)
     """Allow this control to be repeatedly invoked while holding down the keys."""
+    consume_keys: bool = field(default=True, compare=False, repr=True)
+    """Consume the keys (prevent others from seeing the keys)."""
 
 
 def _format_keys(
@@ -155,6 +157,7 @@ class XInputManager(XWidget, kv.Widget):
         callback: Callable[[], None],
         keys: Union[KeysFormat, list[KeysFormat]],
         allow_repeat: bool = False,
+        consume_keys: bool = True,
     ):
         """Register or modify a control.
 
@@ -164,9 +167,10 @@ class XInputManager(XWidget, kv.Widget):
             keys: Keypresses that will invoke the control.
             allow_repeat: Allow this control to be repeatedly invoked if the
                 keys have not been released.
+            consume_keys: Consume the keys.
         """
         keys = [keys] if isinstance(keys, str) else keys
-        kc = KeyControl(name, callback, keys, allow_repeat)
+        kc = KeyControl(name, callback, keys, allow_repeat, consume_keys)
         if kc.name in self.controls:
             if not self.allow_overwrite:
                 raise ValueError(
@@ -284,12 +288,19 @@ class XInputManager(XWidget, kv.Widget):
         self.__last_down_ping = _ping()
         if not is_repeat and self.log_press:
             self.logger(f"Pressed:  |{kf}| {self}")
+        consumed = False
         if kf in self.control_keys:
             for kc in self.control_keys[kf]:
                 if is_repeat and not kc.allow_repeat:
                     continue
                 self._invoke_kc(kc)
+                if kc.consume_keys:
+                    if self.log_callback:
+                        self.logger(f"Consumed {kf!r} by {kc} {self}")
+                    consumed = True
+                    break
         self.pressed = kf
+        return consumed
 
     def _on_key_up(self, window, key: int, scancode: int):
         self.released = self.pressed
@@ -303,7 +314,7 @@ class XInputManager(XWidget, kv.Widget):
     def _invoke_kc(self, kc: KeyControl):
         callback = kc.callback
         if self.log_callback:
-            self.logger(f"Invoking {kc} {callback=}")
+            self.logger(f"Invoking {kc} {callback=} {self}")
         callback()
 
     @property
