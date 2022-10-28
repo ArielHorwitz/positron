@@ -216,6 +216,11 @@ class CodeEditor(kx.Box):
             self.__find_text = text
         self.code_entry.find_prev(self.__find_text)
 
+    def goto_line(self, line_number: int):
+        assert isinstance(line_number, int)
+        assert line_number > 0
+        self.code_entry.cursor = 0, line_number - 1
+
     def analyze(self, *a):
         code = self.code_entry.text
         try:

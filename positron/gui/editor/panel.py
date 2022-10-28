@@ -7,6 +7,7 @@ from .. import kex as kx
 from .code import CodeEditor
 from .tree import ProjectTree
 from .find import Find
+from .goto import Goto
 
 
 class Panel(kx.Anchor):
@@ -31,11 +32,17 @@ class Panel(kx.Anchor):
             container=self,
             name=f"Find modal {uid}",
         )
+        self.goto_line = Goto(
+            session=session,
+            container=self,
+            name=f"Goto modal {uid}",
+        )
         self.modals = {
             "tree": self.project_tree,
             "find": self.find_replace,
+            "goto": self.goto_line,
         }
-        modal_hotkeys = {"tree": "^ t", "find": "^ f"}
+        modal_hotkeys = {"tree": "^ t", "find": "^ f", "goto": "^ g"}
         for name, modal in self.modals.items():
             modal.bind(parent=self._on_modal)
             hk = modal_hotkeys.get(name)
