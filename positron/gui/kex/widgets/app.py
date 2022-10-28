@@ -20,6 +20,7 @@ from ..util import (
 )
 from .layouts import XAnchor
 from .uix import XLabel
+from .win_focus_patch import WindowFocusPatch
 
 
 class XOverlay(kv.FocusBehavior, XAnchor):
@@ -62,6 +63,7 @@ class XApp(XWidget, kv.App):
             escape_exits: Enable exiting when the escape key is pressed.
             enable_multitouch: Enable multitouch.
         """
+        self.__window_focus_path = WindowFocusPatch()
         super().__init__(**kwargs)
         XWindow.enable_escape_exit(escape_exits)
         self.root = XRoot()
