@@ -44,6 +44,7 @@ class CodeEditor(kx.Box):
         self.__disk_diff = False
         self.__disk_cache = None
         self.__find_text = ""
+        self.__cached_selected_text = ""
         # Widgets
         self.im = kx.InputManager(name=f"Code editor {uid}")
         main_frame = kx.Box()
@@ -63,6 +64,7 @@ class CodeEditor(kx.Box):
             focus=self._on_focus,
             cursor=self._on_cursor,
             text=self._on_text,
+            selection_text=self._on_selection_text,
         )
         line_gutter_top_padding = kx.Anchor()
         line_gutter_top_padding.set_size(y=GUTTER_PADDING)
@@ -198,6 +200,10 @@ class CodeEditor(kx.Box):
         return f"{path}{sep}{line},{column}"
 
     # Code inspection
+    @property
+    def selected_text(self):
+        return self.__cached_selected_text
+
     def find_next(self, text: Optional[str] = None):
         if text is not None:
             self.__find_text = text
@@ -239,3 +245,7 @@ class CodeEditor(kx.Box):
         self.status_left.text = error_summary
         self._on_cursor()
         kx.schedule_once(self._on_scroll, 0)
+
+    def _on_selection_text(self, w, text):
+        if self.code_entry.focus:
+            self.__cached_selected_text = text
