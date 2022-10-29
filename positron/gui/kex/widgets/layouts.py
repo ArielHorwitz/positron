@@ -139,13 +139,13 @@ class XScroll(XWidget, kv.ScrollView):
             return False
         return self.do_scroll(m.button != "scrollup")
 
-    def do_scroll(self, up: bool = False):
+    def do_scroll(self, up: bool = False, count: int = 1):
         if not any((self.do_scroll_x, self.do_scroll_y)):
             return False
         dir = 1 if up else -1
         pixels_x, pixels_y = self.convert_distance_to_scroll(
-            self.scroll_amount,
-            self.scroll_amount,
+            self.scroll_amount * count,
+            self.scroll_amount * count,
         )
         if self.scroll_dir == "horizontal":
             self.scroll_x = min(1, max(0, self.scroll_x + pixels_x * dir))
@@ -155,5 +155,5 @@ class XScroll(XWidget, kv.ScrollView):
 
     scroll_down = do_scroll
 
-    def scroll_up(self, *args):
-        return self.do_scroll(up=True)
+    def scroll_up(self, *args, **kwargs):
+        return self.do_scroll(up=True, *args, **kwargs)
