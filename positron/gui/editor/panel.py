@@ -9,6 +9,7 @@ from .tree import ProjectTree
 from .find import Find
 from .goto import Goto
 from .snippets import Snippets
+from .analysis import Analysis
 
 
 class Panel(kx.Anchor):
@@ -43,13 +44,25 @@ class Panel(kx.Anchor):
             container=self,
             name=f"Snippets modal {uid}",
         )
+        self.analysis = Analysis(
+            session=session,
+            container=self,
+            name=f"Analysis modal {uid}",
+        )
         self.modals = {
             "tree": self.project_tree,
             "find": self.find_replace,
             "goto": self.goto_line,
             "snippets": self.snippets,
+            "analysis": self.analysis,
         }
-        modal_hotkeys = {"tree": "^ t", "find": "^ f", "goto": "^ g", "snippets": "^ n"}
+        modal_hotkeys = {
+            "tree": "^ t",
+            "find": "^ f",
+            "goto": "^ g",
+            "snippets": "^ spacebar",
+            "analysis": "! a",
+        }
         for name, modal in self.modals.items():
             modal.bind(parent=self._on_modal)
             hk = modal_hotkeys.get(name)

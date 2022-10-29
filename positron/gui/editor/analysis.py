@@ -1,0 +1,56 @@
+"""Code analysis modal."""
+
+from .. import kex as kx, FONTS_DIR
+from ...util import settings
+
+
+FONT = str(FONTS_DIR / settings.get("ui.font"))
+FONT_SIZE = settings.get("editor.font_size")
+
+
+class Analysis(kx.FocusBehavior, kx.Modal):
+    def __init__(self, session, **kwargs):
+        super().__init__(**kwargs)
+        self.session = session
+        self.set_size(hx=0.85, hy=0.8)
+        self.make_bg(kx.get_color("navy", v=0.2, a=0.9))
+        # Widgets
+        title = kx.Label(text="Code analysis")
+        title.set_size(y=50)
+        self.analysis_label = kx.Label(
+            font_name=FONT,
+            font_size=FONT_SIZE,
+            halign="left",
+            valign="top",
+            fixed_width=True,
+            color=(0.5, 1, 0, 1),
+        )
+        self.analysis_scroll = kx.Scroll(view=self.analysis_label)
+        # Assemble
+        main_frame = kx.Box(orientation="vertical")
+        main_frame.add(title, self.analysis_scroll)
+        self.add(main_frame)
+        self.bind(parent=self._on_parent)
+
+    def analyze(self, *args):
+        code = self.container.code_editor.code_entry
+        col, row = code.cursor
+        info = self.session.get_info(code.text, row+1, col)
+        self.analysis_label.text = info
+
+    def _on_parent(self, w, parent):
+        super()._on_parent(w, parent)
+        if parent is not None:
+            self.focus = True
+            self.analyze()
+
+    def keyboard_on_key_down(self, w, key, text, mods):
+        keycode, key = key
+        if keycode == 280:  # page up
+            self.analysis_scroll.scroll_up(count=10)
+        elif keycode == 281:  # page down
+            self.analysis_scroll.scroll_down(count=10)
+        elif keycode == 273:  # up arrow
+            self.analysis_scroll.scroll_up()
+        elif keycode == 274:  # down arrow
+            self.analysis_scroll.scroll_down()
