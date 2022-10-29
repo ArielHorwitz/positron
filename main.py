@@ -10,7 +10,7 @@ def run():
     from pathlib import Path
     from positron.util.file import PROJ_DIR
     from positron.util import settings
-    from positron.util.session import Session
+    from positron.analyze.session import Session
     from positron.gui.app import App
     from positron.gui.kex import restart_script
 

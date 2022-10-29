@@ -1,11 +1,12 @@
 """Code analysis modal."""
 
+import traceback
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 
 
 FONT = str(FONTS_DIR / settings.get("ui.font"))
-FONT_SIZE = settings.get("editor.font_size")
+FONT_SIZE = settings.get("ui.font_size")
 
 
 class Analysis(kx.FocusBehavior, kx.Modal):
@@ -33,10 +34,16 @@ class Analysis(kx.FocusBehavior, kx.Modal):
         self.bind(parent=self._on_parent)
 
     def analyze(self, *args):
+        file = self.container.code_editor.file
         code = self.container.code_editor.code_entry
         col, row = code.cursor
-        info = self.session.get_info(code.text, row+1, col)
+        try:
+            info = self.session.get_info(file, code.text, row+1, col)
+        except Exception as e:
+            info = "Analysis failed!\nPlease see logs."
+            traceback.print_exception(e)
         self.analysis_label.text = info
+        self.analysis_label.scroll_y = 1
 
     def _on_parent(self, w, parent):
         super()._on_parent(w, parent)
@@ -44,9 +51,24 @@ class Analysis(kx.FocusBehavior, kx.Modal):
             self.focus = True
             self.analyze()
 
+    def on_touch_down(self, touch):
+        super().on_touch_down(touch)
+        if self.collide_point(*touch.pos):
+            touch.grab(self)
+            return True
+
+    def on_touch_up(self, touch):
+        if touch.grab_current is self:
+            touch.ungrab(self)
+            return True
+
     def keyboard_on_key_down(self, w, key, text, mods):
         keycode, key = key
-        if keycode == 280:  # page up
+        if keycode == 278:  # home
+            self.analysis_scroll.scroll_y = 1
+        elif keycode == 279:  # end
+            self.analysis_scroll.scroll_y = 0
+        elif keycode == 280:  # page up
             self.analysis_scroll.scroll_up(count=10)
         elif keycode == 281:  # page down
             self.analysis_scroll.scroll_down(count=10)

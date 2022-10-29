@@ -29,7 +29,7 @@ class Panel(kx.Anchor):
             (Find, "find", "^ f"),
             (Goto, "goto", "^ g"),
             (Snippets, "snippets", "^ spacebar"),
-            (Analysis, "analysis", "! a"),
+            (Analysis, "analysis", "^+ spacebar"),
         ]
         self.modals = {}
         for modal_cls, name, hotkey in modals:
