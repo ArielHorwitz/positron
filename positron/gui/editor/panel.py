@@ -24,50 +24,24 @@ class Panel(kx.Anchor):
         self.code_editor = self.add(CodeEditor(session, uid, file))
         self.set_focus = self.code_editor.set_focus
         # Modals
-        self.project_tree = ProjectTree(
-            session=session,
-            container=self,
-            name=f"Tree modal {uid}",
-        )
-        self.find_replace = Find(
-            session=session,
-            container=self,
-            name=f"Find modal {uid}",
-        )
-        self.goto_line = Goto(
-            session=session,
-            container=self,
-            name=f"Goto modal {uid}",
-        )
-        self.snippets = Snippets(
-            session=session,
-            container=self,
-            name=f"Snippets modal {uid}",
-        )
-        self.analysis = Analysis(
-            session=session,
-            container=self,
-            name=f"Analysis modal {uid}",
-        )
-        self.modals = {
-            "tree": self.project_tree,
-            "find": self.find_replace,
-            "goto": self.goto_line,
-            "snippets": self.snippets,
-            "analysis": self.analysis,
-        }
-        modal_hotkeys = {
-            "tree": "^ t",
-            "find": "^ f",
-            "goto": "^ g",
-            "snippets": "^ spacebar",
-            "analysis": "! a",
-        }
-        for name, modal in self.modals.items():
+        modals = [
+            (ProjectTree, "tree", "^ t"),
+            (Find, "find", "^ f"),
+            (Goto, "goto", "^ g"),
+            (Snippets, "snippets", "^ spacebar"),
+            (Analysis, "analysis", "! a"),
+        ]
+        self.modals = {}
+        for modal_cls, name, hotkey in modals:
+            modal = modal_cls(
+                session=session,
+                container=self,
+                name=f"{name} modal {uid}",
+            )
+            self.modals[name] = modal
             modal.bind(parent=self._on_modal)
-            hk = modal_hotkeys.get(name)
-            if hk:
-                self.im.register(f"Toggle {name} modal", modal.toggle, hk)
+            if hotkey:
+                self.im.register(f"Toggle {name} modal", modal.toggle, hotkey)
         self.im.register("Reload", self.reload, "f5")
         container.bind(current_focus=self._on_panel_focus)
 
