@@ -1,8 +1,10 @@
 """Writing, loading, and opening files."""
+
 from typing import Optional, Iterable
 import os
 import subprocess
 import platform
+import fuzzysearch
 from pathlib import Path
 from itertools import islice
 import tomli
@@ -90,6 +92,7 @@ def search_files(
     depth: int = 10,
 ) -> Iterable[Path]:
     """Generator of files in *dir* using *pattern*."""
+    pattern = pattern.lower()
     ignore_names = [] if ignore_names is None else ignore_names
     ignore_matches = [] if ignore_matches is None else ignore_matches
 
@@ -118,8 +121,17 @@ def search_files(
                     depth=depth - 1,
                 )
         elif child.is_file():
-            if pattern.lower() not in s.lower():
-                continue
+            if pattern:
+                fuzzy_matches = fuzzysearch.find_near_matches(
+                    pattern,
+                    s.lower(),
+                    max_l_dist=10,
+                    max_deletions=0,
+                    max_insertions=10,
+                    max_substitutions=0,
+                )
+                if not fuzzy_matches:
+                    continue
             if file_types and child.suffix[1:] not in file_types:
                 continue
             yield child
