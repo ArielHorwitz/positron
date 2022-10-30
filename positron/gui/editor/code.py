@@ -2,8 +2,6 @@
 
 from typing import Optional
 import os.path
-import sys
-import traceback
 import arrow
 from pathlib import Path
 from pygments.util import ClassNotFound as LexerClassNotFound
@@ -26,6 +24,7 @@ UI_FONT_SIZE = settings.get("ui.font_size")
 AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
+MAX_COMPLETIONS = 10
 
 
 def timestamp():
@@ -94,12 +93,12 @@ class CodeEditor(kx.Box):
             ("Reload", self.reload, "^ l"),
             ("Save", self.save, "^ s"),
             ("Delete file", self.delete_file, "^+ delete"),
-            ("Analyze", self.analyze, "^+ a"),
             ("Duplicate lines", self.code_entry.duplicate, "^+ d", True),
             ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up", True),
             ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
             ("Find next", self.find_next, "^ ]", True),
             ("Find previous", self.find_prev, "^ [", True),
+            ("Complete code", self.complete, "^ spacebar", True),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:
@@ -221,14 +220,27 @@ class CodeEditor(kx.Box):
         assert line_number > 0
         self.code_entry.cursor = 0, line_number - 1
 
-    def analyze(self, *a):
-        code = self.code_entry.text
-        try:
-            info_str = self.session.get_info(code, *self.cursor)
-        except Exception:
-            tb = "".join(traceback.format_exception(*sys.exc_info()))
-            info_str = f"Failed to retrieve info:\n{tb}"
-        print(f"{self.cursor_full()}\n{info_str}")
+    def complete(self):
+        # TODO cache completions until code text changes
+        code = self.code_entry
+        selection = code.selection_text
+        if selection:
+            code.delete_selection()
+        line, col = self.cursor
+        cursor_start = code.cursor_index()
+        comps = self.session.get_completions(
+            self.file,
+            code.text,
+            line,
+            col,
+            MAX_COMPLETIONS,
+        )
+        while selection in comps:
+            comps = comps[comps.index(selection)+1:]
+        final_comp = comps[0] if comps else ""
+        code.insert_text(final_comp)
+        cursor_end = code.cursor_index()
+        code.select_text(cursor_start, cursor_end)
 
     # Events
     def _on_cursor(self, *a):

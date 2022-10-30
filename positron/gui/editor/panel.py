@@ -28,8 +28,8 @@ class Panel(kx.Anchor):
             (ProjectTree, "tree", "^ t"),
             (Find, "find", "^ f"),
             (Goto, "goto", "^ g"),
-            (Snippets, "snippets", "^ spacebar"),
-            (Analysis, "analysis", "^+ spacebar"),
+            (Snippets, "snippets", "^+ spacebar"),
+            (Analysis, "analysis", "^+ a"),
         ]
         self.modals = {}
         for modal_cls, name, hotkey in modals:

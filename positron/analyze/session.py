@@ -19,7 +19,6 @@ SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
 SESSION_FILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
 if not SESSION_FILES_CACHE.exists():
     file_dump(SESSION_FILES_CACHE, "{}")
-MAX_COMPLETIONS = 5
 
 
 def _title_break(text: str) -> str:
@@ -43,6 +42,19 @@ class Session:
         print(f"Created project:     {project_path}")
         print(f"Project environment: {env_path}")
 
+    def get_completions(
+            self,
+            path: Path,
+            code: str,
+            line: int,
+            col: int,
+            max_completions: int,
+        ) -> list[str]:
+        """List of strings to complete code under the cursor."""
+        script = jedi.Script(code=code, path=path, project=self._project)
+        completions = script.complete(line, col)
+        return [c.complete for c in islice(completions, max_completions)]
+
     def get_info(self, path: Path, code: str, line: int, col: int) -> str:
         """Multiline string of code analysis under the cursor."""
         print(f"Getting info for: {path} :: {line},{col}")
@@ -51,15 +63,6 @@ class Session:
         strs = []
         append = strs.append
         extend = strs.extend
-
-        # Code completion
-        completions = script.complete(line, col)
-        if completions:
-            append(_title_break("Code completions"))
-            extend(
-                f"{comp.name}  ¬{comp.complete}"
-                for comp in islice(completions, MAX_COMPLETIONS)
-            )
 
         # Syntax errors
         syntax_errors = script.get_syntax_errors()
@@ -88,6 +91,15 @@ class Session:
         append(_title_break("Context"))
         context = script.get_context(line, col)
         append(format_object_short(script, context))
+
+        # Code completion
+        completions = script.complete(line, col)
+        if completions:
+            append(_title_break("Code completions"))
+            extend(
+                f"{comp.name}  ¬{comp.complete}"
+                for comp in islice(completions, 20)
+            )
 
         # All module names
         append(_title_break("All definitions"))
