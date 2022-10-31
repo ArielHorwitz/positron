@@ -164,5 +164,9 @@ class Session:
             files_cache = json.loads(file_load(SESSION_FILES_CACHE))
         else:
             files_cache = {}
-        files_cache[str(self.project_path)] = [str(f) for f in files]
+        path = str(self.project_path)
+        existing_files = files_cache.get(path, [])
+        if len(existing_files) > len(files):
+            files += existing_files[len(files):]
+        files_cache[path] = [str(f) for f in files]
         file_dump(SESSION_FILES_CACHE, json.dumps(files_cache, indent=4))
