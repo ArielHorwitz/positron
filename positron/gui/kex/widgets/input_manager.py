@@ -107,6 +107,8 @@ class XInputManager(XWidget, kv.Widget):
     # Set negative min_cooldown to disable repeated invoking
     active = kv.BooleanProperty(True)
     """If the InputManager is active."""
+    log_register = kv.BooleanProperty(False)
+    """If registrations should be logged."""
     log_press = kv.BooleanProperty(False)
     """If key presses should be logged."""
     log_release = kv.BooleanProperty(False)
@@ -178,10 +180,12 @@ class XInputManager(XWidget, kv.Widget):
                     "or use a unique name."
                 )
             old_kc = self.controls[kc.name]
-            self.logger(f"{self.name} rplacing {old_kc} -> {kc}")
+            if self.log_register:
+                self.logger(f"{self.name} replacing {old_kc} -> {kc}")
             self._remove_kc(old_kc)
         else:
-            self.logger(f"{self.name} registering {kc}")
+            if self.log_register:
+                self.logger(f"{self.name} registering {kc}")
         self._register_kc(kc)
 
     def remove(self, name: str):
@@ -190,7 +194,8 @@ class XInputManager(XWidget, kv.Widget):
             self.logger(f"{self.name} cannot remove non-existant control: {name}")
             return
         kc = self.controls[name]
-        self.logger(f"{self.name} removing {kc}")
+        if self.log_register:
+            self.logger(f"{self.name} removing {kc}")
         self._remove_kc(kc)
 
     def remove_all(self):
