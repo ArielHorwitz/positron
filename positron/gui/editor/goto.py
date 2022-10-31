@@ -30,16 +30,21 @@ class Goto(kx.Modal):
         self.bind(parent=self._on_parent)
         self.im.register("Goto line", self.goto, "enter")
         self.im.register("Goto line (2)", self.goto, "numpadenter")
+        self.im.register("Goto line end", self.goto_end, "+ enter")
+        self.im.register("Goto line end (2)", self.goto_end, "+ numpadenter")
 
-    def goto(self, *args):
+    def goto(self, *args, end: bool = False):
         line_num = self.line_number_entry.text
         try:
             line_num = max(1, int(line_num))
         except ValueError:
             print(f"Cannot use {line_num!r} as a line number.")
             return
-        self.container.code_editor.goto_line(line_num)
+        self.container.code_editor.goto_line(line_num, end=end)
         self.dismiss()
+
+    def goto_end(self, *args):
+        self.goto(*args, end=True)
 
     def find_prev(self, *args):
         self.container.code_editor.find_prev(self.line_number_entry.text)

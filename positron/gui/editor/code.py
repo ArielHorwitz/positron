@@ -215,10 +215,10 @@ class CodeEditor(kx.Box):
             self.__find_text = text
         self.code_entry.find_prev(self.__find_text)
 
-    def goto_line(self, line_number: int):
+    def goto_line(self, line_number: int, end: bool = False):
         assert isinstance(line_number, int)
         assert line_number > 0
-        self.code_entry.cursor = 0, line_number - 1
+        self.code_entry.cursor = end * 10**6, line_number - 1
 
     def complete(self):
         # TODO cache completions until code text changes
