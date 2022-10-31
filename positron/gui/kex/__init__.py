@@ -87,6 +87,7 @@ from .widgets.uix import (  # noqa: E402,F401
     XModalView as ModalView,
     XModal as Modal,
 )
+from .widgets.code import XCodeEntryNew as CodeEntryNew  # noqa: E402,F401,F402
 from .widgets.input_manager import XInputManager as InputManager  # noqa: E402,F401,F402
 from .widgets.app import XApp as App  # noqa: E402,F401,F402
 
