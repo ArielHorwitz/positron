@@ -399,6 +399,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     ) -> Optional[tuple[int, int]]:
         if not text:
             return None
+        text = re.escape(text)
         cursor = self.cursor_index()
         match = re.search(text, self.text[cursor:])
         wrap_offset = 0
@@ -421,6 +422,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     ) -> Optional[tuple[int, int]]:
         if not text:
             return None
+        text = re.escape(text)
         cursor = self.cursor_index() - 1
         matches = list(re.finditer(text, self.text[:cursor]))
         if not matches:
