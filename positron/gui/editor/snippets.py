@@ -40,7 +40,7 @@ class Snippets(kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.set_size(hx=0.85, hy=0.8)
-        self.make_bg(kx.get_color("lime", a=0.5))
+        self.make_bg(kx.get_color("lime", a=0.75))
         # Widgets
         title = kx.Label(text="Insert snippet")
         title.set_size(y=50)
