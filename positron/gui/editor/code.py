@@ -261,6 +261,22 @@ class CodeEditor(kx.Anchor):
             return
         code.insert_text(comps[0])
 
+    def insert_snippet(self, snippet):
+        code = self.code_entry
+        original_cidx = code.cursor_index()
+        code.insert_text(snippet.text)
+        move = snippet.move
+        if move  < 0:  # move to beginning
+            move = code.cursor_index() - original_cidx
+        final_cidx = code.cursor_index() - move
+        code.cursor = code.get_cursor_from_index(final_cidx)
+        select = snippet.select
+        if select < 0:  # select all
+            select = final_cidx - original_cidx
+        if select:
+            start, end = final_cidx - select, final_cidx
+            kx.schedule_once(lambda *a: code.select_text(start, end), 0)
+
     # Events
     def _on_cursor(self, *a):
         self._refresh_status_diff()
