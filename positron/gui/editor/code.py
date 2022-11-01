@@ -24,16 +24,21 @@ UI_FONT_SIZE = settings.get("ui.font_size")
 AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
+CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 MAX_COMPLETIONS = 10
+COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
+COMPLETION_ENABLE_BEFORE = COMPLETION_DISABLE_AFTER | set(".`'\"")
 
 
 def timestamp():
     return arrow.now().format("HH:mm:ss")
 
 
-class CodeEditor(kx.Box):
+class CodeEditor(kx.Anchor):
+    _cached_code_completions = kx.ListProperty([])
+
     def __init__(self, session, uid: int, file: Optional[Path] = None):
-        super().__init__(orientation="vertical")
+        super().__init__()
         self.session = session
         self.__uid = uid
         if file is None:
@@ -44,9 +49,8 @@ class CodeEditor(kx.Box):
         self.__disk_cache = None
         self.__find_text = ""
         self.__cached_selected_text = ""
-        # Widgets
         self.im = kx.InputManager(name=f"Code editor {uid}")
-        main_frame = kx.Box()
+        # Code
         self.code_entry = kx.CodeEntry(
             font_name=FONT,
             font_size=FONT_SIZE,
@@ -55,6 +59,7 @@ class CodeEditor(kx.Box):
             style_name=STYLE_NAME,
             background_color=kx.XColor(0.025, 0.045, 0.05).rgba,
             scroll_distance=750,
+            cursor_pause_timeout=CURSOR_PAUSE_TIMEOUT,
         )
         self.code_entry.focus = True
         self.code_entry.bind(
@@ -65,6 +70,7 @@ class CodeEditor(kx.Box):
             text=self._on_text,
             selection_text=self._on_selection_text,
         )
+        # Gutter
         line_gutter_top_padding = kx.Anchor()
         line_gutter_top_padding.set_size(y=GUTTER_PADDING)
         self.line_gutter = kx.Label(
@@ -77,15 +83,39 @@ class CodeEditor(kx.Box):
         line_gutter_frame.make_bg(kx.XColor(0.2, 1, 0.6, v=0.2))
         line_gutter_frame.set_size(x=50)
         line_gutter_frame.add(line_gutter_top_padding, self.line_gutter)
-        main_frame.add(line_gutter_frame, self.code_entry)
-        status_bar_frame = kx.Anchor()
-        status_bar_frame.set_size(y=25)
-        status_bar = status_bar_frame.add(kx.Box())
-        status_bar.set_size(hx=0.95)
+        code_frame = kx.Box()
+        code_frame.add(line_gutter_frame, self.code_entry)
+        # Status bar
         self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
         self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
+        status_bar = kx.Box()
+        status_bar.set_size(hx=0.95)
         status_bar.add(self.status_left, self.status_right)
-        self.add(status_bar_frame, main_frame)
+        status_bar_frame = kx.Anchor()
+        status_bar_frame.set_size(y=25)
+        status_bar_frame.add(status_bar)
+        # Assemble
+        main_frame = kx.Box(orientation="vertical")
+        main_frame.add(status_bar_frame, code_frame)
+        self.add(main_frame)
+        # Completion popup
+        self.completion_label = kx.Label(
+            halign="left",
+            font_name=FONT,
+            font_size=FONT_SIZE,
+            fixed_width=True,
+        )
+        self.completion_label.make_bg(kx.get_color("blue", v=0.2, a=0.4))
+        self.completion_label.set_size(x=300, y=30)
+        completion_layout = kx.Relative()
+        completion_layout.add(self.completion_label)
+        self.completion_modal = kx.Modal(container=self, name="Completion popup")
+        self.completion_modal.add(completion_layout)
+        self.code_entry.bind(
+            on_cursor_pause=self._on_cursor_pause,
+            cursor_pos=self._on_cursor_pos,
+        )
+        self.bind(_cached_code_completions=self._on_cached_code_completions)
         # Controls
         self.set_focus = self.code_entry.set_focus
         for reg_args in [
@@ -98,7 +128,9 @@ class CodeEditor(kx.Box):
             ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
             ("Find next", self.find_next, "^ ]", True),
             ("Find previous", self.find_prev, "^ [", True),
-            ("Complete code", self.complete, "^ spacebar", True),
+            ("Complete code", self._do_complete, "! enter"),
+            ("Scroll up code comps", self._scroll_up_completions, "! up", True),
+            ("Scroll down code comps", self._scroll_down_completions, "! down", True),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:
@@ -174,7 +206,7 @@ class CodeEditor(kx.Box):
                 self.__disk_modified_time = modified_time
                 print(f"Cached @ {timestamp()} for: {self._current_file}")
             self.__disk_diff = self.__disk_cache != self.code_entry.text
-        self._on_cursor()
+        self._refresh_status_diff()
 
     def _update_lexer(self):
         try:
@@ -220,14 +252,34 @@ class CodeEditor(kx.Box):
         assert line_number > 0
         self.code_entry.cursor = end * 10**6, line_number - 1
 
-    def complete(self):
-        # TODO cache completions until code text changes
+    def _do_complete(self):
         code = self.code_entry
-        selection = code.selection_text
-        if selection:
-            code.delete_selection()
+        if not self.completion_modal.parent:
+            return
+        comps = self._cached_code_completions
+        if not comps:
+            return
+        code.insert_text(comps[0])
+
+    # Events
+    def _on_cursor(self, *a):
+        self._refresh_status_diff()
+        self.completion_modal.dismiss()
+
+    def _on_cursor_pause(self, *args):
+        code = self.code_entry
+        if code.selection_text:
+            return
         line, col = self.cursor
-        cursor_start = code.cursor_index()
+        cidx = code.cursor_index()
+        last_char = code.text[cidx-1:cidx]
+        if not last_char:
+            return
+        if last_char in COMPLETION_DISABLE_AFTER:
+            return
+        next_char = code.text[cidx:cidx+1]
+        if next_char not in COMPLETION_ENABLE_BEFORE:
+            return
         comps = self.session.get_completions(
             self.file,
             code.text,
@@ -235,17 +287,25 @@ class CodeEditor(kx.Box):
             col,
             MAX_COMPLETIONS,
         )
-        while selection in comps:
-            comps = comps[comps.index(selection)+1:]
-        final_comp = comps[0] if comps else ""
-        code.insert_text(final_comp)
-        cursor_end = code.cursor_index()
-        code.select_text(cursor_start, cursor_end)
+        self._cached_code_completions = [s for s in comps if s]
+        self.completion_modal.open()
 
-    # Events
-    def _on_cursor(self, *a):
-        diff = "*" if self.__disk_diff else ""
-        self.status_right.text = self.cursor_full(f"{diff} :: ")
+    def _on_cached_code_completions(self, w, comps):
+        self.completion_label.text = "\n".join(reversed(comps))
+
+    def _scroll_down_completions(self, *args):
+        if self._cached_code_completions:
+            p = self._cached_code_completions.pop(0)
+            self._cached_code_completions.append(p)
+
+    def _scroll_up_completions(self, *args):
+        if self._cached_code_completions:
+            p = self._cached_code_completions.pop()
+            self._cached_code_completions.insert(0, p)
+
+    def _on_cursor_pos(self, w, cpos):
+        x, y = self.to_window(*cpos)
+        self.completion_label.pos = x, y - self.code_entry.line_height
 
     def _on_scroll(self, *a):
         start, finish = self.code_entry.visible_line_range()
@@ -266,3 +326,7 @@ class CodeEditor(kx.Box):
     def _on_selection_text(self, w, text):
         if self.code_entry.focus:
             self.__cached_selected_text = text
+
+    def _refresh_status_diff(self, *a):
+        diff = "*" if self.__disk_diff else ""
+        self.status_right.text = self.cursor_full(f"{diff} :: ")

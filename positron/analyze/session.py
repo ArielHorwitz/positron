@@ -52,7 +52,11 @@ class Session:
         ) -> list[str]:
         """List of strings to complete code under the cursor."""
         script = jedi.Script(code=code, path=path, project=self._project)
-        completions = script.complete(line, col)
+        try:
+            completions = script.complete(line, col)
+        except Exception as e:
+            print(f"get_completions {e}")
+            return []
         return [c.complete for c in islice(completions, max_completions)]
 
     def get_info(self, path: Path, code: str, line: int, col: int) -> str:
