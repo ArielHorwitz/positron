@@ -149,10 +149,23 @@ class XEntryMixin:
     _background_color_focused = kv.ObjectProperty(None)
     _background_color_unfocused = kv.ObjectProperty(None)
     deselect_on_escape = kv.BooleanProperty(False)
+    cursor_pause_timeout = kv.NumericProperty(0.5)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._focus_background_color(False)
+        self.register_event_type("on_cursor_pause")
+        self._reset_cursor_pause_trigger()
+        self.bind(
+            cursor=self._on_cursor_for_pause,
+            cursor_pause_timeout=self._reset_cursor_pause_trigger,
+        )
+
+    def _reset_cursor_pause_trigger(self, *args):
+        self.__trigger_cursor_pause = kv.Clock.create_trigger(
+            lambda t: self.dispatch("on_cursor_pause"),
+            self.cursor_pause_timeout,
+        )
 
     def _on_textinput_focused(self, w, focus):
         """Overrides base method to handle changing focus.
@@ -202,6 +215,15 @@ class XEntryMixin:
                 self.cancel_selection()
                 self.focus = True
         return r
+
+    def _on_cursor_for_pause(self, w, cursor):
+        ev = self.__trigger_cursor_pause
+        if ev.is_triggered:
+            ev.cancel()
+        ev()
+
+    def on_cursor_pause(self):
+        pass
 
 
 class XEntry(XEntryMixin, XWidget, kv.TextInput):
