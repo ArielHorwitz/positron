@@ -49,15 +49,16 @@ class Session:
             line: int,
             col: int,
             max_completions: int,
+            fuzzy: bool = False,
         ) -> list[str]:
         """List of strings to complete code under the cursor."""
         script = jedi.Script(code=code, path=path, project=self._project)
         try:
-            completions = script.complete(line, col)
+            completions = script.complete(line, col, fuzzy=fuzzy)
         except Exception as e:
-            print(f"get_completions {e}")
+            print(f"get_completions exception: {e}")
             return []
-        return [c.complete for c in islice(completions, max_completions)]
+        return islice(completions, max_completions)
 
     def get_info(self, path: Path, code: str, line: int, col: int) -> str:
         """Multiline string of code analysis under the cursor."""

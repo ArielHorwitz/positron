@@ -1,6 +1,7 @@
 """Code editor widget."""
 
 from typing import Optional
+import re
 import os.path
 import arrow
 from pathlib import Path
@@ -8,9 +9,11 @@ from pygments.util import ClassNotFound as LexerClassNotFound
 from pygments.styles import get_style_by_name, STYLE_MAP
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.markup import MarkdownLexer
+from jedi.api.classes import Completion
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 from ...util.file import file_load, file_dump, try_relative, USER_DIR
+from ...util.snippets import find_snippets, Snippet
 
 
 STYLE_NAME = settings.get("editor.style")
@@ -255,11 +258,21 @@ class CodeEditor(kx.Anchor):
     def _do_complete(self):
         code = self.code_entry
         if not self.completion_modal.parent:
-            return
+            self._find_code_completions()
         comps = self._cached_code_completions
         if not comps:
             return
-        code.insert_text(comps[0])
+        comp = comps[0]
+        if isinstance(comp, Snippet):
+            for i in range(len(self._get_last_word())):
+                code.do_backspace()
+            self.insert_snippet(comp)
+        elif isinstance(comp, Completion):
+            for i in range(comp.get_completion_prefix_length()):
+                code.do_backspace()
+            code.insert_text(comp.name)
+        else:
+            raise ValueError(f"Unknown completion type: {comp!r}")
 
     def insert_snippet(self, snippet):
         code = self.code_entry
@@ -277,37 +290,79 @@ class CodeEditor(kx.Anchor):
             start, end = final_cidx - select, final_cidx
             kx.schedule_once(lambda *a: code.select_text(start, end), 0)
 
+    def _get_last_word(self, text=None):
+        if text is None:
+            text = self.code_entry.text[:self.code_entry.cursor_index()]
+        if not text:
+            return ""
+        full_len = len(text)
+        idx = min(10, full_len)
+        whitespaces = list(re.finditer(r'[\s]+', text[full_len - idx:]))
+        while True:
+            partial_text = text[full_len - idx:]
+            whitespaces = list(re.finditer(r'[\s]+', partial_text))
+            if whitespaces:
+                last_ws = whitespaces[-1].end()
+                return partial_text[last_ws:]
+            idx *= 2
+            if idx > full_len:
+                return text
+
     # Events
     def _on_cursor(self, *a):
         self._refresh_status_diff()
         self.completion_modal.dismiss()
 
     def _on_cursor_pause(self, *args):
+        self._find_code_completions()
+        self.completion_modal.open()
+
+    def _find_code_completions(self, *args):
+        self._cached_code_completions = []
         code = self.code_entry
         if code.selection_text:
             return
+        code_text = code.text
         line, col = self.cursor
         cidx = code.cursor_index()
-        last_char = code.text[cidx-1:cidx]
+        last_word = self._get_last_word(code_text[:cidx])
+        # Code completion
+        last_char = code_text[cidx-1:cidx]
         if not last_char:
             return
         if last_char in COMPLETION_DISABLE_AFTER:
             return
-        next_char = code.text[cidx:cidx+1]
+        next_char = code_text[cidx:cidx+1]
         if next_char not in COMPLETION_ENABLE_BEFORE:
             return
         comps = self.session.get_completions(
             self.file,
-            code.text,
+            code_text,
             line,
             col,
             MAX_COMPLETIONS,
+            fuzzy=True,
         )
-        self._cached_code_completions = [s for s in comps if s]
-        self.completion_modal.open()
+        comps = [
+            c for c in comps
+            if c.name != last_word[-len(c.name):]
+        ]
+        # Snippets
+        snips = []
+        if last_word:
+            snips = list(find_snippets(last_word))
+        self._cached_code_completions = snips + comps
 
     def _on_cached_code_completions(self, w, comps):
-        self.completion_label.text = "\n".join(reversed(comps))
+        text_lines = []
+        for c in reversed(comps):
+            if isinstance(c, Snippet):
+                text_lines.append(f"¬ {c.name}")
+            elif isinstance(c, Completion):
+                text_lines.append(c.name)
+            else:
+                raise ValueError(f"Unknown completion type: {c!r}")
+        self.completion_label.text = "\n".join(text_lines)
 
     def _scroll_down_completions(self, *args):
         if self._cached_code_completions:
@@ -320,8 +375,7 @@ class CodeEditor(kx.Anchor):
             self._cached_code_completions.insert(0, p)
 
     def _on_cursor_pos(self, w, cpos):
-        x, y = self.to_window(*cpos)
-        self.completion_label.pos = x, y - self.code_entry.line_height
+        self.completion_label.pos = self.to_window(*cpos)
 
     def _on_scroll(self, *a):
         start, finish = self.code_entry.visible_line_range()
