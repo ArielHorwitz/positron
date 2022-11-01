@@ -88,7 +88,7 @@ class CodeEditor(kx.Anchor):
         # Status bar
         self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
         self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
-        status_bar = kx.Box()
+        status_bar = kx.Anchor()
         status_bar.set_size(hx=0.95)
         status_bar.add(self.status_left, self.status_right)
         status_bar_frame = kx.Anchor()
