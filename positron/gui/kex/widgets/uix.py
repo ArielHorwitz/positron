@@ -713,7 +713,7 @@ class XModal(XAnchor):
         super().__init__(**kwargs)
         self.container = container
         self.im = XInputManager(name=name, active=False)
-        self.im.register("Dismiss", self.dismiss, "escape")
+        self.im.register("Dismiss", self.dismiss, "escape", consume_keys=False)
         self.bind(parent=self._on_parent)
 
     def toggle(self, *args, set_as: Optional[bool] = None):
