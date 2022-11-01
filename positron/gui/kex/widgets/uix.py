@@ -36,9 +36,14 @@ class XLabel(XWidget, kv.Label):
             self.bind(size=self._on_size)
 
     def _fix_height(self, *a):
-        self.text_size = self.size[0], None
+        x = self.size[0]
+        hx = self.size_hint[0]
+        self.text_size = x, None
         self.texture_update()
-        self.set_size(hx=1, y=self.texture_size[1])
+        if hx is None:
+            self.set_size(x=x, y=self.texture_size[1])
+        else:
+            self.set_size(hx=hx, y=self.texture_size[1])
 
     def _on_size(self, *a):
         self.text_size = self.size
