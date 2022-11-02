@@ -3,6 +3,7 @@
 from pathlib import Path
 from .. import kex as kx
 from ...util import settings
+from ...util.file import FileCursor
 from .panel import Panel
 
 
@@ -21,15 +22,24 @@ class Container(kx.Anchor):
         self.im = kx.InputManager(name="Panel container")
         self.session = session
         # Collect files to open
-        open_files = self.session.get_session_files()
-        if not open_files:
-            open_files = DEFAULT_FILES
-        files = [self.session.project_path / Path(file) for file in open_files]
+        fcs = self.session.get_file_cursors()
+        if not fcs:
+            fcs = []
+            for file_str in DEFAULT_FILES:
+                file = Path(file_str)
+                file = file if file.is_file() else ppath / file
+                fcs.append(FileCursor(file))
         # Create widgets
         self.editors = []
         for i in range(LAYOUT_COLS * LAYOUT_ROWS):
-            file = files.pop(0) if files else None
-            self.editors.append(Panel(i, self, self.session, file))
+            file, cursor = None, None
+            if fcs:
+                fc = fcs.pop(0)
+                file, cursor = fc.file, fc.cursor
+            panel = Panel(i, self, self.session, file)
+            if cursor:
+                panel.code_editor.set_cursor(*cursor)
+            self.editors.append(panel)
         # Assemble
         main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_COLS)
         main_frame.add(*self.editors)
@@ -75,5 +85,8 @@ class Container(kx.Anchor):
             editor.reload()
 
     def clean_up(self):
-        files = [editor.file for editor in self.editors]
-        self.session.save_session_files(files)
+        fcs = [
+            FileCursor(editor.code_editor.file, editor.code_editor.cursor)
+            for editor in self.editors
+        ]
+        self.session.save_file_cursors(fcs)

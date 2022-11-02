@@ -227,6 +227,12 @@ class CodeEditor(kx.Anchor):
         line += 1
         return line, column
 
+    def set_cursor(self, line: int, column: int):
+        kx.schedule_once(lambda *a: self._set_cursor(line, column))
+
+    def _set_cursor(self, line: int, column: int):
+        self.code_entry.cursor = column, line - 1
+
     def cursor_full(self, sep: str = "::"):
         line, column = self.cursor
         path = try_relative(self._current_file, self.session.project_path)

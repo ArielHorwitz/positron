@@ -12,7 +12,7 @@ from .formatting import (
     format_object_debug,
     format_syntax_error,
 )
-from ..util.file import file_load, file_dump, USER_DIR
+from ..util.file import file_load, file_dump, USER_DIR, FileCursor
 
 
 SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
@@ -149,29 +149,47 @@ class Session:
         first_error = syntax_errors[0]
         return f"{count} syntax errors [{first_error.line},{first_error.column}]"
 
-    def get_session_files(self) -> list[Path]:
-        """List of files opened for this session in cache."""
+    def get_file_cursors(self) -> list[FileCursor]:
+        """Files and cursor positions for this session in cache."""
         if self.__file_mode:
-            return [self.__file_mode]
-        files_cache = json.loads(file_load(SESSION_FILES_CACHE))
-        files = [Path(f) for f in files_cache.get(str(self.project_path), [])]
-        filestr = "\n".join(f"  {f}" for f in files)
+            return [FileCursor(self.__file_mode)]
+        # Retrieve entries from cache and convert
+        session_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        ppath = str(self.project_path)
+        if ppath not in session_cache:
+            return []
+        file_cursors = [_convert_str_filecursor(fc) for fc in session_cache[ppath]]
+        filestr = "\n".join(f"  {f}" for f in file_cursors)
         print(f"Session {self.project_path} cached files:\n{filestr}")
-        return files
+        return file_cursors
 
-    def save_session_files(self, files: list[Path]):
-        """Cache list of open files for this session."""
+    def save_file_cursors(self, file_cursors: list[FileCursor]):
+        """Cache files and cursor positions for this session."""
         if self.__file_mode:
             print(f"Skipping caching session files for single-file mode.")
-        filestr = "\n".join(f"  {f}" for f in files)
+            return
+        filestr = "\n".join(f"  {f}" for f in file_cursors)
         print(f"Session {self.project_path} caching files:\n{filestr}")
-        if SESSION_FILES_CACHE.exists():
-            files_cache = json.loads(file_load(SESSION_FILES_CACHE))
-        else:
-            files_cache = {}
+        file_cursors = [_convert_filecursor_str(fc) for fc in file_cursors]
+        # Find and add existing entries from cache
+        session_cache = json.loads(file_load(SESSION_FILES_CACHE))
         path = str(self.project_path)
-        existing_files = files_cache.get(path, [])
-        if len(existing_files) > len(files):
-            files += existing_files[len(files):]
-        files_cache[path] = [str(f) for f in files]
-        file_dump(SESSION_FILES_CACHE, json.dumps(files_cache, indent=4))
+        existing_file_cursors = session_cache.get(path, [])
+        if len(existing_file_cursors) > len(file_cursors):
+            file_cursors += existing_file_cursors[len(file_cursors):]
+        # Save to cache
+        session_cache[path] = file_cursors
+        file_dump(SESSION_FILES_CACHE, json.dumps(session_cache, indent=4))
+
+
+def _convert_str_filecursor(s: str) -> FileCursor:
+    if "::" not in s:
+        return FileCursor(Path(s))
+    sep_index = s.rfind("::")
+    file, cursor = s[:sep_index], s[sep_index + 2:]
+    cursor = tuple(int(c) for c in cursor.split(","))
+    return FileCursor(Path(file), cursor)
+
+
+def _convert_filecursor_str(fc: FileCursor) -> str:
+    return f"{fc.file}::{fc.cursor[0]},{fc.cursor[1]}"

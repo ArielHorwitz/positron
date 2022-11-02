@@ -1,6 +1,7 @@
 """Writing, loading, and opening files."""
 
 from typing import Optional, Iterable
+from dataclasses import dataclass
 import os
 import subprocess
 import platform
@@ -8,6 +9,14 @@ import fuzzysearch
 from pathlib import Path
 from itertools import islice
 import tomli
+
+
+@dataclass(frozen=True)
+class FileCursor:
+    file: Path
+    """File path."""
+    cursor: tuple[int, int] = 1, 0
+    """Cursor position as (line, column) tuple."""
 
 
 def toml_load(file: Path) -> dict:
