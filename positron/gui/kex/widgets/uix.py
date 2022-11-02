@@ -463,6 +463,50 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             self.select_text(start, end)
         return start, end
 
+    def indent(self, *args):
+        start, end = self.selected_line_range()
+        lines = self._lines
+        for lidx in range(start, end + 1):
+            self.cursor = 0, lidx
+            self.insert_text("    ")
+        self.select_full_lines(start, end)
+
+    def dedent(self, *args):
+        start, end = self.selected_line_range()
+        lines = self._lines
+        for lidx in range(start, end + 1):
+            old_indent = self._re_whitespace.match(lines[lidx])
+            if not old_indent:
+                continue
+            old_indent_size = old_indent.end() - old_indent.start()
+            remove_indent = min(4, old_indent_size)
+            self.select_text(
+                self.cursor_index((0, lidx)),
+                self.cursor_index((remove_indent, lidx)),
+            )
+            self.delete_selection()
+        self.select_full_lines(start, end)
+
+    def select_full_lines(self, start_row, end_row):
+        start = self.cursor_index((0, start_row))
+        end = self.cursor_index((len(self._lines[end_row]), end_row))
+        self.select_text(start, end)
+
+    def keyboard_on_key_down(self, window, keycode, text, modifiers):
+        """Override base method to multiline indent on [shift] tab."""
+        key, _ = keycode
+        # Handle tab
+        if key == 9:
+            mods = set(modifiers) - {"numlock"}
+            if mods == {"shift"}:
+                self.dedent()
+                return True
+            else:
+                if self.selection_text:
+                    self.indent()
+                    return True
+        return super().keyboard_on_key_down(window, keycode, text, modifiers)
+
 
 class XSlider(XWidget, kv.Slider):
     """Slider."""
