@@ -30,7 +30,6 @@ DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
-COMPLETION_ENABLE_BEFORE = COMPLETION_DISABLE_AFTER | set(".`'\"")
 
 
 def timestamp():
@@ -331,9 +330,6 @@ class CodeEditor(kx.Anchor):
         if not last_char:
             return
         if last_char in COMPLETION_DISABLE_AFTER:
-            return
-        next_char = code_text[cidx:cidx+1]
-        if next_char not in COMPLETION_ENABLE_BEFORE:
             return
         comps = self.session.get_completions(
             self.file,
