@@ -375,7 +375,8 @@ class CodeEditor(kx.Anchor):
             self._cached_code_completions.insert(0, p)
 
     def _on_cursor_pos(self, w, cpos):
-        self.completion_label.pos = self.to_window(*cpos)
+        fixed_cpos = self.to_widget(*cpos, relative=True)
+        self.completion_label.pos = self.to_widget(*fixed_cpos)
 
     def _on_scroll(self, *a):
         start, finish = self.code_entry.visible_line_range()
