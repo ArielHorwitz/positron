@@ -36,6 +36,8 @@ BACKGROUND_COLOR = kx.XColor(*BACKGROUND_RGB, v=settings.get("editor.bg_brightne
 DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
+STATUS_BG = kx.get_color("black")
+STATUS_BAD_BG = kx.get_color("red", v=0.4)
 
 
 def timestamp():
@@ -95,13 +97,20 @@ class CodeEditor(kx.Anchor):
         code_frame = kx.Box()
         code_frame.add(line_gutter_frame, self.code_entry)
         # Status bar
-        self.status_left = kx.Label(font_name=FONT, font_size=14, halign="left")
-        self.status_right = kx.Label(font_name=FONT, font_size=14, halign="right")
-        status_bar = kx.Anchor()
-        status_bar.set_size(hx=0.95)
-        status_bar.add(self.status_left, self.status_right)
+        status_kw = {"font_name": FONT, "font_size": FONT_SIZE}
+        self.status_syntax = kx.Label(halign="center", **status_kw)
+        self.status_syntax.set_size(hx=0.95, y=FONT_SIZE)
+        self.status_cursor_context = kx.Label(halign="left", **status_kw)
+        self.status_cursor_context.set_size(hx=0.95, y=FONT_SIZE)
+        self.status_file_cursor = kx.Label(halign="right", **status_kw)
+        self.status_file_cursor.set_size(hx=0.95, y=FONT_SIZE)
+        self.status_cursor = kx.Anchor()
+        self.status_cursor.add(self.status_cursor_context, self.status_file_cursor)
+        self.status_cursor.set_size(y=FONT_SIZE)
+        status_bar = kx.DBox()
+        status_bar.add(self.status_syntax, self.status_cursor)
         status_bar_frame = kx.Anchor()
-        status_bar_frame.set_size(y=25)
+        status_bar_frame.set_size(y=sum(c.height for c in status_bar.children))
         status_bar_frame.add(status_bar)
         # Assemble
         main_frame = kx.Box(orientation="vertical")
@@ -324,6 +333,7 @@ class CodeEditor(kx.Anchor):
     def _on_cursor(self, *a):
         self._refresh_status_diff()
         self.completion_modal.dismiss()
+        kx.schedule_once(self._refresh_context)
 
     def _on_cursor_pause(self, *args):
         self._find_code_completions()
@@ -407,7 +417,7 @@ class CodeEditor(kx.Anchor):
 
     def _on_text(self, *a):
         error_summary = self.session.get_error_summary(self.code_entry.text)
-        self.status_left.text = error_summary
+        self.status_syntax.text = error_summary
         self._on_cursor()
         kx.schedule_once(self._refresh_line_gutters)
 
@@ -416,5 +426,20 @@ class CodeEditor(kx.Anchor):
             self.__cached_selected_text = text
 
     def _refresh_status_diff(self, *a):
-        diff = "*" if self.__disk_diff else ""
-        self.status_right.text = self.cursor_full(f"{diff} :: ")
+        diff = self.__disk_diff
+        sep = "* :: " if diff else " :: "
+        self.status_file_cursor.text = self.cursor_full(sep)
+        bg = STATUS_BAD_BG if diff else STATUS_BG
+        self.status_cursor.make_bg(bg)
+
+    def _refresh_context(self, *a):
+        code = self.code_entry
+        line, col = self.cursor
+        context = self.session.get_context(self.file, code.text, line, col)
+        if context is None:
+            context = "__ unknown context __"
+        elif context.full_name is None:
+            context = f"__unknown_context__.{context.name}"
+        else:
+            context = context.full_name[len(context.module_name) + 1:] or "__module__"
+        self.status_cursor_context.text = context

@@ -60,6 +60,10 @@ class Session:
             return []
         return islice(completions, max_completions)
 
+    def get_context(self, path: Path, code: str, line: int, col: int):
+        script = jedi.Script(code=code, path=path, project=self._project)
+        return script.get_context(line, col)
+
     def get_info(self, path: Path, code: str, line: int, col: int) -> str:
         """Multiline string of code analysis under the cursor."""
         print(f"Getting info for: {path} :: {line},{col}")
