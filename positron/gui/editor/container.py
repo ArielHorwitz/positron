@@ -27,7 +27,8 @@ class Container(kx.Anchor):
         if not fcs:
             for file in DEFAULT_FILES:
                 # Try resolving files as relative to project
-                file = file if file.is_file() else ppath / file
+                rel_file = self.session.project_path / file
+                file = rel_file if rel_file.exists() else file
                 fcs.append(FileCursor(file))
         while len(fcs) < editor_count:
             fcs.append(FileCursor(settings.SETTINGS_FILE))
