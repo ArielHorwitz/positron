@@ -32,6 +32,8 @@ disk_diff_interval = 0.1
 cursor_pause_timeout = 0.25
 # Number of lines to offset when scrolling to cursor
 cursor_scroll_offset = 10
+# Never check for errors more than once per this many seconds
+error_check_cooldown = 0.25
 # Automatically load the file on startup
 auto_load = true
 

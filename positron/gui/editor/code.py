@@ -34,6 +34,7 @@ BACKGROUND_RGB = settings.get("editor.bg_color")
 assert len(BACKGROUND_RGB) == 3
 BACKGROUND_COLOR = kx.XColor(*BACKGROUND_RGB, v=settings.get("editor.bg_brightness"))
 DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
+ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
 STATUS_BG = kx.get_color("black")
@@ -113,6 +114,7 @@ class CodeEditor(kx.Anchor):
         status_bar_frame = kx.Anchor()
         status_bar_frame.set_size(y=sum(c.height for c in status_bar.children))
         status_bar_frame.add(status_bar)
+        self.__update_errors_trigger = kx.create_trigger(self._update_errors, ERROR_CHECK_COOLDOWN)
         # Assemble
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(status_bar_frame, code_frame)
@@ -424,23 +426,10 @@ class CodeEditor(kx.Anchor):
         self.im.active = focus
 
     def _on_text(self, *a):
-        errors = []
-        if self._current_file.suffix == ".py":
-            errors = self.session.get_errors(self.code_entry.text)
-        if errors:
-            count = len(errors)
-            first_error = errors[0]
-            line, column = first_error.line, first_error.column
-            self.__next_error_position = line, column
-            summary = f"Error @ {line},{column} :: {first_error.message}"
-            if count > 1:
-                summary = f"{summary}  ( + {count - 1} more errors)"
-            self.status_errors.make_bg(STATUS_BAD_BG)
-        else:
-            summary = "No errors :)"
-            self.status_errors.make_bg(STATUS_BG)
-
-        self.status_errors.text = summary
+        ev = self.__update_errors_trigger
+        if ev.is_triggered:
+            ev.cancel()
+        ev()
         self._on_cursor()
         kx.schedule_once(self._refresh_line_gutters)
 
@@ -466,3 +455,21 @@ class CodeEditor(kx.Anchor):
         else:
             context = context.full_name[len(context.module_name) + 1:] or "__module__"
         self.status_cursor_context.text = context
+
+    def _update_errors(self, *args):
+        errors = []
+        if self._current_file.suffix == ".py":
+            errors = self.session.get_errors(self.code_entry.text)
+        if not errors:
+            self.status_errors.text = "No errors :)"
+            self.status_errors.make_bg(STATUS_BG)
+            return
+        count = len(errors)
+        first_error = errors[0]
+        line, column = first_error.line, first_error.column
+        self.__next_error_position = line, column
+        summary = f"Error @ {line},{column} :: {first_error.message}"
+        if count > 1:
+            summary = f"{summary}  ( + {count - 1} more errors)"
+        self.status_errors.text = summary
+        self.status_errors.make_bg(STATUS_BAD_BG)
