@@ -98,8 +98,8 @@ class CodeEditor(kx.Anchor):
         code_frame.add(line_gutter_frame, self.code_entry)
         # Status bar
         status_kw = {"font_name": FONT, "font_size": FONT_SIZE}
-        self.status_syntax = kx.Label(halign="center", **status_kw)
-        self.status_syntax.set_size(hx=0.95, y=FONT_SIZE)
+        self.status_errors = kx.Label(halign="center", **status_kw)
+        self.status_errors.set_size(hx=0.95, y=FONT_SIZE)
         self.status_cursor_context = kx.Label(halign="left", **status_kw)
         self.status_cursor_context.set_size(hx=0.95, y=FONT_SIZE)
         self.status_file_cursor = kx.Label(halign="right", **status_kw)
@@ -108,7 +108,7 @@ class CodeEditor(kx.Anchor):
         self.status_cursor.add(self.status_cursor_context, self.status_file_cursor)
         self.status_cursor.set_size(y=FONT_SIZE)
         status_bar = kx.DBox()
-        status_bar.add(self.status_syntax, self.status_cursor)
+        status_bar.add(self.status_errors, self.status_cursor)
         status_bar_frame = kx.Anchor()
         status_bar_frame.set_size(y=sum(c.height for c in status_bar.children))
         status_bar_frame.add(status_bar)
@@ -416,8 +416,21 @@ class CodeEditor(kx.Anchor):
         self.im.active = focus
 
     def _on_text(self, *a):
-        error_summary = self.session.get_error_summary(self.code_entry.text)
-        self.status_syntax.text = error_summary
+        errors = []
+        if self._current_file.suffix == ".py":
+            errors = self.session.get_errors(self.code_entry.text)
+        if errors:
+            count = len(errors)
+            first_error = errors[0]
+            summary = f"{first_error.message} @ {first_error.line},{first_error.column}"
+            if count > 1:
+                summary = f"{summary}  ( + {count - 1} more errors)"
+            self.status_errors.make_bg(STATUS_BAD_BG)
+        else:
+            summary = "No syntax errors"
+            self.status_errors.make_bg(STATUS_BG)
+
+        self.status_errors.text = summary
         self._on_cursor()
         kx.schedule_once(self._refresh_line_gutters)
 

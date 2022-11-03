@@ -2,10 +2,12 @@
 
 from typing import Optional
 from itertools import islice
+from dataclasses import dataclass
 from pathlib import Path
 import json
 import jedi
 from jedi.api.classes import Name
+from jedi.api.errors import SyntaxError
 from .formatting import (
     format_object,
     format_object_short,
@@ -21,9 +23,17 @@ if not SESSION_FILES_CACHE.exists():
     file_dump(SESSION_FILES_CACHE, "{}")
 
 
+@dataclass
+class CodeError:
+    message: str
+    line: int
+    column: int
+
+
 def _title_break(text: str) -> str:
     text = f"  {text}  "
     return f"\n{text:≡^50}\n"
+
 
 class Session:
     def __init__(self, project_path: Path, env_path: Optional[Path] = None):
@@ -144,14 +154,16 @@ class Session:
         results = self._project.search(string, all_scopes=exhaustive)
         return results
 
-    def get_error_summary(self, code: str) -> str:
+    def get_errors(self, code: str) -> list[CodeError]:
         script = jedi.Script(code=code, project=self._project)
-        syntax_errors = script.get_syntax_errors()
-        if not syntax_errors:
-            return "No syntax errors."
-        count = len(syntax_errors)
-        first_error = syntax_errors[0]
-        return f"{count} syntax errors [{first_error.line},{first_error.column}]"
+        errors = []
+        append = errors.append
+        for e in script.get_syntax_errors():
+            msg = e.get_message()
+            if msg == "SyntaxError: invalid syntax":
+                msg = "Invalid syntax"
+            append(CodeError(msg, e.line, e.column))
+        return errors
 
     def get_file_cursors(self) -> list[FileCursor]:
         """Files and cursor positions for this session in cache."""
