@@ -146,6 +146,7 @@ class XEntryMixin:
 
     select_on_focus = kv.BooleanProperty(False)
     focus_brighter = kv.BooleanProperty(True)
+    _focus_brightness_diff = kv.NumericProperty(0.5)
     _background_color_focused = kv.ObjectProperty(None)
     _background_color_unfocused = kv.ObjectProperty(None)
     deselect_on_escape = kv.BooleanProperty(False)
@@ -230,8 +231,11 @@ class XEntryMixin:
         if self._background_color_focused is None:
             self._background_color_focused = self.background_color
         if self._background_color_unfocused is None:
-            unfbg = XColor(*self._background_color_focused, v=0.5).rgba
-            self._background_color_unfocused = unfbg
+            unfbg = XColor(
+                *self._background_color_focused,
+                v=self._focus_brightness_diff,
+            )
+            self._background_color_unfocused = unfbg.rgba
         if focus:
             self.background_color = self._background_color_focused
         else:

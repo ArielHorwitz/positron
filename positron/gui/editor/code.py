@@ -30,6 +30,10 @@ DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
 GUTTER_WIDTH = settings.get("editor.gutter_width")
+BACKGROUND_RGB = settings.get("editor.bg_color")
+assert len(BACKGROUND_RGB) == 3
+BACKGROUND_COLOR = kx.XColor(*BACKGROUND_RGB, v=settings.get("editor.bg_brightness"))
+DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
 
@@ -60,10 +64,11 @@ class CodeEditor(kx.Anchor):
             auto_indent=True,
             do_wrap=False,
             style_name=STYLE_NAME,
-            background_color=kx.XColor(0.025, 0.045, 0.05).rgba,
+            background_color=BACKGROUND_COLOR.rgba,
             scroll_distance=750,
             cursor_pause_timeout=CURSOR_PAUSE_TIMEOUT,
             cursor_scroll_offset=CURSOR_SCROLL_OFFSET,
+            _focus_brightness_diff=DEFOCUS_BRIGHTNESS,
         )
         self.code_entry.focus = True
         self.code_entry.bind(

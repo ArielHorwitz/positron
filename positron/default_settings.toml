@@ -18,7 +18,10 @@ rows = 1
 font = "firacode-mono.ttf"
 font_size = 16
 style = "one-dark"
-auto_load = true
+bg_color = [0.2, 0.8, 1.0]
+bg_brightness = 0.125
+# Background relative brightness when defocused
+defocus_brightness = 0.5
 # Number of pixels to vertically offset line gutter
 gutter_padding = 4
 # Width of line gutter in pixels
@@ -29,6 +32,8 @@ disk_diff_interval = 0.1
 cursor_pause_timeout = 0.25
 # Number of lines to offset when scrolling to cursor
 cursor_scroll_offset = 10
+# Automatically load the file on startup
+auto_load = true
 
 [project]
 # Default project to open
