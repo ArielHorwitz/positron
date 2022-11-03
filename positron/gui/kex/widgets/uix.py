@@ -475,6 +475,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         start, end = start + cursor - wrap_offset, end + cursor - wrap_offset
         if move_cursor:
             self.cursor = self.get_cursor_from_index(end)
+            self.scroll_to_cursor()
             self.select_text(start, end)
         return start, end
 
@@ -496,6 +497,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         start, end = match.span()
         if move_cursor:
             self.cursor = self.get_cursor_from_index(end)
+            self.scroll_to_cursor()
             self.select_text(start, end)
         return start, end
 
