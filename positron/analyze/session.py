@@ -4,6 +4,7 @@ from typing import Optional
 from itertools import islice
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import json
 import jedi
 from jedi.api.classes import Name
@@ -21,6 +22,8 @@ SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
 SESSION_FILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
 if not SESSION_FILES_CACHE.exists():
     file_dump(SESSION_FILES_CACHE, "{}")
+RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
+RE_NEWLINE = re.compile(r"\n")
 
 
 @dataclass
@@ -158,11 +161,20 @@ class Session:
         script = jedi.Script(code=code, project=self._project)
         errors = []
         append = errors.append
+        # Syntax errors from jedi
         for e in script.get_syntax_errors():
             msg = e.get_message()
-            if msg == "SyntaxError: invalid syntax":
-                msg = "Invalid syntax"
+            _, __, msg = msg.partition("Error: ")
             append(CodeError(msg, e.line, e.column))
+        # Trailing whitespace
+        text = f"\n{code}\n"
+        for match in RE_TRAILING_WHITESPACE.finditer(text):
+            start = match.start()
+            match_text = match.group()
+            newlines = list(RE_NEWLINE.finditer(text[:start]))
+            line = len(newlines)
+            column = start - newlines[-1].start() - 1
+            append(CodeError("trailing whitespace", line, column))
         return errors
 
     def get_file_cursors(self) -> list[FileCursor]:

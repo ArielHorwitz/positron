@@ -422,12 +422,12 @@ class CodeEditor(kx.Anchor):
         if errors:
             count = len(errors)
             first_error = errors[0]
-            summary = f"{first_error.message} @ {first_error.line},{first_error.column}"
+            summary = f"Error @ {first_error.line},{first_error.column} :: {first_error.message}"
             if count > 1:
                 summary = f"{summary}  ( + {count - 1} more errors)"
             self.status_errors.make_bg(STATUS_BAD_BG)
         else:
-            summary = "No syntax errors"
+            summary = "No errors :)"
             self.status_errors.make_bg(STATUS_BG)
 
         self.status_errors.text = summary
