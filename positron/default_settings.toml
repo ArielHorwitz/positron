@@ -21,6 +21,8 @@ style = "one-dark"
 auto_load = true
 # Number of pixels to vertically offset line gutter
 gutter_padding = 4
+# Width of line gutter in pixels
+gutter_width = 50
 # Number of seconds between checking difference from disk
 disk_diff_interval = 0.1
 # Number of seconds to show popup on cursor

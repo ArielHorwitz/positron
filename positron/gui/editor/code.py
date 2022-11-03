@@ -29,6 +29,7 @@ GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
+GUTTER_WIDTH = settings.get("editor.gutter_width")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
 
@@ -84,7 +85,7 @@ class CodeEditor(kx.Anchor):
         )
         line_gutter_frame = kx.Box(orientation="vertical")
         line_gutter_frame.make_bg(kx.XColor(0.2, 1, 0.6, v=0.2))
-        line_gutter_frame.set_size(x=50)
+        line_gutter_frame.set_size(x=GUTTER_WIDTH)
         line_gutter_frame.add(line_gutter_top_padding, self.line_gutter)
         code_frame = kx.Box()
         code_frame.add(line_gutter_frame, self.code_entry)
