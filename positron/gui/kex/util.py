@@ -402,3 +402,4 @@ def _pong(ping_):
 
 schedule_once = kv.Clock.schedule_once
 schedule_interval = kv.Clock.schedule_interval
+create_trigger = kv.Clock.create_trigger

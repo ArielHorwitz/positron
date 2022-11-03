@@ -53,6 +53,7 @@ from .util import (  # noqa: E402,F401
     consume_args,
     schedule_once,
     schedule_interval,
+    create_trigger,
     queue_around_frame,
 )
 from .widgets import XBaseWidget as Widget  # noqa: E402,F401
