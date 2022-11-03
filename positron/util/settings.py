@@ -12,6 +12,10 @@ from . import file
 from pathlib import Path
 
 
+SETTINGS_FILE = file.USER_DIR / "settings.toml"
+DEFAULT_SETTINGS_FILE = file.PROJ_DIR / "positron" / "default_settings.toml"
+
+
 def _yield_flat_dict(d: dict, path=None) -> Iterator[tuple[str, Any]]:
     """Yield a '.' separated path and value in a nested dict."""
     path = [] if path is None else path
@@ -30,16 +34,13 @@ def _flatten_dict(d: dict) -> dict[str, Any]:
 
 
 def _load_settings() -> dict[str, Any]:
-    # Resolve paths
-    defaults_file = file.PROJ_DIR / "positron" / "default_settings.toml"
-    settings_file = file.USER_DIR / "settings.toml"
     # Create missing
-    assert defaults_file.is_file()
-    if not settings_file.is_file():
-        shutil.copy(defaults_file, settings_file)
+    assert DEFAULT_SETTINGS_FILE.is_file()
+    if not SETTINGS_FILE.is_file():
+        shutil.copy(DEFAULT_SETTINGS_FILE, SETTINGS_FILE)
     # Read TOMLs
-    defaults = _flatten_dict(file.toml_load(defaults_file))
-    settings = _flatten_dict(file.toml_load(settings_file))
+    defaults = _flatten_dict(file.toml_load(DEFAULT_SETTINGS_FILE))
+    settings = _flatten_dict(file.toml_load(SETTINGS_FILE))
     non_redundant = {}
     for k, v in settings.items():
         if k not in defaults:

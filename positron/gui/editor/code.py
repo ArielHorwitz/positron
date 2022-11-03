@@ -12,7 +12,7 @@ from pygments.lexers.markup import MarkdownLexer
 from jedi.api.classes import Completion
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
-from ...util.file import file_load, file_dump, try_relative, USER_DIR
+from ...util.file import file_load, file_dump, try_relative
 from ...util.snippets import find_snippets, Snippet
 
 
@@ -28,6 +28,7 @@ AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
+CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
 
@@ -39,12 +40,11 @@ def timestamp():
 class CodeEditor(kx.Anchor):
     _cached_code_completions = kx.ListProperty([])
 
-    def __init__(self, session, uid: int, file: Optional[Path] = None):
+    def __init__(self, session, uid: int, file: Path):
         super().__init__()
         self.session = session
         self.__uid = uid
-        if file is None:
-            file = USER_DIR / "settings.toml"
+        assert isinstance(file, Path)
         self._current_file = file.expanduser().resolve()
         self.__disk_modified_time = None
         self.__disk_diff = False
@@ -62,11 +62,12 @@ class CodeEditor(kx.Anchor):
             background_color=kx.XColor(0.025, 0.045, 0.05).rgba,
             scroll_distance=750,
             cursor_pause_timeout=CURSOR_PAUSE_TIMEOUT,
+            cursor_scroll_offset=CURSOR_SCROLL_OFFSET,
         )
         self.code_entry.focus = True
         self.code_entry.bind(
             scroll_y=self._on_scroll,
-            size=self._on_scroll,
+            size=self._on_size,
             focus=self._on_focus,
             cursor=self._on_cursor,
             text=self._on_text,
@@ -174,7 +175,7 @@ class CodeEditor(kx.Anchor):
         cursor = self.code_entry.cursor
         self.code_entry.text = text
         if reset_cursor:
-            kx.schedule_once(self.code_entry.reset_cursor_selection)
+            self.code_entry.reset_cursor_selection()
         else:
             self.code_entry.cursor = cursor
 
@@ -218,7 +219,7 @@ class CodeEditor(kx.Anchor):
         self.code_entry.lexer = lexer
 
     def _open_settings(self):
-        self.load(file=USER_DIR / "settings.toml")
+        self.load(file=settings.SETTINGS_FILE)
 
     # Cursor management
     @property
@@ -228,10 +229,10 @@ class CodeEditor(kx.Anchor):
         return line, column
 
     def set_cursor(self, line: int, column: int):
-        kx.schedule_once(lambda *a: self._set_cursor(line, column))
-
-    def _set_cursor(self, line: int, column: int):
-        self.code_entry.cursor = column, line - 1
+        code = self.code_entry
+        code.cursor = column, line - 1
+        code.scroll_to_cursor()
+        code.cancel_cursor_pause()
 
     def cursor_full(self, sep: str = "::"):
         line, column = self.cursor
@@ -380,12 +381,20 @@ class CodeEditor(kx.Anchor):
         fixed_cpos = self.to_widget(*cpos, relative=True)
         self.completion_label.pos = self.to_widget(*fixed_cpos)
 
-    def _on_scroll(self, *a):
+    def _on_scroll(self, w, scroll):
+        self._refresh_line_gutters()
+
+    def _refresh_line_gutters(self, *a):
         start, finish = self.code_entry.visible_line_range()
         finish = min(finish, len(self.code_entry._lines))
         self.line_gutter.text = "\n".join(
             f"{i+1:>4}" for i in range(start, finish)
         )
+
+    def _on_size(self, w, size):
+        self._refresh_line_gutters()
+        self.code_entry.scroll_to_cursor()
+        self.code_entry.cancel_cursor_pause()
 
     def _on_focus(self, w, focus):
         self.im.active = focus
@@ -394,7 +403,7 @@ class CodeEditor(kx.Anchor):
         error_summary = self.session.get_error_summary(self.code_entry.text)
         self.status_left.text = error_summary
         self._on_cursor()
-        kx.schedule_once(self._on_scroll, 0)
+        kx.schedule_once(self._refresh_line_gutters)
 
     def _on_selection_text(self, w, text):
         if self.code_entry.focus:

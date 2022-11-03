@@ -150,6 +150,7 @@ class XEntryMixin:
     _background_color_unfocused = kv.ObjectProperty(None)
     deselect_on_escape = kv.BooleanProperty(False)
     cursor_pause_timeout = kv.NumericProperty(0.5)
+    cursor_scroll_offset = kv.NumericProperty(5)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -160,6 +161,44 @@ class XEntryMixin:
             cursor=self._on_cursor_for_pause,
             cursor_pause_timeout=self._reset_cursor_pause_trigger,
         )
+
+    def visible_line_range(self):
+        top_line = round(self.scroll_y / self.line_height)
+        bot_line = top_line + int(self.height / self.line_height)
+        return top_line, bot_line + 1
+
+    def selected_line_range(self):
+        if not self._selection:
+            return self.cursor_row, self.cursor_row
+        _, row_from = self.get_cursor_from_index(self._selection_from)
+        _, row_to = self.get_cursor_from_index(self._selection_to)
+        start, end = min(row_from, row_to), max(row_from, row_to)
+        return start, end
+
+    def scroll_to_cursor(self, *a):
+        top_line = self.cursor[1] - self.cursor_scroll_offset
+        # Don't overshoot last line
+        visible_count = int(self.height / self.line_height)
+        top_cap = len(self._lines) - visible_count + 1
+        # Don't overshoot cursor out of view
+        top_cap = min(self.cursor_row, top_cap)
+        bot_cap = max(0, self.cursor_row - visible_count + 2)
+        top_line = max(max(0, bot_cap), min(top_line, top_cap))
+        self.scroll_y = self.line_height * top_line
+        self.scroll_x = 0
+        self._trigger_update_graphics()
+
+    def _refresh_line_options(self, *args):
+        """Override base method to prevent scroll reset."""
+        prev_cur = self.cursor
+        super()._refresh_line_options(*args)
+        self.cursor = prev_cur
+
+    def on_size(self, w, size):
+        """Override base method to prevent scroll reset."""
+        self._trigger_refresh_text()
+        self._refresh_hint_text()
+        self.scroll_to_cursor()
 
     def _reset_cursor_pause_trigger(self, *args):
         self.__trigger_cursor_pause = kv.Clock.create_trigger(
@@ -226,6 +265,12 @@ class XEntryMixin:
         pass
 
 
+    def cancel_cursor_pause(self, *a):
+        ev = self.__trigger_cursor_pause
+        if ev.is_triggered:
+            ev.cancel()
+
+
 class XEntry(XEntryMixin, XWidget, kv.TextInput):
     """TextInput with sane defaults."""
 
@@ -273,19 +318,6 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
 
     def _on_window_focus(self, w, focus):
         self.cursor_blink = focus
-
-    def visible_line_range(self):
-        top_line = round(self.scroll_y / self.line_height)
-        bot_line = top_line + round(self.height / self.line_height)
-        return top_line, bot_line + 1
-
-    def selected_line_range(self):
-        if not self._selection:
-            return self.cursor_row, self.cursor_row
-        _, row_from = self.get_cursor_from_index(self._selection_from)
-        _, row_to = self.get_cursor_from_index(self._selection_to)
-        start, end = min(row_from, row_to), max(row_from, row_to)
-        return start, end
 
     def insert_text(self, substring, *args, **kwargs):
         if substring == "\t" and self.soft_tab:

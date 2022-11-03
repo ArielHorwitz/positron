@@ -3,13 +3,13 @@
 from pathlib import Path
 from .. import kex as kx
 from ...util import settings
-from ...util.file import FileCursor
+from ...util.file import FileCursor, USER_DIR
 from .panel import Panel
 
 
 LAYOUT_COLS = settings.get("ui.cols")
 LAYOUT_ROWS = settings.get("ui.rows")
-DEFAULT_FILES = settings.get("project.open")
+DEFAULT_FILES = [Path(f) for f in settings.get("project.open")]
 MAX_EDITOR_HOTKEYS = 4
 
 
@@ -21,24 +21,22 @@ class Container(kx.Anchor):
         super().__init__()
         self.im = kx.InputManager(name="Panel container")
         self.session = session
+        editor_count = LAYOUT_COLS * LAYOUT_ROWS
         # Collect files to open
         fcs = self.session.get_file_cursors()
         if not fcs:
-            fcs = []
-            for file_str in DEFAULT_FILES:
-                file = Path(file_str)
+            for file in DEFAULT_FILES:
+                # Try resolving files as relative to project
                 file = file if file.is_file() else ppath / file
                 fcs.append(FileCursor(file))
+        while len(fcs) < editor_count:
+            fcs.append(FileCursor(settings.SETTINGS_FILE))
+        fcs = fcs[:editor_count]
         # Create widgets
         self.editors = []
-        for i in range(LAYOUT_COLS * LAYOUT_ROWS):
-            file, cursor = None, None
-            if fcs:
-                fc = fcs.pop(0)
-                file, cursor = fc.file, fc.cursor
-            panel = Panel(i, self, self.session, file)
-            if cursor:
-                panel.code_editor.set_cursor(*cursor)
+        for i, fc in enumerate(fcs):
+            panel = Panel(i, self, self.session, fc.file)
+            panel.code_editor.set_cursor(*fc.cursor)
             self.editors.append(panel)
         # Assemble
         main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_COLS)

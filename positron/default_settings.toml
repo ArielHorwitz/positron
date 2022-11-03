@@ -25,7 +25,8 @@ gutter_padding = 4
 disk_diff_interval = 0.1
 # Number of seconds to show popup on cursor
 cursor_pause_timeout = 0.25
-
+# Number of lines to offset when scrolling to cursor
+cursor_scroll_offset = 10
 
 [project]
 # Default project to open
