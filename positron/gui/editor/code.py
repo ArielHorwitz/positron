@@ -57,6 +57,7 @@ class CodeEditor(kx.Anchor):
         self.__disk_diff = False
         self.__disk_cache = None
         self.__find_text = ""
+        self.__next_error_position = None
         self.__cached_selected_text = ""
         self.im = kx.InputManager(name=f"Code editor {uid}")
         # Code
@@ -149,6 +150,7 @@ class CodeEditor(kx.Anchor):
             ("Complete code", self._do_complete, "! enter"),
             ("Scroll up code comps", self._scroll_up_completions, "! up", True),
             ("Scroll down code comps", self._scroll_down_completions, "! down", True),
+            ("Next error", self.scroll_to_error, "^ e", True),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:
@@ -329,6 +331,12 @@ class CodeEditor(kx.Anchor):
             if idx > full_len:
                 return text
 
+    def scroll_to_error(self):
+        if self.__next_error_position is None:
+            return
+        line, column = self.__next_error_position
+        self.set_cursor(line, column)
+
     # Events
     def _on_cursor(self, *a):
         self._refresh_status_diff()
@@ -422,7 +430,9 @@ class CodeEditor(kx.Anchor):
         if errors:
             count = len(errors)
             first_error = errors[0]
-            summary = f"Error @ {first_error.line},{first_error.column} :: {first_error.message}"
+            line, column = first_error.line, first_error.column
+            self.__next_error_position = line, column
+            summary = f"Error @ {line},{column} :: {first_error.message}"
             if count > 1:
                 summary = f"{summary}  ( + {count - 1} more errors)"
             self.status_errors.make_bg(STATUS_BAD_BG)
