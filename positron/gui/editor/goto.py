@@ -40,7 +40,8 @@ class Goto(kx.Modal):
         except ValueError:
             print(f"Cannot use {line_num!r} as a line number.")
             return
-        self.container.code_editor.goto_line(line_num, end=end)
+        column = 10 ** 6 if end else 0
+        self.container.code_editor.set_cursor(line_num, column)
         self.dismiss()
 
     def goto_end(self, *args):

@@ -275,11 +275,6 @@ class CodeEditor(kx.Anchor):
             self.__find_text = text
         self.code_entry.find_prev(self.__find_text)
 
-    def goto_line(self, line_number: int, end: bool = False):
-        assert isinstance(line_number, int)
-        assert line_number > 0
-        self.code_entry.cursor = end * 10**6, line_number - 1
-
     def _do_complete(self):
         code = self.code_entry
         if not self.completion_modal.parent:
