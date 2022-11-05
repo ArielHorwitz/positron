@@ -10,6 +10,7 @@ from .find import Find
 from .goto import Goto
 from .snippets import Snippets
 from .analysis import Analysis
+from .errors import Errors
 
 
 class Panel(kx.Anchor):
@@ -30,6 +31,7 @@ class Panel(kx.Anchor):
             (Goto, "goto", "^ g"),
             (Snippets, "snippets", "^ spacebar"),
             (Analysis, "analysis", "^+ a"),
+            (Errors, "errors", "^+ e"),
         ]
         self.modals = {}
         for modal_cls, name, hotkey in modals:
