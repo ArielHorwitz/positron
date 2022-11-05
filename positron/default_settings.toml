@@ -12,6 +12,10 @@ font = "firacode-mono.ttf"
 font_size = 18
 cols = 2
 rows = 1
+# Background colors of the status bar
+status.normal = [0, 0, 0]
+status.warn = [0.15, 0.15, 0]
+status.error = [0.25, 0, 0]
 
 
 [editor]

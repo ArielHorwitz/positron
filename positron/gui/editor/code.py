@@ -37,8 +37,9 @@ DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
-STATUS_BG = kx.get_color("black")
-STATUS_BAD_BG = kx.get_color("red", v=0.4)
+STATUS_BG = kx.XColor(*settings.get("ui.status.normal"))
+STATUS_BG_WARN = kx.XColor(*settings.get("ui.status.warn"))
+STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
 
 
 def timestamp():
@@ -436,7 +437,7 @@ class CodeEditor(kx.Anchor):
         diff = self.__disk_diff
         sep = "* :: " if diff else " :: "
         self.status_file_cursor.text = self.cursor_full(sep)
-        bg = STATUS_BAD_BG if diff else STATUS_BG
+        bg = STATUS_BG_WARN if diff else STATUS_BG
         self.status_cursor.make_bg(bg)
 
     def _refresh_context(self, *a):
@@ -467,4 +468,4 @@ class CodeEditor(kx.Anchor):
         if count > 1:
             summary = f"{summary}  ( + {count - 1} more errors)"
         self.status_errors.text = summary
-        self.status_errors.make_bg(STATUS_BAD_BG)
+        self.status_errors.make_bg(STATUS_BG_ERROR)
