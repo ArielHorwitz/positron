@@ -40,7 +40,7 @@ class Container(kx.Anchor):
             panel.code_editor.set_cursor(*fc.cursor)
             self.editors.append(panel)
         # Assemble
-        main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_COLS)
+        main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_ROWS)
         main_frame.add(*self.editors)
         self.add(main_frame)
         self.register_hotkeys()
