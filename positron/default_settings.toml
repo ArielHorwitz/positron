@@ -59,6 +59,8 @@ exclude = [
 
 
 [project]
+# Maximum search results to show
+max_search_results = 20
 # Default project to open
 default = "~"
 # For new projects open the following files

@@ -141,15 +141,12 @@ class Session:
         exhaustive: bool = True,
     ):
         """Search the project."""
+        if not string:
+            return
         if do_complete:
-            completions = self._project.complete_search(string)
-            try:
-                remainder = next(completions).complete
-                string = f"{string}{remainder}"
-            except StopIteration:
-                return []
-        results = self._project.search(string, all_scopes=exhaustive)
-        return results
+            yield from self._project.complete_search(string, all_scopes=exhaustive)
+            return
+        yield from self._project.search(string, all_scopes=exhaustive)
 
     def get_errors(self, code: str) -> list[CodeError]:
         script = jedi.Script(code=code, project=self._project)
