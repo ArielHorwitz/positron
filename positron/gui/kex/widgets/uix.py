@@ -501,6 +501,21 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             self.select_text(start, end)
         return start, end
 
+    def toggle_prepend(self, prepend: str):
+        start, end = self.selected_line_range()
+        cursor = self.cursor
+        for lidx in range(start, end + 1):
+            line_text = self._lines[lidx]
+            if line_text.startswith(prepend):
+                line_start = self.cursor_index((0, lidx))
+                self.select_text(line_start, line_start + len(prepend))
+                self.delete_selection()
+            else:
+                self.cursor = 0, lidx
+                self.insert_text(prepend)
+        self.select_full_lines(start, end)
+        self.cursor = cursor
+
     def indent(self, *args):
         start, end = self.selected_line_range()
         lines = self._lines

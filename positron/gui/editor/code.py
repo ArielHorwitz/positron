@@ -152,6 +152,7 @@ class CodeEditor(kx.Anchor):
             ("Scroll up code comps", self._scroll_up_completions, "! up", True),
             ("Scroll down code comps", self._scroll_down_completions, "! down", True),
             ("Next error", self.scroll_to_error, "^ e", True),
+            ("Comment", self.make_comment, "^ \\"),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:
@@ -332,6 +333,9 @@ class CodeEditor(kx.Anchor):
             return
         line, column = self.__next_error_position
         self.set_cursor(line, column)
+
+    def make_comment(self):
+        self.code_entry.toggle_prepend("# ")
 
     # Events
     def _on_cursor(self, *a):
