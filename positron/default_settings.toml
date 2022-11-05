@@ -22,8 +22,7 @@ status.error = [0.25, 0, 0]
 font = "firacode-mono.ttf"
 font_size = 16
 style = "one-dark"
-bg_color = [0.2, 0.8, 1.0]
-bg_brightness = 0.125
+bg_color = [0.025, 0.1, 0.125]
 # Background relative brightness when defocused
 defocus_brightness = 0.5
 # Number of pixels to vertically offset line gutter

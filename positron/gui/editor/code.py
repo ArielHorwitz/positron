@@ -30,9 +30,7 @@ DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
 GUTTER_WIDTH = settings.get("editor.gutter_width")
-BACKGROUND_RGB = settings.get("editor.bg_color")
-assert len(BACKGROUND_RGB) == 3
-BACKGROUND_COLOR = kx.XColor(*BACKGROUND_RGB, v=settings.get("editor.bg_brightness"))
+BACKGROUND_COLOR = kx.XColor(*settings.get("editor.bg_color"))
 DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
 MAX_COMPLETIONS = 10
