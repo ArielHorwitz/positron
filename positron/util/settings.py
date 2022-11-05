@@ -5,11 +5,8 @@ package, and a user-defined custom config exists in the usr dir. User-defined
 values take priority.
 """
 from typing import Any, Iterator
-import copy
 import shutil
-import tomli
 from . import file
-from pathlib import Path
 
 
 SETTINGS_FILE = file.USER_DIR / "settings.toml"

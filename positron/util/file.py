@@ -69,6 +69,7 @@ def get_usr_dir(dir_name: str) -> Path:
 
 
 def try_relative(path: Path, dir: Path) -> Path:
+    """Return path relative to dir, or just path if not relative."""
     return path.relative_to(dir) if path.is_relative_to(dir) else path
 
 
@@ -90,6 +91,11 @@ def format_dir_tree(
     return "\n".join(path_strs)
 
 
+def _child_sort(child, breadth_first):
+    dir_val = child.is_dir() if breadth_first else not child.is_dir()
+    return f"{int(dir_val)}{child}"
+
+
 def search_files(
     dir: Path,
     pattern: str,
@@ -105,12 +111,8 @@ def search_files(
     ignore_names = [] if ignore_names is None else ignore_names
     ignore_matches = [] if ignore_matches is None else ignore_matches
 
-    def child_sort(child):
-        dir_val = child.is_dir() if breadth_first else not child.is_dir()
-        return f"{int(dir_val)}{child}"
-
     children = islice(dir.iterdir(), max_branching)
-    for child in sorted(children, key=child_sort):
+    for child in sorted(children, key=lambda x: _child_sort(x, breadth_first)):
         name = child.name
         if name in ignore_names:
             continue
