@@ -6,14 +6,8 @@ from pathlib import Path
 import re
 import json
 import jedi
+from jedi import Script
 from jedi.api.classes import Name
-from jedi.api.errors import SyntaxError
-from .formatting import (
-    format_object,
-    format_object_short,
-    format_object_debug,
-    format_syntax_error,
-)
 from ..util.file import file_load, file_dump, USER_DIR, FileCursor
 from ..util.code import CodeError
 from .linter import lint_text
@@ -41,7 +35,7 @@ class Session:
         self.project_path = project_path.expanduser().resolve()
         if env_path is None:
             all_venvs = list(jedi.find_virtualenvs(paths=[project_path]))
-            print(f"Available environments:")
+            print("Available environments:")
             print("\n".join(f"  {v.executable}" for v in all_venvs))
             env_path = all_venvs[-1].executable
         self.env_path = Path(env_path)
@@ -50,14 +44,14 @@ class Session:
         print(f"Project environment: {env_path}")
 
     def get_completions(
-            self,
-            path: Path,
-            code: str,
-            line: int,
-            col: int,
-            max_completions: int,
-            fuzzy: bool = False,
-        ) -> list[str]:
+        self,
+        path: Path,
+        code: str,
+        line: int,
+        col: int,
+        max_completions: int,
+        fuzzy: bool = False,
+    ) -> list[str]:
         """List of strings to complete code under the cursor."""
         script = jedi.Script(code=code, path=path, project=self._project)
         try:
@@ -84,14 +78,14 @@ class Session:
         syntax_errors = script.get_syntax_errors()
         if syntax_errors:
             append(_title_break("Syntax Errors"))
-            extend(format_syntax_error(err) for err in syntax_errors)
+            extend(_format_syntax_error(err) for err in syntax_errors)
 
         # Definitions
         append(_title_break("Definitions"))
         names = list(script.help(line, col))
         if names:
-            append("\n==========\n".join(format_object(script, n) for n in names))
-            debug_strs.append(format_object_debug(names[0]))
+            append("\n==========\n".join(_format_object(script, n) for n in names))
+            debug_strs.append(_format_object_debug(names[0]))
         else:
             append("No definitions found.")
 
@@ -99,14 +93,14 @@ class Session:
         append(_title_break("References"))
         refs = list(script.get_references(line, col))
         if refs:
-            extend(format_object_short(script, r) for r in refs)
+            extend(_format_object_short(script, r) for r in refs)
         else:
             append("No references found.")
 
         # Context
         append(_title_break("Context"))
         context = script.get_context(line, col)
-        append(format_object_short(script, context))
+        append(_format_object_short(script, context))
 
         # Code completion
         completions = script.complete(line, col)
@@ -122,7 +116,7 @@ class Session:
         names = list(script.get_names(all_scopes=True))
         if names:
             extend(
-                format_object_short(script, n)
+                _format_object_short(script, n)
                 for n in names
                 if n.type in {"class", "function"}
             )
@@ -179,7 +173,7 @@ class Session:
     def save_file_cursors(self, file_cursors: list[FileCursor]):
         """Cache files and cursor positions for this session."""
         if self.__file_mode:
-            print(f"Skipping caching session files for single-file mode.")
+            print("Skipping caching session files for single-file mode.")
             return
         filestr = "\n".join(f"  {f}" for f in file_cursors)
         print(f"Session {self.project_path} caching files:\n{filestr}")
@@ -206,3 +200,48 @@ def _convert_str_filecursor(s: str) -> FileCursor:
 
 def _convert_filecursor_str(fc: FileCursor) -> str:
     return f"{fc.file}::{fc.cursor[0]},{fc.cursor[1]}"
+
+
+def _format_object(script: Script, obj: Name) -> str:
+    assert isinstance(script, Script)
+    assert isinstance(obj, Name)
+    strs = [
+        _format_object_short(script, obj),
+        obj.docstring(),
+    ]
+    return "\n".join(strs)
+
+
+def _format_object_short(script: Script, obj: Name) -> str:
+    assert isinstance(script, Script)
+    assert isinstance(obj, Name)
+    name = obj.full_name or obj.description
+    if obj.type in {"param"}:
+        name = obj.description
+    filename = obj.module_path
+    filename = filename.name if filename else "NOPATH"
+    return f"{name} ({filename} :: {obj.line},{obj.column})"
+
+
+def _format_syntax_error(err) -> str:
+    start = f"{err.line},{err.column}"
+    end = f"{err.until_line},{err.until_column}"
+    return f"{start} to {end} :: {err.get_message()}"
+
+
+def _format_object_debug(obj: Name) -> str:
+    strs = [f"[u]{obj!r}[/u]"]
+    for attr in dir(obj):
+        if attr.startswith("_"):
+            continue
+        value = getattr(obj, attr)
+        keyname = attr[:18]
+        if callable(value):
+            keyname = f"{keyname}()"
+            try:
+                value = value()
+            except Exception:
+                value = f"failed call: {value}"
+        value = repr(value)[:50]
+        strs.append(f"  {keyname:<20} {value}")
+    return "\n".join(strs)
