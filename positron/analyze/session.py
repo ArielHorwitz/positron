@@ -2,7 +2,6 @@
 
 from typing import Optional
 from itertools import islice
-from dataclasses import dataclass
 from pathlib import Path
 import re
 import json
@@ -16,6 +15,8 @@ from .formatting import (
     format_syntax_error,
 )
 from ..util.file import file_load, file_dump, USER_DIR, FileCursor
+from ..util.code import CodeError
+from .linter import lint_text
 
 
 SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
@@ -24,13 +25,6 @@ if not SESSION_FILES_CACHE.exists():
     file_dump(SESSION_FILES_CACHE, "{}")
 RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
 RE_NEWLINE = re.compile(r"\n")
-
-
-@dataclass
-class CodeError:
-    message: str
-    line: int
-    column: int
 
 
 def _title_break(text: str) -> str:
@@ -166,15 +160,9 @@ class Session:
             msg = e.get_message()
             _, __, msg = msg.partition("Error: ")
             append(CodeError(msg, e.line, e.column))
-        # Trailing whitespace
-        text = f"\n{code}\n"
-        for match in RE_TRAILING_WHITESPACE.finditer(text):
-            start = match.start()
-            match_text = match.group()
-            newlines = list(RE_NEWLINE.finditer(text[:start]))
-            line = len(newlines)
-            column = start - newlines[-1].start() - 1
-            append(CodeError("trailing whitespace", line, column))
+        # Linter errors
+        linter_errors = lint_text(code)
+        errors.extend(linter_errors)
         return errors
 
     def get_file_cursors(self) -> list[FileCursor]:

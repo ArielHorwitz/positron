@@ -36,9 +36,27 @@ cursor_pause_timeout = 0.25
 # Number of lines to offset when scrolling to cursor
 cursor_scroll_offset = 10
 # Never check for errors more than once per this many seconds
-error_check_cooldown = 0.25
+error_check_cooldown = 2
 # Automatically load the file on startup
 auto_load = true
+
+
+[linter]  # Settings for the linter (flake8).
+# Error codes to ignore (using comma-separated values)
+ignore = "E203,"
+# Maximum line length (79-80 according to pep8, 88 according to black)
+max_line_length = 88
+# Maximum cyclomatic complexity (see: https://en.wikipedia.org/wiki/Cyclomatic_complexity)
+max_complexity = 10
+# Docstring convention to use
+docstring_convention = "google"
+# Paths to exclude from the global linter
+exclude = [
+    "__pycache__",
+    "venv",
+    "build",
+]
+
 
 [project]
 # Default project to open
