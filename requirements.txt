@@ -6,3 +6,4 @@ tomli>=2.0.1
 fuzzysearch>=0.7.3
 flake8>=5.0.4
 flake8-docstrings>=1.6.0
+docopt-ng>=0.8.1
