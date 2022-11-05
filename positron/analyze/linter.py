@@ -23,6 +23,7 @@ def lint_path(
     max_line_length: int = MAX_LINE_LENGTH,
     max_complexity: int = MAX_COMPLEXITY,
     docstring_convention: str = DOCSTRING_CONVENTION,
+    capture_output: bool = True,
 ) -> str:
     """Run flake8 on a path."""
     command_args = [
@@ -41,6 +42,8 @@ def lint_path(
         "--docstring-convention",
         docstring_convention,
     ]
+    if not capture_output:
+        return subprocess.run(command_args)
     r = subprocess.run(command_args, capture_output=True, text=True)
     if r.stderr:
         return r.stderr
