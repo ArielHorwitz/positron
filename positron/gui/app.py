@@ -54,8 +54,8 @@ class App(kx.App):
         for a, c, hk in [
             ("app.quit", self.stop, "^+ q"),
             ("app.restart", self.restart, "^+ w"),
-            ("Open user dir", lambda: open_path(USER_DIR), "f9"),
-            ("Open session dir", self._open_project_dir, "^+ f"),
+            ("Open user dir", lambda: open_path(USER_DIR), "f12"),
+            ("Open session dir", self._open_project_dir, "f9"),
         ]:
             self.im.register(a, c, hk)
 

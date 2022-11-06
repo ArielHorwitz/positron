@@ -140,7 +140,7 @@ class CodeEditor(kx.Anchor):
         # Controls
         self.set_focus = self.code_entry.set_focus
         for reg_args in [
-            ("Open settings", self._open_settings, "f8"),
+            ("Open settings", self._open_settings, "f11"),
             ("Reload", self.reload, "^ l"),
             ("Save", self.save, "^ s"),
             ("Delete file", self.delete_file, "^+ delete"),
