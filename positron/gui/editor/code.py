@@ -1,5 +1,6 @@
 """Code editor widget."""
 
+from loguru import logger
 from typing import Optional
 import re
 import os.path
@@ -17,10 +18,10 @@ from ...util.snippets import find_snippets, Snippet
 
 
 STYLE_NAME = settings.get("editor.style")
-print(f"Available styles: {list(STYLE_MAP.keys())}")
+logger.info(f"Available styles: {list(STYLE_MAP.keys())}")
 if STYLE_NAME not in STYLE_MAP:
     STYLE_NAME = "default"
-print(f"Chosen style: {STYLE_NAME}")
+logger.info(f"Chosen style: {STYLE_NAME}")
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
 UI_FONT_SIZE = settings.get("ui.font_size")
@@ -171,7 +172,7 @@ class CodeEditor(kx.Anchor):
         text = self.code_entry.text
         file.parent.mkdir(parents=True, exist_ok=True)
         file_dump(file, text)
-        print(f"Saved  @ {timestamp()} to: {file}")
+        logger.info(f"Saved  @ {timestamp()} to: {file}")
         self.__disk_modified_time = self._get_disk_mod_date(self._current_file)
         self.__disk_cache = text
         self.__disk_diff = False
@@ -184,10 +185,10 @@ class CodeEditor(kx.Anchor):
         self._update_lexer()
         text = self._get_disk_content(file)
         if text:
-            print(f"Loaded @ {timestamp()} from: {file}")
+            logger.info(f"Loaded @ {timestamp()} from: {file}")
         else:
             text = ""
-            print(f"New unsaved file: {file}")
+            logger.info(f"New unsaved file: {file}")
         self.__disk_modified_time = self._get_disk_mod_date(file)
         self.__disk_cache = text
         self.__disk_diff = False
@@ -204,7 +205,7 @@ class CodeEditor(kx.Anchor):
     def delete_file(self):
         if self._current_file.exists():
             self._current_file.unlink()
-            print(f"Deleted @ {timestamp()} file: {self._current_file}")
+            logger.info(f"Deleted @ {timestamp()} file: {self._current_file}")
             self.load()
 
     def _get_disk_content(self, file: Path) -> str:
@@ -226,7 +227,7 @@ class CodeEditor(kx.Anchor):
             if modified_time != self.__disk_modified_time:
                 self.__disk_cache = self._get_disk_content(self._current_file)
                 self.__disk_modified_time = modified_time
-                print(f"Cached @ {timestamp()} for: {self._current_file}")
+                logger.info(f"Cached @ {timestamp()} for: {self._current_file}")
             self.__disk_diff = self.__disk_cache != self.code_entry.text
         self._refresh_status_diff()
 

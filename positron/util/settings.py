@@ -10,6 +10,7 @@ All settings files are configured using TOML.
 """
 
 
+from loguru import logger
 from typing import Optional, Any, Iterator
 from pathlib import Path
 import shutil
@@ -62,7 +63,7 @@ def _load_settings(settings_files: Optional[list[Path]] = None) -> dict[str, Any
         file_settings = _flatten_dict(toml_load(file))
         for name, value in file_settings.items():
             if name not in defaults:
-                print(f"Unknown setting: {name}")
+                logger.warning(f"Unknown setting: {name}")
                 continue
             if name in custom_settings:
                 continue
@@ -79,7 +80,7 @@ class _Settings:
 
         See module documentation for details.
         """
-        print(f"Loading settings with: {settings_files=}")
+        logger.info(f"Loading settings with: {settings_files=}")
         cls._SETTINGS = _load_settings(settings_files)
 
     @classmethod

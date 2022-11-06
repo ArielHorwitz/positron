@@ -10,22 +10,26 @@ Options:
   --debug-args        Debug argument parsing and quit
 """
 
+from loguru import logger
+import sys
 from docopt import docopt
 from pathlib import Path
 from positron.util import settings
+logger.add(settings.USER_DIR / "debug.log", level="DEBUG", rotation="1 MB")
+logger.add(settings.USER_DIR / "errors.log", level="WARNING", rotation="100 KB")
 
 
 def _debug_args(args: dict):
-    print("Parsed arguments:")
+    logger.info("Parsed arguments:")
     for k, v in args.items():
         if len(k) > 17:
-            print(f"  {k}\n      {v}")
+            logger.info(f"  {k}\n      {v}")
         else:
-            print(f"  {k:>20} :  {v}")
+            logger.info(f"  {k:>20} :  {v}")
 
 
 def _run_positron(project_path: Path):
-    print("\n".join(["\n", "="*50, "Starting up Positron...", "="*50, "\n"]))
+    logger.info("\n".join(["\n", "="*50, "Starting up Positron...", "="*50, "\n"]))
 
     # Late import since Kivy opens window on import
     from positron.analyze.session import Session
@@ -36,13 +40,15 @@ def _run_positron(project_path: Path):
     app = App(app_session)
     returncode = app.run()
     if returncode < 0:
-        print("Restarting Positron...\n\n")
+        logger.info("Restarting Positron...\n\n")
         restart_script()
-    print("Quit Positron.")
+    logger.info("Quit Positron.")
 
 
+@logger.catch
 def main():
     """Main script entry point."""
+    logger.debug(f"{sys.argv=}")
     args = docopt(options_first=True, more_magic=True)
 
     # Debug argument parsing
@@ -52,7 +58,11 @@ def main():
 
     # Load custom settings
     if args["--settings"] is not None:
-        settings.load([Path(args["--settings"])])
+        custom_settings = Path(args["--settings"])
+        if custom_settings.is_file():
+            settings.load([custom_settings])
+        else:
+            logger.warning(f"Custom settings file does not exist: {custom_settings}")
 
     # Find the path to open
     if args.path:

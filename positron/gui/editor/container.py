@@ -1,5 +1,6 @@
 """Container for code editor panels."""
 
+from loguru import logger
 from pathlib import Path
 from .. import kex as kx
 from ...util import settings
@@ -54,7 +55,7 @@ class Container(kx.Anchor):
                 assert self._check_descendent(panel)
                 puid = panel.uid
                 if self.current_focus != puid:
-                    print(f"Focused panel uid: {puid}")
+                    logger.debug(f"Focused panel uid: {puid}")
                     self.current_focus = puid
                 return
             if panel is panel.parent:

@@ -1,5 +1,6 @@
 """Goto dialog for line number in code editor."""
 
+from loguru import logger
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
 
@@ -38,7 +39,7 @@ class Goto(kx.Modal):
         try:
             line_num = max(1, int(line_num))
         except ValueError:
-            print(f"Cannot use {line_num!r} as a line number.")
+            logger.warning(f"Cannot use {line_num!r} as a line number.")
             return
         column = 10 ** 6 if end else 0
         self.container.code_editor.set_cursor(line_num, column)

@@ -1,5 +1,6 @@
 """GUI app."""
 
+from loguru import logger
 from pathlib import Path
 from . import kex as kx, FONTS_DIR
 from .editor.container import Container as EditorContainer
@@ -18,7 +19,7 @@ UI_FONT_SIZE = settings.get("ui.font_size")
 
 class App(kx.App):
     def __init__(self, session):
-        print("Starting GUI.")
+        logger.info("Starting GUI.")
         super().__init__()
         self.icon = str(PROJ_DIR / "icon.png")
         self.__cleaned_up = False
@@ -29,7 +30,7 @@ class App(kx.App):
         self.root.add(self.panels)
         self.register_hotkeys()
         self.hook(self.update, FPS)
-        print("Finished initialization.")
+        logger.info("Finished initialization.")
 
     def _init_window(self):
         kx.Window.toggle_borderless(WINDOW_BORDERLESS)

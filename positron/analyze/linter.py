@@ -1,5 +1,6 @@
 """Linter utilities."""
 
+from loguru import logger
 from pathlib import Path
 import traceback
 import subprocess
@@ -56,8 +57,8 @@ def lint_text(code: str, *args, **kwargs) -> list[CodeError]:
     try:
         r = lint_path(LINTER_CACHED_FILE, *args, **kwargs)
     except Exception as e:
-        traceback.print_exception(e)
-        print("Failed to run linter, see traceback above.")
+        logger.warning("".join(traceback.format_exception(e)))
+        logger.warning("Failed to run linter, see traceback above.")
         return []
     LINTER_CACHED_FILE.unlink()
     results = []
@@ -66,7 +67,7 @@ def lint_text(code: str, *args, **kwargs) -> list[CodeError]:
         if not line:
             continue
         if not line.startswith(FILE_STR):
-            print(f"Unexpected line in linter: {line!r}")
+            logger.warning(f"Unexpected line in linter: {line!r}")
             continue
         line, col, error = line[FILE_STR_LEN:].split(":", 2)
         error = error[1:]  # Leading whitespace
@@ -74,7 +75,7 @@ def lint_text(code: str, *args, **kwargs) -> list[CodeError]:
             # Errors are off by 1 column, I think...?
             line, col = int(line), max(0, int(col) - 1)
         except ValueError:
-            print(f"Unexpected format from linter output: {line!r}")
+            logger.warning(f"Unexpected format from linter output: {line!r}")
             continue
         append(CodeError(error, line, col))
     return results

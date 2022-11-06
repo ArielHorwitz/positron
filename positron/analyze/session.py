@@ -1,8 +1,10 @@
 """Project session for analysis."""
 
+from loguru import logger
 from typing import Optional
 from itertools import islice
 from pathlib import Path
+import traceback
 import re
 import json
 import jedi
@@ -35,13 +37,13 @@ class Session:
         self.project_path = project_path.expanduser().resolve()
         if env_path is None:
             all_venvs = list(jedi.find_virtualenvs(paths=[project_path]))
-            print("Available environments:")
-            print("\n".join(f"  {v.executable}" for v in all_venvs))
+            logger.info("Available environments:")
+            logger.info("\n".join(f"  {v.executable}" for v in all_venvs))
             env_path = all_venvs[-1].executable
         self.env_path = Path(env_path)
         self._project = jedi.Project(project_path, environment_path=env_path)
-        print(f"Created project:     {project_path}")
-        print(f"Project environment: {env_path}")
+        logger.info(f"Created project:     {project_path}")
+        logger.info(f"Project environment: {env_path}")
 
     def get_completions(
         self,
@@ -57,7 +59,7 @@ class Session:
         try:
             completions = script.complete(line, col, fuzzy=fuzzy)
         except Exception as e:
-            print(f"get_completions exception: {e}")
+            logger.warning(f"get_completions exception: {e}")
             return []
         return islice(completions, max_completions)
 
@@ -67,7 +69,7 @@ class Session:
 
     def get_info(self, path: Path, code: str, line: int, col: int) -> str:
         """Multiline string of code analysis under the cursor."""
-        print(f"Getting info for: {path} :: {line},{col}")
+        logger.debug(f"Getting info for: {path} :: {line},{col}")
         script = jedi.Script(code=code, path=path, project=self._project)
         debug_strs = []
         strs = []
@@ -138,7 +140,11 @@ class Session:
         if not string:
             return
         if do_complete:
-            yield from self._project.complete_search(string, all_scopes=exhaustive)
+            try:
+                yield from self._project.complete_search(string, all_scopes=exhaustive)
+            except Exception as e:
+                logger.warning("".join(traceback.format_exception(e)))
+                logger.warning(f"Search project failed on string: {string!r}")
             return
         yield from self._project.search(string, all_scopes=exhaustive)
 
@@ -167,16 +173,16 @@ class Session:
             return []
         file_cursors = [_convert_str_filecursor(fc) for fc in session_cache[ppath]]
         filestr = "\n".join(f"  {f}" for f in file_cursors)
-        print(f"Session {self.project_path} cached files:\n{filestr}")
+        logger.info(f"Session {self.project_path} cached files:\n{filestr}")
         return file_cursors
 
     def save_file_cursors(self, file_cursors: list[FileCursor]):
         """Cache files and cursor positions for this session."""
         if self.__file_mode:
-            print("Skipping caching session files for single-file mode.")
+            logger.info("Skipping caching session files for single-file mode.")
             return
         filestr = "\n".join(f"  {f}" for f in file_cursors)
-        print(f"Session {self.project_path} caching files:\n{filestr}")
+        logger.info(f"Session {self.project_path} caching files:\n{filestr}")
         file_cursors = [_convert_filecursor_str(fc) for fc in file_cursors]
         # Find and add existing entries from cache
         session_cache = json.loads(file_load(SESSION_FILES_CACHE))

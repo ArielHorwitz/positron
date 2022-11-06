@@ -1,5 +1,6 @@
 """Code analysis modal."""
 
+from loguru import logger
 import traceback
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
@@ -41,7 +42,7 @@ class Analysis(kx.FocusBehavior, kx.Modal):
             info = self.session.get_info(file, code.text, row+1, col)
         except Exception as e:
             info = "Analysis failed!\nPlease see logs."
-            traceback.print_exception(e)
+            logger.warning("".join(traceback.format_exception(e)))
         self.analysis_label.text = info
         self.analysis_label.scroll_y = 1
 
