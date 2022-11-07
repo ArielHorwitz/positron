@@ -53,7 +53,6 @@ class XApp(XWidget, kv.App):
         self,
         logger: Optional[Callable[[str], None]] = None,
         escape_exits: bool = False,
-        enable_multitouch: bool = False,
         **kwargs,
     ):
         """Initialize the class.
@@ -61,7 +60,6 @@ class XApp(XWidget, kv.App):
         Args:
             logger: Logging function for XWidgets. Used internally for debugging.
             escape_exits: Enable exiting when the escape key is pressed.
-            enable_multitouch: Enable multitouch.
         """
         self.__window_focus_path = WindowFocusPatch()
         super().__init__(**kwargs)
@@ -71,15 +69,13 @@ class XApp(XWidget, kv.App):
         self.__restart_flag = False
         self.__last_focused = None
         self.__overlay = None
-        self.__enable_multitouch = enable_multitouch
-        if not enable_multitouch:
-            XWindow.disable_multitouch()
-        self.root.bind(
-            on_touch_down=self._is_touch_blocked,
-            on_touch_up=self._is_touch_blocked,
-            on_touch_move=self._is_touch_blocked,
-        )
+        XWindow.disable_multitouch()
         kv.Clock.schedule_interval(self._check_focus, 1 / 60)
+        kv.Window.bind(
+            on_touch_down=self._filter_touch,
+            on_touch_up=self._filter_touch,
+            on_touch_move=self._filter_touch,
+        )
 
     def _check_focus(self, dt):
         self.current_focus = self.keyboard.target
@@ -122,12 +118,11 @@ class XApp(XWidget, kv.App):
         """The current overlay."""
         return self.__overlay
 
-    def _is_touch_blocked(self, w, m):
+    def _filter_touch(self, w, touch):
         if self.block_input:
             return True
-        if not self.__enable_multitouch:
-            if hasattr(m, "multitouch_sim") and m.multitouch_sim:
-                return True
+        if "button" not in touch.profile:
+            return True
         return False
 
     def __create_overlay(self, **kwargs):
