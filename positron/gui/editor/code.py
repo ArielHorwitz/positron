@@ -25,7 +25,7 @@ if STYLE_NAME not in STYLE_MAP:
 logger.info(f"Chosen style: {STYLE_NAME}")
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
-UI_FONT_SIZE = settings.get("ui.font_size")
+STATUS_BAR_HEIGHT = int(FONT_SIZE * 1.1)
 AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
@@ -118,13 +118,13 @@ class CodeEditor(kx.Anchor):
         self.status_file_cursor = kx.Label(halign="right", **status_kw)
         self.status_file_cursor.set_size(hx=0.95)
         self.status_bar_cursor = kx.Anchor()
-        self.status_bar_cursor.set_size(y=FONT_SIZE)
+        self.status_bar_cursor.set_size(y=STATUS_BAR_HEIGHT)
         self.status_bar_cursor.add(self.status_cursor_context, self.status_file_cursor)
         # Errors status bar
         self.status_errors = kx.Label(halign="center", **status_kw)
         self.status_errors.set_size(hx=0.95)
         self.status_bar_errors = kx.Anchor()
-        self.status_bar_errors.set_size(y=FONT_SIZE)
+        self.status_bar_errors.set_size(y=STATUS_BAR_HEIGHT)
         self.status_bar_errors.add(self.status_errors)
         self.__update_errors_trigger = kx.create_trigger(
             self._update_errors,
