@@ -44,6 +44,7 @@ class XDBox(XWidget, kv.GridLayout):
     def __init__(self, cols: int = 1, **kwargs):
         """Initialize the class."""
         super().__init__(cols=cols, **kwargs)
+        self.bind(children=self._resize)
 
     def add(self, w: XWidget, *args, **kwargs):
         """Overrides XWidget `add` in order to bind to size changes."""
@@ -51,11 +52,6 @@ class XDBox(XWidget, kv.GridLayout):
         r = super().add(w, *args, **kwargs)
         kv.Clock.schedule_once(self._resize, 0)
         return r
-
-    def remove_widget(self, *a, **k):
-        """Overrides base class `remove_widget` in order to resize."""
-        super().remove_widget(*a, **k)
-        self._resize()
 
     def _resize(self, *a):
         self.set_size(hx=1, y=sum([c.height for c in self.children]))
