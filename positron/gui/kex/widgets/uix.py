@@ -3,15 +3,8 @@ from typing import Optional, Any, Mapping
 from itertools import chain
 import re
 from .. import kivy as kv
-from ..util import (
-    XWidget,
-    ColorType,
-    XColor,
-)
-from .layouts import (
-    XBox,
-    XAnchor,
-)
+from ..util import XWidget, ColorType, XColor
+from .layouts import XBox, XAnchor
 from .input_manager import XInputManager
 
 
@@ -268,7 +261,6 @@ class XEntryMixin:
     def on_cursor_pause(self):
         pass
 
-
     def cancel_cursor_pause(self, *a):
         ev = self.__trigger_cursor_pause
         if ev.is_triggered:
@@ -295,6 +287,7 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
             foreground_color: Color of the foreground.
             text_validate_unfocus: If focus should be removed after validation
                 (pressing enter on a single-line widget).
+            write_tab: Allow tabs to be written.
             kwargs: keyword arguments for TextInput.
         """
         super().__init__(
@@ -330,8 +323,6 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
 
     def duplicate(self):
         start, end = self.selected_line_range()
-        line_count = end - start
-        new_end = end + line_count
         lines = [""] + self._lines[start:end + 1]
         substring = "\n".join(lines)
         # Move cursor to end of last line
@@ -356,7 +347,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             rows = (start, end), (start - 1, start)
         self._shift_lines(direction, rows=rows)
 
-    def _shift_lines(
+    def _shift_lines(  # noqa: C901
         self, direction, rows=None, old_cursor=None, from_undo=False
     ):
         if self._selection_callback:
@@ -518,7 +509,6 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
 
     def indent(self, *args):
         start, end = self.selected_line_range()
-        lines = self._lines
         for lidx in range(start, end + 1):
             self.cursor = 0, lidx
             self.insert_text("    ")
