@@ -30,7 +30,7 @@ gutter_padding = 4
 # Width of line gutter in pixels
 gutter_width = 50
 # Number of seconds between checking difference from disk
-disk_diff_interval = 0.1
+disk_diff_interval = 1.0
 # Number of seconds to show popup on cursor
 cursor_pause_timeout = 0.25
 # Number of lines to offset when scrolling to cursor

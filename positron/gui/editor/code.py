@@ -5,6 +5,7 @@ from typing import Optional
 import re
 import os.path
 import arrow
+import functools
 from pathlib import Path
 from pygments.util import ClassNotFound as LexerClassNotFound
 from pygments.styles import STYLE_MAP
@@ -13,7 +14,7 @@ from pygments.lexers.markup import MarkdownLexer
 from jedi.api.classes import Completion
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
-from ...util.file import file_load, file_dump, try_relative
+from ...util.file import file_load, file_dump
 from ...util.snippets import find_snippets, Snippet
 
 
@@ -43,6 +44,18 @@ STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
 
 def _timestamp():
     return arrow.now().format("HH:mm:ss")
+
+
+@functools.cache
+def _format_humanized(m):
+    if m is None:
+        return ""
+    m = m.removesuffix(' ago')
+    if m == "a minute":
+        m = "1m"
+    m = m.replace(" seconds", "s").replace(" minutes", "m").replace(" hours", "h")
+    m = m.replace(" days", "D").replace(" months", "M").replace(" years", "Y")
+    return f"[{m}] "
 
 
 class CodeEditor(kx.Anchor):
@@ -221,7 +234,7 @@ class CodeEditor(kx.Anchor):
         return file_load(file)
 
     def _get_disk_mod_date(self, file: Path):
-        return os.path.getmtime(file) if file.exists() else None
+        return arrow.get(os.path.getmtime(file)) if file.exists() else None
 
     def _check_disk_diff(self, *args):
         if not self._current_file.exists():
@@ -260,11 +273,6 @@ class CodeEditor(kx.Anchor):
         code.cursor = column, line - 1
         code.scroll_to_cursor()
         code.cancel_cursor_pause()
-
-    def cursor_full(self, sep: str = "::"):
-        line, column = self.cursor
-        path = try_relative(self._current_file, self.session.project_path)
-        return f"{path}{sep}{line},{column}"
 
     # Code inspection
     @property
@@ -444,11 +452,23 @@ class CodeEditor(kx.Anchor):
             self.__cached_selected_text = text
 
     def _refresh_status_diff(self, *a):
-        diff = self.__disk_diff
-        sep = "* :: " if diff else " :: "
-        self.status_file_cursor.text = self.cursor_full(sep)
-        bg = STATUS_BG_WARN if diff else STATUS_BG
+        self.status_file_cursor.text = self._cursor_full()
+        bg = STATUS_BG_WARN if self.__disk_diff else STATUS_BG
         self.status_bar_cursor.make_bg(bg)
+
+    def _cursor_full(self):
+        line, column = self.cursor
+        path = self._current_file
+        ppath = self.session.project_path
+        if path.is_relative_to(ppath):
+            path = f"$/{path.relative_to(ppath)}"
+        elif path.is_relative_to(Path.home()):
+            path = f"~/{path.relative_to(Path.home())}"
+        modified = ""
+        if self.__disk_modified_time:
+            modified = _format_humanized(self.__disk_modified_time.humanize())
+        diff = "*" if self.__disk_diff else ""
+        return f"{modified}{path}{diff} ::{line:>4},{column:<3}"
 
     def _refresh_context(self, *a):
         code = self.code_entry
