@@ -7,7 +7,7 @@ import os.path
 import arrow
 from pathlib import Path
 from pygments.util import ClassNotFound as LexerClassNotFound
-from pygments.styles import get_style_by_name, STYLE_MAP
+from pygments.styles import STYLE_MAP
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.markup import MarkdownLexer
 from jedi.api.classes import Completion
@@ -35,13 +35,13 @@ BACKGROUND_COLOR = kx.XColor(*settings.get("editor.bg_color"))
 DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
 MAX_COMPLETIONS = 10
-COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")
+COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")  # noqa: W605
 STATUS_BG = kx.XColor(*settings.get("ui.status.normal"))
 STATUS_BG_WARN = kx.XColor(*settings.get("ui.status.warn"))
 STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
 
 
-def timestamp():
+def _timestamp():
     return arrow.now().format("HH:mm:ss")
 
 
@@ -114,7 +114,10 @@ class CodeEditor(kx.Anchor):
         status_bar_frame = kx.Anchor()
         status_bar_frame.set_size(y=sum(c.height for c in status_bar.children))
         status_bar_frame.add(status_bar)
-        self.__update_errors_trigger = kx.create_trigger(self._update_errors, ERROR_CHECK_COOLDOWN)
+        self.__update_errors_trigger = kx.create_trigger(
+            self._update_errors,
+            ERROR_CHECK_COOLDOWN,
+        )
         # Assemble
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(status_bar_frame, code_frame)
@@ -146,7 +149,12 @@ class CodeEditor(kx.Anchor):
             ("Delete file", self.delete_file, "^+ delete"),
             ("Duplicate lines", self.code_entry.duplicate, "^+ d", True),
             ("Shift lines up", lambda: self.code_entry.shift_lines(-1), "!+ up", True),
-            ("Shift lines down", lambda: self.code_entry.shift_lines(1), "!+ down", True),
+            (
+                "Shift lines down",
+                lambda: self.code_entry.shift_lines(1),
+                "!+ down",
+                True,
+            ),
             ("Find next", self.find_next, "^ ]", True),
             ("Find previous", self.find_prev, "^ [", True),
             ("Complete code", self._do_complete, "! enter"),
@@ -172,7 +180,7 @@ class CodeEditor(kx.Anchor):
         text = self.code_entry.text
         file.parent.mkdir(parents=True, exist_ok=True)
         file_dump(file, text)
-        logger.info(f"Saved  @ {timestamp()} to: {file}")
+        logger.info(f"Saved  @ {_timestamp()} to: {file}")
         self.__disk_modified_time = self._get_disk_mod_date(self._current_file)
         self.__disk_cache = text
         self.__disk_diff = False
@@ -185,7 +193,7 @@ class CodeEditor(kx.Anchor):
         self._update_lexer()
         text = self._get_disk_content(file)
         if text:
-            logger.info(f"Loaded @ {timestamp()} from: {file}")
+            logger.info(f"Loaded @ {_timestamp()} from: {file}")
         else:
             text = ""
             logger.info(f"New unsaved file: {file}")
@@ -205,7 +213,7 @@ class CodeEditor(kx.Anchor):
     def delete_file(self):
         if self._current_file.exists():
             self._current_file.unlink()
-            logger.info(f"Deleted @ {timestamp()} file: {self._current_file}")
+            logger.info(f"Deleted @ {_timestamp()} file: {self._current_file}")
             self.load()
 
     def _get_disk_content(self, file: Path) -> str:
@@ -227,7 +235,7 @@ class CodeEditor(kx.Anchor):
             if modified_time != self.__disk_modified_time:
                 self.__disk_cache = self._get_disk_content(self._current_file)
                 self.__disk_modified_time = modified_time
-                logger.info(f"Cached @ {timestamp()} for: {self._current_file}")
+                logger.info(f"Cached @ {_timestamp()} for: {self._current_file}")
             self.__disk_diff = self.__disk_cache != self.code_entry.text
         self._refresh_status_diff()
 
@@ -300,7 +308,7 @@ class CodeEditor(kx.Anchor):
         original_cidx = code.cursor_index()
         code.insert_text(snippet.text)
         move = snippet.move
-        if move  < 0:  # move to beginning
+        if move < 0:  # move to beginning
             move = code.cursor_index() - original_cidx
         final_cidx = code.cursor_index() - move
         code.cursor = code.get_cursor_from_index(final_cidx)
