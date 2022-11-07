@@ -1,3 +1,5 @@
+# flake8: noqa
+# Ignoring flake8 errors E402,F401 because of late imports and unused imports
 """The Kex library.
 
 An interface to the [Kivy](https://kivy.org/) library with extended widgets for
@@ -14,7 +16,7 @@ __os.environ["KIVY_NO_ARGS"] = "1"  # no consuming script arguments
 __os.environ["KCFG_KIVY_LOG_LEVEL"] = "warning"  # no spamming console on startup
 
 
-from .kivy import (  # noqa: E402,F401
+from .kivy import (
     ButtonBehavior,
     FocusBehavior,
     ToggleButtonBehavior,
@@ -41,7 +43,7 @@ from .kivy import (  # noqa: E402,F401
     OptionProperty,
     ReferenceListProperty,
 )
-from .util import (  # noqa: E402,F401
+from .util import (
     XWindow as Window,
     XColor,
     get_color,
@@ -56,8 +58,8 @@ from .util import (  # noqa: E402,F401
     create_trigger,
     queue_around_frame,
 )
-from .widgets import XBaseWidget as Widget  # noqa: E402,F401
-from .widgets.layouts import (  # noqa: E402,F401
+from .widgets import XBaseWidget as Widget
+from .widgets.layouts import (
     XBox as Box,
     XZBox as ZBox,
     XDBox as DBox,
@@ -67,7 +69,7 @@ from .widgets.layouts import (  # noqa: E402,F401
     XAnchor as Anchor,
     XScroll as Scroll,
 )
-from .widgets.uix import (  # noqa: E402,F401
+from .widgets.uix import (
     XLabel as Label,
     XCheckBox as CheckBox,
     XCheckBoxText as CheckBoxText,
@@ -87,8 +89,8 @@ from .widgets.uix import (  # noqa: E402,F401
     XModalView as ModalView,
     XModal as Modal,
 )
-from .widgets.input_manager import XInputManager as InputManager  # noqa: E402,F401,F402
-from .widgets.app import XApp as App  # noqa: E402,F401,F402
+from .widgets.input_manager import XInputManager as InputManager
+from .widgets.app import XApp as App
 
 
 __all__ = []
