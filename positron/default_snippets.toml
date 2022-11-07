@@ -4,7 +4,11 @@ text = "*args, **kwargs"
 select = -1
 
 ["method"]
-text = "\n    def method(self):\n        pass\n"
+text = """
+
+    def method(self):
+        pass
+"""
 move = 21
 select = 6
 
@@ -14,18 +18,33 @@ move = 4
 select = 4
 
 ["property"]
-text = "\n    @property\n    def property(self):\n        pass\n"
+text = """
+
+    @property
+    def property(self):
+        pass
+"""
 move = 21
 select = 8
 
 ["class"]
-text = "\nclass ClassName:\n    def __init__(self):\n        pass\n"
+text = """
+
+class ClassName:
+    def __init__(self):
+        pass
+"""
 move = 39
 select = 9
 
 ["class verbose"]
-text = "\nclass ClassName(object):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n"
-move = 93
+text = """
+
+class ClassName:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+"""
+move = 85
 select = 9
 
 ["docstring"]
@@ -34,9 +53,18 @@ move = 3
 select = 9
 
 ["code snippet"]
-text = "\n```\n```\n"
+text = """
+
+```
+```
+"""
 move = 5
 
 ["code snippet python"]
-text = "\n```python\n\n```\n"
+text = """
+
+```python
+
+```
+"""
 move = 5
