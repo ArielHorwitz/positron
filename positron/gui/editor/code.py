@@ -98,29 +98,28 @@ class CodeEditor(kx.Anchor):
         line_gutter_frame.add(line_gutter_top_padding, self.line_gutter)
         code_frame = kx.Box()
         code_frame.add(line_gutter_frame, self.code_entry)
-        # Status bar
+        # Cursor status bar
         status_kw = {"font_name": FONT, "font_size": FONT_SIZE}
-        self.status_errors = kx.Label(halign="center", **status_kw)
-        self.status_errors.set_size(hx=0.95, y=FONT_SIZE)
         self.status_cursor_context = kx.Label(halign="left", **status_kw)
-        self.status_cursor_context.set_size(hx=0.95, y=FONT_SIZE)
+        self.status_cursor_context.set_size(hx=0.95)
         self.status_file_cursor = kx.Label(halign="right", **status_kw)
-        self.status_file_cursor.set_size(hx=0.95, y=FONT_SIZE)
-        self.status_cursor = kx.Anchor()
-        self.status_cursor.add(self.status_cursor_context, self.status_file_cursor)
-        self.status_cursor.set_size(y=FONT_SIZE)
-        status_bar = kx.DBox()
-        status_bar.add(self.status_errors, self.status_cursor)
-        status_bar_frame = kx.Anchor()
-        status_bar_frame.set_size(y=sum(c.height for c in status_bar.children))
-        status_bar_frame.add(status_bar)
+        self.status_file_cursor.set_size(hx=0.95)
+        self.status_bar_cursor = kx.Anchor()
+        self.status_bar_cursor.set_size(y=FONT_SIZE)
+        self.status_bar_cursor.add(self.status_cursor_context, self.status_file_cursor)
+        # Errors status bar
+        self.status_errors = kx.Label(halign="center", **status_kw)
+        self.status_errors.set_size(hx=0.95)
+        self.status_bar_errors = kx.Anchor()
+        self.status_bar_errors.set_size(y=FONT_SIZE)
+        self.status_bar_errors.add(self.status_errors)
         self.__update_errors_trigger = kx.create_trigger(
             self._update_errors,
             ERROR_CHECK_COOLDOWN,
         )
         # Assemble
         main_frame = kx.Box(orientation="vertical")
-        main_frame.add(status_bar_frame, code_frame)
+        main_frame.add(self.status_bar_cursor, code_frame, self.status_bar_errors)
         self.add(main_frame)
         # Completion popup
         self.completion_label = kx.Label(
@@ -449,7 +448,7 @@ class CodeEditor(kx.Anchor):
         sep = "* :: " if diff else " :: "
         self.status_file_cursor.text = self.cursor_full(sep)
         bg = STATUS_BG_WARN if diff else STATUS_BG
-        self.status_cursor.make_bg(bg)
+        self.status_bar_cursor.make_bg(bg)
 
     def _refresh_context(self, *a):
         code = self.code_entry
@@ -469,7 +468,7 @@ class CodeEditor(kx.Anchor):
             errors = self.session.get_errors(self.code_entry.text)
         if not errors:
             self.status_errors.text = "No errors :)"
-            self.status_errors.make_bg(STATUS_BG)
+            self.status_bar_errors.make_bg(STATUS_BG)
             return
         count = len(errors)
         first_error = errors[0]
@@ -479,4 +478,4 @@ class CodeEditor(kx.Anchor):
         if count > 1:
             summary = f"{summary}  ( + {count - 1} more errors)"
         self.status_errors.text = summary
-        self.status_errors.make_bg(STATUS_BG_ERROR)
+        self.status_bar_errors.make_bg(STATUS_BG_ERROR)
