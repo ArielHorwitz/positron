@@ -42,6 +42,7 @@ from .kivy import (
     DictProperty,
     OptionProperty,
     ReferenceListProperty,
+    CoreLabel,
 )
 from .util import (
     XWindow as Window,

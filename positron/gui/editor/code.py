@@ -25,7 +25,6 @@ if STYLE_NAME not in STYLE_MAP:
 logger.info(f"Chosen style: {STYLE_NAME}")
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 FONT_SIZE = settings.get("editor.font_size")
-STATUS_BAR_HEIGHT = int(FONT_SIZE * 1.1)
 AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
@@ -40,6 +39,11 @@ COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")  # noqa: W6
 STATUS_BG = kx.XColor(*settings.get("ui.status.normal"))
 STATUS_BG_WARN = kx.XColor(*settings.get("ui.status.warn"))
 STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
+MAX_LINE_LENGTH = settings.get("linter.max_line_length")
+LINE_LENGTH_HINT_COLOR = settings.get("editor.line_width_color")
+CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=FONT_SIZE).get_extents(text="a")
+CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
+MAX_LINE_WIDTH = CHAR_WIDTH * (MAX_LINE_LENGTH + 1)
 
 
 def _timestamp():
@@ -118,13 +122,13 @@ class CodeEditor(kx.Anchor):
         self.status_file_cursor = kx.Label(halign="right", **status_kw)
         self.status_file_cursor.set_size(hx=0.95)
         self.status_bar_cursor = kx.Anchor()
-        self.status_bar_cursor.set_size(y=STATUS_BAR_HEIGHT)
+        self.status_bar_cursor.set_size(y=LINE_HEIGHT)
         self.status_bar_cursor.add(self.status_cursor_context, self.status_file_cursor)
         # Errors status bar
         self.status_errors = kx.Label(halign="center", **status_kw)
         self.status_errors.set_size(hx=0.95)
         self.status_bar_errors = kx.Anchor()
-        self.status_bar_errors.set_size(y=STATUS_BAR_HEIGHT)
+        self.status_bar_errors.set_size(y=LINE_HEIGHT)
         self.status_bar_errors.add(self.status_errors)
         self.__update_errors_trigger = kx.create_trigger(
             self._update_errors,
@@ -134,6 +138,16 @@ class CodeEditor(kx.Anchor):
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(self.status_bar_cursor, code_frame, self.status_bar_errors)
         self.add(main_frame)
+        # Line length hint
+        with self.canvas.after:
+            kx.Color(*LINE_LENGTH_HINT_COLOR)
+            self.line_width_hint = kx.Rectangle(size=(2, 10_000))
+            kx.Color()
+        self._reposition_line_width_hint()
+        self.code_entry.bind(
+            pos=self._reposition_line_width_hint,
+            size=self._reposition_line_width_hint,
+        )
         # Completion popup
         self.completion_label = kx.Label(
             halign="left",
@@ -435,6 +449,11 @@ class CodeEditor(kx.Anchor):
         self._refresh_line_gutters()
         self.code_entry.scroll_to_cursor()
         self.code_entry.cancel_cursor_pause()
+
+    def _reposition_line_width_hint(self, *args):
+        code = self.code_entry
+        self.line_width_hint.pos = code.x + MAX_LINE_WIDTH, code.y
+        self.line_width_hint.size = 2, code.height
 
     def _on_focus(self, w, focus):
         self.im.active = focus
