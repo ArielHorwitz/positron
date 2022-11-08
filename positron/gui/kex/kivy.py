@@ -14,6 +14,7 @@ from kivy.properties import (
     ListProperty,
     DictProperty,
     OptionProperty,
+    ColorProperty,
     ReferenceListProperty,
 )
 
