@@ -302,6 +302,9 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
             self.set_size(y=35)
 
 
+RE_LEADING_WS = re.compile(r"\s*.")  # noqa: W605
+
+
 class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     """CodeInput with modifications."""
 
@@ -497,12 +500,15 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         cursor = self.cursor
         for lidx in range(start, end + 1):
             line_text = self._lines[lidx]
-            if line_text.startswith(prepend):
-                line_start = self.cursor_index((0, lidx))
-                self.select_text(line_start, line_start + len(prepend))
+            line_ws = RE_LEADING_WS.match(line_text).group()
+            line_start = len(line_ws) - 1
+            line_text_stripped = line_text[line_start:]
+            if line_text_stripped.startswith(prepend):
+                line_start_cursor = self.cursor_index((line_start , lidx))
+                self.select_text(line_start_cursor, line_start_cursor + len(prepend))
                 self.delete_selection()
             else:
-                self.cursor = 0, lidx
+                self.cursor = line_start, lidx
                 self.insert_text(prepend)
         self.select_full_lines(start, end)
         self.cursor = cursor
