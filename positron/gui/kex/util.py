@@ -400,6 +400,17 @@ def _pong(ping_):
     return time.time() * 1000 - ping_
 
 
+class SnoozingTrigger:
+    def __init__(self, *args, **kwargs):
+        self.ev = kv.Clock.create_trigger(*args, **kwargs)
+
+    def __call__(self, *args):
+        if self.ev.is_triggered:
+            self.ev.cancel()
+        self.ev()
+
+
 schedule_once = kv.Clock.schedule_once
 schedule_interval = kv.Clock.schedule_interval
 create_trigger = kv.Clock.create_trigger
+snoozing_trigger = SnoozingTrigger
