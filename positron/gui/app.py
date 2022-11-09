@@ -31,6 +31,10 @@ class App(kx.App):
         self.register_hotkeys()
         self.hook(self.update, FPS)
         logger.info("Finished initialization.")
+        self.bind(current_focus=self._debug_focus)
+
+    def _debug_focus(self, w, focus):
+        logger.debug(f"{focus=}")
 
     def _init_window(self):
         kx.Window.toggle_borderless(WINDOW_BORDERLESS)
