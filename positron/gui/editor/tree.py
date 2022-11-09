@@ -1,126 +1,171 @@
 """Project tree for listing and opening files."""
 
+from loguru import logger
+import arrow
 from pathlib import Path
-from itertools import islice, chain
+import fuzzysearch
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
-from ...util.file import format_dir_tree, search_files
 
 
 FONT = str(FONTS_DIR / settings.get("editor.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
-BREADTH_FIRST = settings.get("project.breadth_first")
-DIR_TREE_DEPTH = settings.get("project.tree_depth")
-FILE_TYPES = set(settings.get("project.file_types"))
-IGNORE_NAMES = set(settings.get("project.ignore_names"))
-IGNORE_MATCHES = set(settings.get("project.ignore_match"))
-GLOBAL_DIRS = [
-    Path(p).expanduser().resolve()
-    for p in settings.get("project.global_folders")
-]
-GLOBAL_FILES = [
-    Path(p).expanduser().resolve()
-    for p in settings.get("project.global_files")
-]
-MAX_FILES = settings.get("project.max_tree_size")
+REFRESH_DELAY = settings.get("project.tree_search_cooldown")
+FUZZY_LDIST = settings.get("project.tree_search_fuzziness")
+CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
+CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
+MISSING_COLOR = "#ff0000"
+FOLDER_COLOR = "#0066ff"
+FILE_COLOR = "#00ff66"
+QUICK_FILE_COLOR = "#00ffff"
 
 
 class ProjectTree(kx.Modal):
-    files = kx.ListProperty()
-
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
-        self.set_size(hx=0.8, hy=0.8)
+        self._quick_file = None
+        self.set_size(hx=0.8, hy=0.9)
         self.make_bg(kx.get_color("cyan", v=0.2))
-        self.title = kx.Label(text="Project Tree")
+        self.title = kx.Label(text=f"[u]Project Tree[/u]\n{self.dtree.root}")
         self.title.set_size(y=40)
+
+        # Quick results
+        self.quick_label = kx.Label(
+            font_name=FONT,
+            font_size=UI_FONT_SIZE,
+        )
+        self.quick_label.set_size(y=40)
 
         # Search
         self.search_entry = kx.Entry(
             font_name=FONT,
             font_size=UI_FONT_SIZE,
-            write_tab=False,
+            halign="center",
             background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
+            select_on_focus=True,
             multiline=False,
         )
         self.search_entry.set_size(y=40)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
-        self.tree_label = kx.Label(
-            font_name=FONT,
+        self.tree_list = kx.List(
+            item_height=LINE_HEIGHT,
+            font=FONT,
             font_size=UI_FONT_SIZE,
-            halign="left",
-            valign="top",
         )
 
         # Assemble
-        panel_frame = kx.Box(orientation="vertical")
-        panel_frame.add(self.search_entry, self.tree_label)
+        self.search_entry.focus_next = self.tree_list
+        self.tree_list.focus_next = self.search_entry
         main_frame = kx.Box(orientation="vertical")
-        main_frame.add(self.title, panel_frame)
+        main_frame.add(
+            self.title,
+            self.quick_label,
+            self.search_entry,
+            self.tree_list,
+        )
         self.add(main_frame)
 
         # Events
-        self.bind(parent=self._on_parent, files=self._on_files)
-        self.search_entry.bind(focus=self._on_search_focus)
-        self._on_search_text(self.search_entry, "")
-        self.im.register("Load", self._do_load, "enter")
-        self.im.register("Load (2)", self._do_load, "numpadenter")
-        self.im.register("New", self._do_new, "^ enter")
-        self.im.register("New (2)", self._do_new, "^ numpadenter")
-        self.im.register("Scroll down", self._scroll_down, "down", allow_repeat=True)
-        self.im.register("Scroll up", self._scroll_up, "up", allow_repeat=True)
-        self.im.register("Page down", lambda: self._scroll_down(10), "pagedown", allow_repeat=True)
-        self.im.register("Page up", lambda: self._scroll_up(10), "pageup", allow_repeat=True)
+        self._refresh_tree = kx.snoozing_trigger(self._do_refresh_tree, REFRESH_DELAY)
+        self._do_refresh_tree()
+        self.bind(parent=self._on_parent)
+        self.im.register("Load", self._on_enter, "enter")
+        self.im.register("Load (2)", self._on_enter, "numpadenter")
+        self.im.register("New", self._on_enter_new, "^ enter")
+        self.im.register("New (2)", self._on_enter_new, "^ numpadenter")
+        self.im.register("Focus tree", self._on_down, "down")
 
-    def _do_new(self):
-        self._do_load(force_new=True)
+    @property
+    def dtree(self):
+        return self.session.dir_tree
 
-    def _do_load(self, force_new: bool = False):
-        if not self.files or force_new:
-            file = self.session.project_path / Path(self.search_entry.text)
-        else:
-            file = self.files[0]
+    def _do_load(self, file: Path):
         self.container.load(file)
-        self.toggle(set_as=False)
+        self.dismiss()
 
-    def _scroll_down(self, count=1):
-        for i in range(count):
-            self.files.append(self.files.pop(0))
+    # Events
+    def _on_enter(self):
+        if self.search_entry.focus:
+            if self._quick_file:
+                self._do_load(self._quick_file)
+        elif self.tree_list.focus:
+            idx = self.tree_list.selection
+            file = self._files[idx]
+            if file.is_file():
+                self._do_load(file)
+            elif file.is_dir():
+                self.search_entry.text = str(file.relative_to(self.dtree.root))
 
-    def _scroll_up(self, count=1):
-        for i in range(count):
-            self.files.insert(0, self.files.pop())
+    def _on_enter_new(self):
+        if self.search_entry.focus:
+            file = self.dtree.root / Path(self.search_entry.text)
+            self._do_load(file)
 
-    def _on_files(self, w, files):
-        project_path = self.session.project_path
-        self.tree_label.text = format_dir_tree(files, relative_dir=project_path)
+    def _on_down(self, *args):
+        if self.search_entry.focus:
+            self.tree_list.focus = True
+        else:
+            self.tree_list.select(delta=1)
 
-    def _on_search_text(self, w, text):
-        gens = []
-        for directory in [self.session.project_path] + GLOBAL_DIRS:
-            gens.append(search_files(
-                dir=directory,
-                pattern=text,
-                ignore_names=IGNORE_NAMES,
-                ignore_matches=IGNORE_MATCHES,
-                file_types=FILE_TYPES,
-                breadth_first=BREADTH_FIRST,
-                depth=DIR_TREE_DEPTH,
-            ))
-        gens.append((p for p in GLOBAL_FILES if text in str(p)))
-        self.files = list(islice(chain(*gens), MAX_FILES))
-
-    def _on_search_focus(self, w, focus):
-        if not focus:
-            kx.schedule_once(self.dismiss, 0)
+    def _on_search_text(self, w, pattern):
+        self._refresh_tree()
 
     def _on_parent(self, w, parent):
         super()._on_parent(w, parent)
         if parent is None:
             return
         self.search_entry.set_focus()
-        self.search_entry.select_all()
-        self._on_search_text(self.search_entry, self.search_entry.text)
+        self.dtree.reindex()
+        self._refresh_tree()
+
+    def _do_refresh_tree(self, *args):
+        root = self.dtree.root
+        items = [str(root)]
+        self._quick_file = None
+        self._files = self._get_tree_files()
+        self.quick_label.text = f"{root}/..."
+        if self._files:
+            items = []
+            append = items.append
+            for f in self._files:
+                path_str = f"$/{f.relative_to(root)}"
+                color = MISSING_COLOR
+                if f.is_dir():
+                    color = FOLDER_COLOR
+                elif f.is_file():
+                    color = FILE_COLOR
+                    if self._quick_file is None:
+                        self._quick_file = f
+                        self.quick_label.text = _wrap_color(path_str, QUICK_FILE_COLOR)
+                append(_wrap_color(path_str, color))
+        self.tree_list.items = items
+        self.tree_list.selection = 0
+
+    def _get_tree_files(self, *args):
+        logger.debug(f"Tree modal refreshing files... {arrow.now()}")
+        root = self.dtree.root
+        pattern = self.search_entry.text
+        if pattern:
+            files = []
+            append = files.append
+            for path in self.dtree.all_paths:
+                fuzzy_matches = fuzzysearch.find_near_matches(
+                    pattern,
+                    str(path.relative_to(root)).lower(),
+                    max_l_dist=FUZZY_LDIST,
+                    max_deletions=0,
+                    max_insertions=FUZZY_LDIST,
+                    max_substitutions=0,
+                )
+                if fuzzy_matches:
+                    append(path)
+        else:
+            files = self.dtree.all_paths
+        return sorted(files, key=self.dtree.sort_folders_key)
+
+
+def _wrap_color(t, color):
+    return f"[color={color}]{t}[/color]"

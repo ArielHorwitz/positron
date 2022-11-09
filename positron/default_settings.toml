@@ -89,21 +89,9 @@ ignore_names = [
     "__pycache__",
     ".pytest_cache",
     ".hypothesis",
-]
-# Ignore any file with the following strings found anywhere in the path
-ignore_match = [
     ".egg-info/",
 ]
-# Folders and files available in every project
-global_folders = [
-  # "~/.local/share/positron/",
-]
-global_files = [
-  # "~/.local/share/positron/settings.toml",
-]
-# How to sort directory tree
-breadth_first = false
-# How many results to show in the directory tree
-max_tree_size = 100
-# How deep to look in the directory tree
-tree_depth = 10
+# How fuzzy to make the tree search (higher = more results)
+tree_search_fuzziness = 20
+# How many seconds to cooldown before searching the project tree
+tree_search_cooldown = 0.1
