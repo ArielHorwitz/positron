@@ -148,5 +148,24 @@ def search_files(
             yield child
 
 
+def yield_children(
+    dir: Path,
+    /,
+    *,
+    file_types: Optional[set[str]] = None,
+    max_children: int = 1_000,
+) -> Iterable[Path]:
+    """Yield children of a directory."""
+    assert dir.is_dir()
+    count = 0
+    for child in dir.iterdir():
+        if file_types and child.is_file() and child.suffix not in file_types:
+            continue
+        yield child
+        count += 1
+        if count > max_children:
+            break
+
+
 USER_DIR = get_usr_dir("positron")
 PROJ_DIR = Path(__file__).parent.parent.parent

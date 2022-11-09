@@ -13,6 +13,7 @@ from jedi.api.classes import Name
 from ..util.file import file_load, file_dump, USER_DIR, FileCursor
 from ..util.code import CodeError
 from .linter import lint_text
+from .tree import DirectoryTree
 
 
 SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
@@ -40,10 +41,11 @@ class Session:
             logger.info("Available environments:")
             logger.info("\n".join(f"  {v.executable}" for v in all_venvs))
             env_path = all_venvs[-1].executable
-        self.env_path = Path(env_path)
+        self.env_path = Path(env_path).expanduser().resolve()
+        self.dir_tree = DirectoryTree(self.project_path)
         self._project = jedi.Project(project_path, environment_path=env_path)
-        logger.info(f"Created project:     {project_path}")
-        logger.info(f"Project environment: {env_path}")
+        logger.info(f"Created project:     {self.project_path}")
+        logger.info(f"Project environment: {self.env_path}")
 
     def get_completions(
         self,
