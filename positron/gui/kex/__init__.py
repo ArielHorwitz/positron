@@ -92,6 +92,7 @@ from .widgets.uix import (
     XModalView as ModalView,
     XModal as Modal,
 )
+from .widgets.list import XList as List
 from .widgets.input_manager import XInputManager as InputManager
 from .widgets.app import XApp as App
 
