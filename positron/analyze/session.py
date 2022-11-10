@@ -37,13 +37,16 @@ class Session:
             project_path = project_path.parent
         self.project_path = project_path.expanduser().resolve()
         if env_path is None:
-            all_venvs = list(jedi.find_virtualenvs(paths=[project_path]))
+            all_venvs = list(jedi.find_virtualenvs(paths=[self.project_path]))
             logger.info("Available environments:")
             logger.info("\n".join(f"  {v.executable}" for v in all_venvs))
             env_path = all_venvs[-1].executable
         self.env_path = Path(env_path).expanduser().resolve()
         self.dir_tree = DirectoryTree(self.project_path)
-        self._project = jedi.Project(project_path, environment_path=env_path)
+        self._project = jedi.Project(
+            str(self.project_path),
+            environment_path=str(self.env_path),
+        )
         logger.info(f"Created project:     {self.project_path}")
         logger.info(f"Project environment: {self.env_path}")
 
@@ -141,6 +144,7 @@ class Session:
         """Search the project."""
         if not string:
             return
+        string = string.strip()
         if do_complete:
             try:
                 yield from self._project.complete_search(string, all_scopes=exhaustive)
