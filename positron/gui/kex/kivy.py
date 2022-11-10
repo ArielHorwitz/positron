@@ -3,7 +3,9 @@
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.config import Config
+from kivy.cache import Cache
 from kivy.core.text import Label as CoreLabel
+from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
 from kivy.core.window import Window, Keyboard
 from kivy.properties import (
     ObjectProperty,

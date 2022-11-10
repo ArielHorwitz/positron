@@ -43,6 +43,7 @@ from .kivy import (
     OptionProperty,
     ReferenceListProperty,
     CoreLabel,
+    CoreMarkupLabel,
 )
 from .util import (
     XWindow as Window,
