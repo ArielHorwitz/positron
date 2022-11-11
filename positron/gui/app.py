@@ -25,6 +25,7 @@ class App(kx.App):
         self.__cleaned_up = False
         self._init_window()
         self.session = session
+        self._project_path_repr = self.session.repr_full_path(self.session.project_path)
         self.im = kx.InputManager(name="App root")
         self.panels = EditorContainer(session)
         self.root.add(self.panels)
@@ -65,4 +66,4 @@ class App(kx.App):
 
     def update(self, dt: float):
         winsize = f"{kx.Window.kivy.width}×{kx.Window.kivy.height}"
-        self.title = f"Positron :: {self.session.project_path} :: {winsize}"
+        self.title = f"Positron :: {self._project_path_repr} :: {winsize}"

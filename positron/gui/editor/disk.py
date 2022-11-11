@@ -72,7 +72,7 @@ class Disk(kx.Modal):
         reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
         paths.extend(BOOKMARKS)
-        reprs.extend(_path_repr(b, name_only=False) for b in BOOKMARKS)
+        reprs.extend(self._path_repr(b, name_only=False) for b in BOOKMARKS)
         # Built-in defaults
         if DEFAULT_BOOKMARKS:
             paths.extend([
@@ -93,9 +93,9 @@ class Disk(kx.Modal):
             path = path.parent
         children = self._get_children(path)
         paths = [path.parent, *children]
-        parent_repr = f"{path}/" if path != Path("/") else str(path)
+        parent_repr = self.session.repr_full_path(path)
         reprs = [_wrap_color(parent_repr, PARENT_COLOR)]
-        reprs.extend(_path_repr(c, name_only=True) for c in children)
+        reprs.extend(self._path_repr(c, name_only=True) for c in children)
         self._current_paths = paths
         self._current_reprs = reprs
         self._trigger_refresh_items()
@@ -149,17 +149,16 @@ class Disk(kx.Modal):
         func = self.session.dir_tree.get_children_from_disk
         return func(path, use_file_types=False, use_path_filter=False)
 
-
-def _path_repr(p: Path, name_only: bool) -> str:
-    name = p.name if name_only else str(p)
-    if p.is_dir():
-        color = FOLDER_COLOR
-        name = f"{name}/"
-    elif p.is_file():
-        color = FILE_COLOR
-    else:
-        color = MISSING_COLOR
-    return _wrap_color(name, color)
+    def _path_repr(self, p: Path, name_only: bool) -> str:
+        name = p.name if name_only else self.session.repr_full_path(p)
+        if p.is_dir():
+            color = FOLDER_COLOR
+            name = f"{name}/"
+        elif p.is_file():
+            color = FILE_COLOR
+        else:
+            color = MISSING_COLOR
+        return _wrap_color(name, color)
 
 
 def _wrap_color(t, color):

@@ -101,3 +101,9 @@ default_bookmarks = true
 tree_search_fuzziness = 20
 # How many seconds to cooldown before searching the project tree
 tree_search_cooldown = 0.1
+# When displaying paths, replace using these prefixes (first one that matches)
+path_prefixes = [
+    # "/folder/path/;PREFIX",  # Displays "/folder/path/file.py" as "PREFIX/file.py"
+    "~/.local/share/positron/;$POSITRON",  # Positron config folder
+    "~;~",  # Home folder
+]

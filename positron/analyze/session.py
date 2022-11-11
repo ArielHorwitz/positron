@@ -12,9 +12,16 @@ from jedi import Script
 from jedi.api.classes import Name
 from ..util.file import file_load, file_dump, USER_DIR, FileCursor
 from ..util.code import CodeError
+from ..util import settings
 from .linter import lint_text
 from .tree import DirectoryTree
 
+
+PATH_PREFIXES = {}
+for replacement in settings.get("project.path_prefixes"):
+    original, new = replacement.split(";")
+    original = Path(original).expanduser().resolve()
+    PATH_PREFIXES[original] = new
 
 SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
 SESSION_FILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
@@ -22,11 +29,6 @@ if not SESSION_FILES_CACHE.exists():
     file_dump(SESSION_FILES_CACHE, "{}")
 RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
 RE_NEWLINE = re.compile(r"\n")
-
-
-def _title_break(text: str) -> str:
-    text = f"  {text}  "
-    return f"\n{text:≡^50}\n"
 
 
 class Session:
@@ -200,6 +202,17 @@ class Session:
         session_cache[path] = file_cursors
         file_dump(SESSION_FILES_CACHE, json.dumps(session_cache, indent=4))
 
+    @staticmethod
+    def repr_full_path(p: Path) -> str:
+        p = p.expanduser().resolve()
+        for prefixed_path, replacement in PATH_PREFIXES.items():
+            if p.is_relative_to(prefixed_path):
+                relative = p.relative_to(prefixed_path)
+                if relative == Path("."):
+                    return replacement
+                return f"{replacement}/{relative}"
+        return str(p)
+
 
 def _convert_str_filecursor(s: str) -> FileCursor:
     if "::" not in s:
@@ -257,3 +270,8 @@ def _format_object_debug(obj: Name) -> str:
         value = repr(value)[:50]
         strs.append(f"  {keyname:<20} {value}")
     return "\n".join(strs)
+
+
+def _title_break(text: str) -> str:
+    text = f"  {text}  "
+    return f"\n{text:≡^50}\n"
