@@ -55,17 +55,17 @@ class Disk(kx.Modal):
         self.bind(parent=self._on_parent)
         self.tree_list.bind(on_invoked=self._on_invoked)
         self.im.register("Browse back", self._browse_back, "backspace")
-        self.im.register("Browse project", self._browse_project, "home")
-        self.im.register("Browse bookmarks", self._browse_bookmarks, "^ home")
+        self.im.register("Browse bookmarks", self._browse_bookmarks, "home")
+        self.im.register("Browse project", self._browse_project, "^ home")
         self.im.register("Open path", self._open_path, ["^ enter", "^ numpadenter"])
         help_label.text = "\n".join([
             "[u]ctrl + enter[/u] : open in a new window",
-            "        [u]home[/u] : project folder",
-            " [u]ctrl + home[/u] : bookmarks",
+            "        [u]home[/u] : bookmarks",
+            " [u]ctrl + home[/u] : project folder",
             "   [u]backspace[/u] : back",
         ])
         help_label.set_size(y=LINE_HEIGHT * 6)
-        self._set_dir(self.session.dir_tree.root)
+        self._browse_bookmarks()
 
     def _create_bookmarks(self):
         paths = [USER_DIR]
