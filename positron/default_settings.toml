@@ -92,11 +92,11 @@ ignore_names = [
     ".egg-info/",
 ]
 # Paths on disk for quick access in disk browser
-disk_bookmarks = [
+bookmarks = [
     # "~/path/to/projects/",
 ]
 # Include default bookmarks
-disk_bookmarks_defaults = true
+default_bookmarks = true
 # How fuzzy to make the tree search (higher = more results)
 tree_search_fuzziness = 20
 # How many seconds to cooldown before searching the project tree

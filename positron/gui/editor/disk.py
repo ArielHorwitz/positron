@@ -10,10 +10,10 @@ from ...util.file import USER_DIR
 
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
-DEFAULT_BOOKMARKS = settings.get("project.disk_bookmarks_defaults")
+DEFAULT_BOOKMARKS = settings.get("project.default_bookmarks")
 BOOKMARKS = tuple(
     Path(b).expanduser().resolve()
-    for b in settings.get("project.disk_bookmarks")
+    for b in settings.get("project.bookmarks")
 )
 CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
 CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
