@@ -12,6 +12,7 @@ from .snippets import Snippets
 from .analysis import Analysis
 from .errors import Errors
 from .search import Search
+from .disk import Disk
 
 
 class Panel(kx.Anchor):
@@ -34,6 +35,7 @@ class Panel(kx.Anchor):
             (Analysis, "analysis", "^+ a"),
             (Errors, "errors", "^+ e"),
             (Search, "search", "^+ f"),
+            (Disk, "disk", "^ k"),
         ]
         self.modals = {}
         for modal_cls, name, hotkey in modals:
