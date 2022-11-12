@@ -107,7 +107,7 @@ class XList(kv.FocusBehavior, XRelative):
         self.canvas.clear()
         height = self.height
         item_height = self.item_height
-        rect_count = max(1, math.ceil(height / item_height))
+        rect_count = max(1, int(height / item_height))
         size = self.width, item_height
         self._rects = []
         append = self._rects.append
