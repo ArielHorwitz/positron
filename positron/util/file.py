@@ -96,16 +96,23 @@ def _child_sort(child, breadth_first):
 
 
 def yield_children(
-    dir: Path,
+    path: Path,
     /,
     *,
     file_types: Optional[set[str]] = None,
     max_children: int = 1_000,
 ) -> Iterable[Path]:
     """Yield children of a directory."""
-    assert dir.is_dir()
+    assert path.is_dir()
     count = 0
-    for child in dir.iterdir():
+    try:
+        next(path.iterdir())
+    except PermissionError:
+        logger.info(f"Permission denied, skipping: {path}")
+        return
+    except StopIteration:
+        return
+    for child in path.iterdir():
         if file_types and child.is_file() and child.suffix not in file_types:
             continue
         yield child
