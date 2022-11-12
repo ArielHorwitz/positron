@@ -1,6 +1,7 @@
 """Writing, loading, and opening files."""
 
 from typing import Optional, Iterable
+from loguru import logger
 from dataclasses import dataclass
 import os
 import subprocess
@@ -111,6 +112,53 @@ def yield_children(
         count += 1
         if count > max_children:
             break
+
+
+def search_text(
+    pattern: str,
+    files: Iterable[Path],
+    /,
+    *,
+    use_regex: bool = False,
+    case_sensitive: bool = False,
+    max_results: int = 0,
+) -> list[tuple[FileCursor, str]]:
+    """Use grep to find a pattern in files."""
+    command_args = [
+        "grep",
+        "--with-filename",
+        "--line-num",
+        "--binary-files=without-match",
+        "--ignore-case" if case_sensitive else "--no-ignore-case",
+        "--basic-regexp" if use_regex else "--fixed-strings",
+        pattern,
+    ]
+    results = []
+    count = 0
+    append = results.append
+    for file in files:
+        if not file.is_file():
+            continue
+        r = subprocess.run(command_args + [str(file)], capture_output=True, text=True)
+        if r.stderr:
+            raise ChildProcessError(r.stderr)
+        grep_output = r.stdout
+        for result in grep_output.split("\n"):
+            if not result:
+                continue
+            file, line, text = result.split(":", 2)
+            try:
+                file = Path(file)
+                line = int(line)
+            except ValueError:
+                logger.warning(f"Unexpected format from grep output: {line!r}")
+                continue
+            col = text.find(pattern)
+            append((FileCursor(file, (line, col)), text))
+            count += 1
+            if max_results and count >= max_results:
+                return results
+    return results
 
 
 USER_DIR = get_usr_dir("positron")
