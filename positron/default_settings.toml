@@ -63,8 +63,6 @@ exclude = [
 
 
 [project]
-# Maximum search results to show
-max_search_results = 20
 # Default project to open
 default = "~/positron-example.txt"
 # For new projects open the following files
@@ -93,16 +91,20 @@ ignore_names = [
     ".hypothesis",
     ".egg-info/",
 ]
+# How fuzzy to make the tree search (higher = more results)
+tree_search_fuzziness = 20
+# How many seconds to cooldown before searching the project tree
+tree_search_cooldown = 0.1
+# Maximum text search results to show
+max_search_results = 100
+# How many seconds to cooldown before searching the entrie project for text
+text_search_cooldown = 0.2
 # Paths on disk for quick access in disk browser
 bookmarks = [
     # "~/path/to/projects/",
 ]
 # Include default bookmarks
 default_bookmarks = true
-# How fuzzy to make the tree search (higher = more results)
-tree_search_fuzziness = 20
-# How many seconds to cooldown before searching the project tree
-tree_search_cooldown = 0.1
 # When displaying paths, replace using these prefixes (first one that matches)
 path_prefixes = [
     # "/folder/path/;PREFIX",  # Displays "/folder/path/file.py" as "PREFIX/file.py"

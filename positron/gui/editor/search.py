@@ -1,19 +1,22 @@
 """Project search."""
 
-from itertools import islice
+from loguru import logger
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
+from ...util.file import file_load, search_text
 
 
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
 MAX_RESULTS = settings.get("project.max_search_results")
+REFRESH_DELAY = settings.get("project.text_search_cooldown")
 # TODO find more reliable method - CHAR_WIDTH may only work with the builtin font
 CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="A")
 CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 CHAR_WIDTH -= 1
 DESCRIPTION_COLOR = "#44dd44"
 LOCATION_COLOR = "#bb44bb"
+CONTEXT_COLOR = "#22bbbb"
 
 
 class Search(kx.Modal):
@@ -32,84 +35,104 @@ class Search(kx.Modal):
             font_size=UI_FONT_SIZE,
             halign="center",
             write_tab=False,
-            background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
+            background_color=(0.04, 0.12, 0.2, 1),
             multiline=False,
         )
         self.search_entry.set_size(y=40)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
-        self.results_label = kx.Label(
-            font_name=FONT,
+        self.results_list = kx.List(
+            font=FONT,
             font_size=UI_FONT_SIZE,
-            halign="left",
-            valign="top",
+            on_invoke=self._on_invoke,
+            item_height=LINE_HEIGHT * 4,
         )
 
         # Assemble
         panel_frame = kx.Box(orientation="vertical")
-        panel_frame.add(self.search_entry, self.results_label)
+        panel_frame.add(self.search_entry, self.results_list)
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(self.title, panel_frame)
         self.add(main_frame)
+        self.search_entry.focus_next = self.results_list
+        self.results_list.focus_next = self.search_entry
 
         # Events
+        self._refresh_results = kx.snoozing_trigger(
+            self._do_refresh_results,
+            REFRESH_DELAY,
+        )
         self.bind(parent=self._on_parent)
-        self.search_entry.bind(focus=self._on_search_focus)
-        self._on_search_text()
         self.im.register("Load", self._do_load, "enter")
         self.im.register("Load (2)", self._do_load, "numpadenter")
-        self.im.register("Scroll down", self._scroll_down, "down", allow_repeat=True)
-        self.im.register("Scroll up", self._scroll_up, "up", allow_repeat=True)
-        self.im.register(
-            "Page down", lambda: self._scroll_down(10), "pagedown", allow_repeat=True,
-        )
-        self.im.register(
-            "Page up", lambda: self._scroll_up(10), "pageup", allow_repeat=True,
-        )
+        self.im.register("Focus ", self._on_down_arrow, "down")
 
-    def _do_load(self):
-        if not self._results:
-            return
-        editor = self.container.code_editor
-        result = self._results[0]
-        editor.load(result.module_path)
-        editor.set_cursor(result.line, result.column)
+    def _do_load(self, result=None):
+        if result is None:
+            if not self._results:
+                return
+            result = self._results[self.results_list.selection]
+        location, text = result
+        self.container.code_editor.load(location.file, cursor=location.cursor)
         self.dismiss()
 
-    def _scroll_down(self, count=1):
-        for i in range(count):
-            self._results.append(self._results.pop(0))
-        self._refresh_results()
+    def _on_down_arrow(self):
+        if self.search_entry.focus:
+            self.results_list.focus = True
+        elif self.results_list.focus:
+            self.results_list.select(delta=1)
 
-    def _scroll_up(self, count=1):
-        for i in range(count):
-            self._results.insert(0, self._results.pop())
-        self._refresh_results()
+    def _on_invoke(self, w, index, label):
+        self._do_load(self._results[index])
 
-    def _refresh_results(self, *args):
-        lines = []
-        append = lines.append
-        line_width = max(1, int(self.results_label.width / CHAR_WIDTH))
-        module_width = line_width - 12
-        for r in self._results:
-            mod_name = f" {r.module_name}"
-            append(_wrap_color(
-                f"{mod_name:¯>{module_width}} ::{r.line:>5},{r.column:>3}",
-                LOCATION_COLOR,
-            ))
-            desc = f"{r.description[:line_width]:<{line_width}}"
-            append(_wrap_color(desc, DESCRIPTION_COLOR))
-        self.results_label.text = "\n".join(lines)
+    def _do_refresh_results(self, *args):
+        pattern = self.search_entry.text
+        results = None
+        if pattern:
+            results = search_text(
+                pattern,
+                self.session.dir_tree.all_paths,
+                max_results=MAX_RESULTS,
+            )
+        logger.debug(f"{len(results)=}" if results else "No results")
+        self._results = results
+        self._refresh_list()
+
+    def _refresh_list(self, *args):
+        root = self.session.dir_tree.root
+        items = []
+        append = items.append
+        if not self._results:
+            self.results_list.items = ["No results."]
+            return
+        line_width = int(self.results_list.width / CHAR_WIDTH) - 1
+        get_context = self.session.get_context
+        for location, text in self._results:
+            if location.file.suffix == ".py":
+                context = get_context(
+                    path=location.file,
+                    code=file_load(location.file),
+                    line=location.cursor[0],
+                    col=location.cursor[1],
+                ).full_name
+            else:
+                context = location.file.name
+            context = context[-line_width:]
+            file = f"$/{location.file.relative_to(root)}"[-line_width:]
+            cursor = f"{location.cursor[0]:>4},{location.cursor[1]:>3}"
+            loc = f"{file} ::{cursor}"
+            text = kx.escape_markup(text).strip()[:line_width]
+            item = "\n".join([
+                _wrap_color(loc, LOCATION_COLOR),
+                _wrap_color(context, CONTEXT_COLOR),
+                _wrap_color(text, DESCRIPTION_COLOR),
+            ])
+            append(item)
+        self.results_list.items = items
 
     def _on_search_text(self, *args):
-        results = self.session.search_project(self.search_entry.text)
-        self._results = list(islice(results, MAX_RESULTS))
         self._refresh_results()
-
-    def _on_search_focus(self, w, focus):
-        if not focus:
-            kx.schedule_once(self.dismiss, 0)
 
     def _on_parent(self, w, parent):
         super()._on_parent(w, parent)
