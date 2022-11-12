@@ -44,6 +44,7 @@ from .kivy import (
     ReferenceListProperty,
     CoreLabel,
     CoreMarkupLabel,
+    escape_markup,
 )
 from .util import (
     XWindow as Window,
