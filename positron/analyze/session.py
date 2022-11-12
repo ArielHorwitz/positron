@@ -38,6 +38,7 @@ class Session:
             self.__file_mode = project_path
             project_path = project_path.parent
         self.project_path = project_path.expanduser().resolve()
+        logger.info(f"Creating project:     {self.project_path}")
         if env_path is None:
             all_venvs = list(jedi.find_virtualenvs(paths=[self.project_path]))
             logger.info("Available environments:")
@@ -49,8 +50,10 @@ class Session:
             str(self.project_path),
             environment_path=str(self.env_path),
         )
-        logger.info(f"Created project:     {self.project_path}")
-        logger.info(f"Project environment: {self.env_path}")
+        logger.info(
+            f"Created project {self.project_path}"
+            f" with environment: {self.env_path}"
+        )
 
     def get_completions(
         self,
