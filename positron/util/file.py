@@ -5,9 +5,7 @@ from dataclasses import dataclass
 import os
 import subprocess
 import platform
-import fuzzysearch
 from pathlib import Path
-from itertools import islice
 import tomli
 
 
@@ -94,58 +92,6 @@ def format_dir_tree(
 def _child_sort(child, breadth_first):
     dir_val = child.is_dir() if breadth_first else not child.is_dir()
     return f"{int(dir_val)}{child}"
-
-
-def search_files(
-    dir: Path,
-    pattern: str,
-    ignore_names: Optional[set[str]] = None,
-    ignore_matches: Optional[set[str]] = None,
-    file_types: Optional[set[str]] = None,
-    breadth_first: bool = True,
-    max_branching: int = 100,
-    depth: int = 10,
-) -> Iterable[Path]:
-    """Generator of files in *dir* using *pattern*."""
-    pattern = pattern.lower()
-    ignore_names = [] if ignore_names is None else ignore_names
-    ignore_matches = [] if ignore_matches is None else ignore_matches
-
-    children = islice(dir.iterdir(), max_branching)
-    for child in sorted(children, key=lambda x: _child_sort(x, breadth_first)):
-        name = child.name
-        if name in ignore_names:
-            continue
-        s = str(child)
-        if any(match in s for match in ignore_matches):
-            continue
-        if child.is_dir():
-            if depth == 0:
-                yield child
-            else:
-                yield from search_files(
-                    child,
-                    pattern,
-                    ignore_names,
-                    ignore_matches,
-                    file_types,
-                    depth=depth - 1,
-                )
-        elif child.is_file():
-            if pattern:
-                fuzzy_matches = fuzzysearch.find_near_matches(
-                    pattern,
-                    s.lower(),
-                    max_l_dist=10,
-                    max_deletions=0,
-                    max_insertions=10,
-                    max_substitutions=0,
-                )
-                if not fuzzy_matches:
-                    continue
-            if file_types and child.suffix[1:] not in file_types:
-                continue
-            yield child
 
 
 def yield_children(
