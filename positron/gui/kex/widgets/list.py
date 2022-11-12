@@ -1,8 +1,6 @@
 """List widget."""
 
 from typing import Optional
-# from loguru import logger
-import math
 from .. import kivy as kv
 from ..util import text_texture
 from .layouts import XRelative
@@ -26,6 +24,8 @@ class XList(kv.FocusBehavior, XRelative):
     items = kv.ListProperty()
     selection = kv.NumericProperty(0)
     paging_size = kv.NumericProperty(None)
+    indicator_width = kv.NumericProperty(5)
+    indicator_color = kv.ColorProperty([0.5, 0.5, 0.5, 0.5])
     # TODO implement bg colors
     bg_color = kv.ColorProperty([0.05, 0.075, 0.1, 1])
     bg_color_alt = kv.ColorProperty([0.05, 0.1, 0.075, 1])
@@ -52,16 +52,19 @@ class XList(kv.FocusBehavior, XRelative):
             item_height=self._refresh_label_kwargs,
             font=self._refresh_label_kwargs,
             font_size=self._refresh_label_kwargs,
+            indicator_color=self._refresh_scroll_indicator_color,
             _label_kwargs=self._on_label_kwargs,
         )
 
-    def _on_items(self, *args):
+    def _on_items(self, w, items):
         assert len(self.items) > 0
         self.select()
         self._refresh_items()
+        self._refresh_scroll_indicator()
 
     def _on_scroll(self, *args):
         self._refresh_items()
+        self._refresh_scroll_indicator()
 
     def select(self, index: Optional[int] = None, /, *, delta: int = 0):
         if index is None:
@@ -86,6 +89,35 @@ class XList(kv.FocusBehavior, XRelative):
         self._selection_rect.pos = self._get_rect_pos(offset)
         self._selection_rect.size = self._rects[offset].size
 
+    def _refresh_scroll_indicator(self, *args):
+        scroll = self.scroll
+        rect_count = len(self._rects)
+        item_count = len(self.items)
+        widget_height = self.height
+        indicator_width = self.indicator_width
+        # Find relative scroll of indicator top and bottom edges
+        indicator_rel_top = 1 - scroll / item_count
+        indicator_rel_height = min(rect_count, item_count) / item_count
+        indicator_rel_bot = max(0, indicator_rel_top - indicator_rel_height)
+        # Adjust based on widget size
+        indicator_height = widget_height * indicator_rel_height
+        indicator_y = widget_height * indicator_rel_bot
+        indicator_x = self.width - indicator_width
+        # Sometimes we are asked to refresh when not all properties have finished
+        # updating, let's gracefully handle that by pretending we see the entire list
+        broken_geometry = (
+            (not 0 <= indicator_rel_bot <= indicator_rel_top <= 1)
+            or (not 0 <= indicator_rel_height <= 1)
+        )
+        if broken_geometry:
+            indicator_height = widget_height
+            indicator_y = 0
+        self._scroll_indicator.pos = self.x + indicator_x, self.y + indicator_y
+        self._scroll_indicator.size = indicator_width, indicator_height
+
+    def _refresh_scroll_indicator_color(self, *args):
+        self._scroll_indicator_color.rgba = self.indicator_color
+
     def _on_geometry(self, *args):
         self._bg.size = self.size
         self._bg.pos = self.pos
@@ -102,6 +134,8 @@ class XList(kv.FocusBehavior, XRelative):
         with self.canvas.after:
             self._selection_rect_color = kv.Color(0, 0.5, 0.5, 0.5)
             self._selection_rect = kv.Rectangle(source=OUTLINE, size=(50, 50))
+            self._scroll_indicator_color = kv.Color(*self.indicator_color)
+            self._scroll_indicator = kv.Rectangle()
 
     def _refresh_graphics(self, *args):
         self.canvas.clear()
@@ -118,6 +152,7 @@ class XList(kv.FocusBehavior, XRelative):
                 append(rect)
         self._refresh_items()
         self._refresh_selection_graphics()
+        self._refresh_scroll_indicator()
 
     def _get_rect_pos(self, idx: int):
         x, y = self.to_window(*self.pos)
@@ -164,7 +199,7 @@ class XList(kv.FocusBehavior, XRelative):
         selection = self.selection
         line_count = len(self._rects)
         min_scroll = max(0, selection - line_count + 1)
-        max_scroll = selection
+        max_scroll = min(selection, len(self.items) - line_count)
         new_scroll = max(min_scroll, min(scroll, max_scroll))
         is_new_scroll = new_scroll != self._scroll
         self._scroll = new_scroll
