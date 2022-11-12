@@ -4,6 +4,7 @@ from loguru import logger
 from pathlib import Path
 import os.path
 import re
+import arrow
 from dataclasses import dataclass, field
 from ..util.file import yield_children
 from ..util.time import pingpong, pong
@@ -36,6 +37,7 @@ class DirectoryTree:
         self._cache = {self.root: _CachedDir(self.root)}
         self._all_paths = {self.root}
         self._sorted_tree = [self.root]
+        self.last_modified = -1
         self.reindex()
 
     @property
@@ -83,6 +85,7 @@ class DirectoryTree:
             # Refresh if cache is invalidated by modification time
             modified = os.path.getmtime(path)
             if cdir.modified != modified:
+                self.last_modified = arrow.now()
                 require_sort = True
                 cdir.modified = modified
                 # Update children and paths

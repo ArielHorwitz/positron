@@ -8,7 +8,7 @@ from .. import kex as kx, FONTS_DIR
 from ...util import settings
 
 
-FONT = str(FONTS_DIR / settings.get("editor.font"))
+FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
 REFRESH_DELAY = settings.get("project.tree_search_cooldown")
 FUZZY_LDIST = settings.get("project.tree_search_fuzziness")
@@ -24,11 +24,12 @@ class ProjectTree(kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
+        self._last_modified = self.dtree.last_modified.shift(seconds=-1)
         self._quick_file = None
         self.set_size(hx=0.8, hy=0.9)
         self.make_bg(kx.get_color("cyan", v=0.2))
-        self.title = kx.Label(text=f"[u]Project Tree[/u]\n{self.dtree.root}")
-        self.title.set_size(y=40)
+        self.title = kx.Label(font_name=FONT, font_size=UI_FONT_SIZE)
+        self.title.set_size(y=LINE_HEIGHT * 3)
 
         # Quick results
         self.quick_label = kx.Label(
@@ -67,6 +68,7 @@ class ProjectTree(kx.Modal):
             self.tree_list,
         )
         self.add(main_frame)
+        self._refresh_title()
 
         # Events
         self._refresh_tree = kx.snoozing_trigger(self._do_refresh_tree, REFRESH_DELAY)
@@ -143,6 +145,7 @@ class ProjectTree(kx.Modal):
                 append(_wrap_color(path_str, color))
         self.tree_list.items = items
         self.tree_list.selection = 0
+        self._refresh_title()
 
     def _get_tree_files(self, *args):
         logger.debug(f"Tree modal refreshing files... {arrow.now()}")
@@ -165,6 +168,13 @@ class ProjectTree(kx.Modal):
         else:
             files = self.dtree.all_paths
         return sorted(files, key=self.dtree.sort_folders_key)
+
+    def _refresh_title(self):
+        if self.dtree.last_modified == self._last_modified:
+            return
+        self._last_modified = self.dtree.last_modified
+        file_count = sum(p.is_file() for p in self.dtree.all_paths)
+        self.title.text = f"[u]Project Tree[/u] ({file_count} files)\n{self.dtree.root}"
 
 
 def _wrap_color(t, color):
