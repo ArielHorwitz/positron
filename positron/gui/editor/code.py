@@ -213,7 +213,14 @@ class CodeEditor(kx.Anchor):
         self.__disk_diff = False
         self._on_cursor()
 
-    def load(self, file: Optional[Path] = None, reset_cursor: bool = True):
+    def load(
+        self,
+        file: Optional[Path] = None,
+        /,
+        *,
+        reset_cursor: bool = True,
+        cursor: Optional[tuple[int, int]] = None,
+    ):
         if file is None:
             file = self._current_file
         self._current_file = file
@@ -227,12 +234,16 @@ class CodeEditor(kx.Anchor):
         self.__disk_modified_time = self._get_disk_mod_date(file)
         self.__disk_cache = text
         self.__disk_diff = False
-        cursor = self.code_entry.cursor
+        old_cursor = self.code_entry.cursor
         self.code_entry.text = text
-        if reset_cursor:
-            self.code_entry.reset_cursor_selection()
+        if reset_cursor or cursor is not None:
+            if cursor:
+                self.set_cursor(*cursor)
+            else:
+                self.code_entry.reset_cursor_selection()
         else:
-            self.code_entry.cursor = cursor
+            self.code_entry.cursor = old_cursor
+        self.code_entry.cancel_cursor_pause()
 
     def reload(self, *args):
         self.load(reset_cursor=False)
@@ -274,7 +285,7 @@ class CodeEditor(kx.Anchor):
         self.code_entry.lexer = lexer
 
     def _open_settings(self):
-        self.load(file=settings.SETTINGS_FILE)
+        self.load(settings.SETTINGS_FILE)
 
     # Cursor management
     @property
