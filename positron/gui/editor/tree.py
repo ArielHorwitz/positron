@@ -12,6 +12,7 @@ FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
 REFRESH_DELAY = settings.get("project.tree_search_cooldown")
 FUZZY_LDIST = settings.get("project.tree_search_fuzziness")
+FUZZY_THRESHOLD_COUNT = settings.get("project.tree_fuzzy_threshold_count")
 CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
 CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 MISSING_COLOR = "#ff0000"
@@ -148,25 +149,29 @@ class ProjectTree(kx.Modal):
         self._refresh_title()
 
     def _get_tree_files(self, *args):
-        logger.debug(f"Tree modal refreshing files... {arrow.now()}")
+        logger.debug(f"Tree modal refreshing files from {self.dtree} {arrow.now()}")
         root = self.dtree.root
-        pattern = self.search_entry.text
+        pattern = self.search_entry.text.lower()
+        files = all_paths = self.dtree.all_paths
+        do_fuzzy = self.fuzzy_enabled
         if pattern:
             files = []
             append = files.append
-            for path in self.dtree.all_paths:
-                fuzzy_matches = fuzzysearch.find_near_matches(
-                    pattern,
-                    str(path.relative_to(root)).lower(),
-                    max_l_dist=FUZZY_LDIST,
-                    max_deletions=0,
-                    max_insertions=FUZZY_LDIST,
-                    max_substitutions=0,
-                )
-                if fuzzy_matches:
+            for path in all_paths:
+                path_str = str(path.relative_to(root)).lower()
+                if do_fuzzy:
+                    match = fuzzysearch.find_near_matches(
+                        pattern,
+                        path_str,
+                        max_l_dist=FUZZY_LDIST,
+                        max_deletions=0,
+                        max_insertions=FUZZY_LDIST,
+                        max_substitutions=0,
+                    )
+                else:
+                    match = pattern in path_str
+                if match:
                     append(path)
-        else:
-            files = self.dtree.all_paths
         return sorted(files, key=self.dtree.sort_folders_key)
 
     def _refresh_title(self):
@@ -174,7 +179,14 @@ class ProjectTree(kx.Modal):
             return
         self._last_modified = self.dtree.last_modified
         file_count = sum(p.is_file() for p in self.dtree.all_paths)
-        self.title.text = f"[u]Project Tree[/u] ({file_count} files)\n{self.dtree.root}"
+        fuzzy_warn = "" if self.fuzzy_enabled else " (no fuzzy search)"
+        self.title.text = (
+            f"[u]Project Tree:[/u] {file_count} files{fuzzy_warn}\n{self.dtree.root}"
+        )
+
+    @property
+    def fuzzy_enabled(self):
+        return len(self.dtree.all_paths) <= FUZZY_THRESHOLD_COUNT
 
 
 def _wrap_color(t, color):
