@@ -94,7 +94,7 @@ class Disk(kx.Modal):
         children = self._get_children(path)
         paths = [path.parent, *children]
         parent_repr = self.session.repr_full_path(path)
-        reprs = [_wrap_color(parent_repr, PARENT_COLOR)]
+        reprs = [_wrap_color(kx.escape_markup(parent_repr), PARENT_COLOR)]
         reprs.extend(self._path_repr(c, name_only=True) for c in children)
         self._current_paths = paths
         self._current_reprs = reprs

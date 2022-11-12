@@ -133,7 +133,7 @@ class ProjectTree(kx.Modal):
             items = []
             append = items.append
             for f in self._files:
-                path_str = f"$/{f.relative_to(root)}"
+                path_str = kx.escape_markup(f"$/{f.relative_to(root)}")
                 color = MISSING_COLOR
                 if f.is_dir():
                     color = FOLDER_COLOR
