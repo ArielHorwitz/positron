@@ -91,6 +91,8 @@ ignore_names = [
     ".hypothesis",
     ".egg-info/",
 ]
+# Maximum seconds to try indexing directories
+indexing_timeout = 10
 # How fuzzy to make the tree search (higher = more results)
 tree_search_fuzziness = 20
 # How many seconds to cooldown before searching the project tree

@@ -14,7 +14,7 @@ from ..util import settings
 FILE_TYPES = set((f".{ft}" if ft else ft) for ft in settings.get("project.file_types"))
 IGNORE_MATCHES = settings.get("project.ignore_names")
 RE_IGNORE_PATHS = re.compile("|".join(IGNORE_MATCHES)) if IGNORE_MATCHES else None
-INDEX_TIMEOUT_MS = 2000
+INDEX_TIMEOUT_MS = settings.get("project.indexing_timeout") * 1000
 
 
 @dataclass
