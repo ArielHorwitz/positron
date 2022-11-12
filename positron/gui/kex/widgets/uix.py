@@ -146,7 +146,7 @@ class XEntryMixin:
     cursor_pause_timeout = kv.NumericProperty(0.5)
     cursor_scroll_offset = kv.NumericProperty(5)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, fix_scroll_to_line: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
         self._focus_background_color(False)
         self.register_event_type("on_cursor_pause")
@@ -155,6 +155,8 @@ class XEntryMixin:
             cursor=self._on_cursor_for_pause,
             cursor_pause_timeout=self._reset_cursor_pause_trigger,
         )
+        if fix_scroll_to_line:
+            self.bind(scroll_y=self._on_scroll_y, size=self._on_size_fix_scroll)
 
     def visible_line_range(self):
         top_line = round(self.scroll_y / self.line_height)
@@ -265,6 +267,17 @@ class XEntryMixin:
         ev = self.__trigger_cursor_pause
         if ev.is_triggered:
             ev.cancel()
+
+    def _on_size_fix_scroll(self, *args):
+        kv.Clock.schedule_once(self.fix_scroll_to_line)
+
+    def fix_scroll_to_line(self, *args):
+        line = round(self.scroll_y / self.line_height)
+        self.scroll_y = line * self.line_height
+
+    def _on_scroll_y(self, w, scroll_y):
+        self.fix_scroll_to_line()
+        return True
 
 
 class XEntry(XEntryMixin, XWidget, kv.TextInput):
