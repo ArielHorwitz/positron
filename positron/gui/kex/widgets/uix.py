@@ -148,13 +148,15 @@ class XEntryMixin:
 
     def __init__(self, *args, fix_scroll_to_line: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
-        self._focus_background_color(False)
+        self._on_any_focus()
         self.register_event_type("on_cursor_pause")
         self._reset_cursor_pause_trigger()
         self.bind(
             cursor=self._on_cursor_for_pause,
             cursor_pause_timeout=self._reset_cursor_pause_trigger,
+            focus=self._on_any_focus,
         )
+        kv.Window.bind(focus=self._on_any_focus)
         if fix_scroll_to_line:
             self.bind(scroll_y=self._on_scroll_y, size=self._on_size_fix_scroll)
 
@@ -210,7 +212,6 @@ class XEntryMixin:
         """
         self._fix_textinput_modifiers()
         super()._on_textinput_focused(w, focus)
-        self._focus_background_color(focus)
         if focus and self.select_on_focus:
             self.select_all()
 
@@ -220,7 +221,8 @@ class XEntryMixin:
         self._alt_l = False
         self._alt_r = False
 
-    def _focus_background_color(self, focus):
+    def _on_any_focus(self, *args):
+        focus = kv.Window.focus and self.focus
         if not self.focus_brighter:
             return
         if self._background_color_focused is None:
