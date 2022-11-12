@@ -14,10 +14,10 @@ from loguru import logger
 from typing import Optional, Any, Iterator
 from pathlib import Path
 import shutil
-from .file import USER_DIR, PROJ_DIR, toml_load
+from .file import SETTINGS_DIR, PROJ_DIR, toml_load
 
 
-SETTINGS_FILE = USER_DIR / "settings.toml"
+SETTINGS_FILE = SETTINGS_DIR / "settings.toml"
 DEFAULT_SETTINGS_FILE = PROJ_DIR / "positron" / "default_settings.toml"
 
 

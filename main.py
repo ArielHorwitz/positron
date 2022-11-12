@@ -14,11 +14,12 @@ from loguru import logger
 import sys
 from docopt import docopt
 from pathlib import Path
+from positron.util.file import LOGS_DIR
 from positron.util import settings
 
 
-logger.add(settings.USER_DIR / "debug.log", level="DEBUG", rotation="1 MB")
-logger.add(settings.USER_DIR / "errors.log", level="WARNING", rotation="100 KB")
+logger.add(LOGS_DIR / "debug.log", level="DEBUG", rotation="1 MB")
+logger.add(LOGS_DIR / "errors.log", level="WARNING", rotation="100 KB")
 
 
 @logger.catch

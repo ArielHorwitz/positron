@@ -168,5 +168,13 @@ def search_text(
     return results
 
 
-USER_DIR = get_usr_dir("positron")
+def mkdir(path: Path) -> Path:
+    """Create path folder with parents without complaining if exists."""
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 PROJ_DIR = Path(__file__).parent.parent.parent
+USER_DIR = get_usr_dir("positron")
+LOGS_DIR = mkdir(USER_DIR / "logs")
+SETTINGS_DIR = mkdir(USER_DIR / "settings")
