@@ -30,11 +30,9 @@ class Goto(kx.Modal):
         self.add(main_frame)
         self.bind(parent=self._on_parent)
         self.im.register("Goto line", self.goto, "enter")
-        self.im.register("Goto line (2)", self.goto, "numpadenter")
-        self.im.register("Goto line end", self.goto_end, "+ enter")
-        self.im.register("Goto line end (2)", self.goto_end, "+ numpadenter")
+        self.im.register("Goto line start", self.goto_start, "^ enter")
 
-    def goto(self, *args, end: bool = False):
+    def goto(self, *args, end: bool = True):
         line_num = self.line_number_entry.text
         try:
             line_num = max(1, int(line_num))
@@ -45,8 +43,8 @@ class Goto(kx.Modal):
         self.container.code_editor.set_cursor(line_num, column)
         self.dismiss()
 
-    def goto_end(self, *args):
-        self.goto(*args, end=True)
+    def goto_start(self, *args):
+        self.goto(*args, end=False)
 
     def find_prev(self, *args):
         self.container.code_editor.find_prev(self.line_number_entry.text)
