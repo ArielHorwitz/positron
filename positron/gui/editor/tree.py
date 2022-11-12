@@ -93,7 +93,7 @@ class ProjectTree(kx.Modal):
         if self.search_entry.focus:
             if self._quick_file:
                 self._do_load(self._quick_file)
-        elif self.tree_list.focus:
+        elif self.tree_list.focus and self._files:
             idx = self.tree_list.selection
             file = self._files[idx]
             if file.is_file():
