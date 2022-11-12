@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
-from ...util.file import USER_DIR
+from ...util.file import USER_DIR, PROJ_DIR
 
 
 FONT = str(FONTS_DIR / settings.get("ui.font"))
@@ -141,7 +141,7 @@ class Disk(kx.Modal):
             logger.debug(f"No such path: {path}")
             return
         logger.info(f"Opening path: {path}")
-        command_args = ["./run-positron.sh", str(path)]
+        command_args = [str(PROJ_DIR / "run-positron.sh"), str(path)]
         proc = subprocess.Popen(command_args)
         logger.debug(f"{proc=}")
 
