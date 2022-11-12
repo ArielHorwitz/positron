@@ -75,7 +75,7 @@ class CodeEditor(kx.Anchor):
         self.__disk_diff = False
         self.__disk_cache = None
         self.__find_text = ""
-        self.__next_error_position = None
+        self.__errors = None
         self.__cached_selected_text = ""
         self.im = kx.InputManager(name=f"Code editor {uid}")
         # Code
@@ -286,7 +286,6 @@ class CodeEditor(kx.Anchor):
         code = self.code_entry
         code.cursor = column, line - 1
         code.scroll_to_cursor()
-        code.cancel_cursor_pause()
 
     # Code inspection
     @property
@@ -359,10 +358,9 @@ class CodeEditor(kx.Anchor):
                 return text
 
     def scroll_to_error(self):
-        if self.__next_error_position is None:
-            return
-        line, column = self.__next_error_position
-        self.set_cursor(line, column)
+        next_error = self._get_next_error(include_cursor_index=False)
+        if next_error:
+            self.set_cursor(next_error.line, next_error.column)
 
     def make_comment(self):
         self.code_entry.toggle_prepend("# ")
@@ -374,6 +372,7 @@ class CodeEditor(kx.Anchor):
         kx.schedule_once(self._refresh_context)
 
     def _on_cursor_pause(self, *args):
+        self._refresh_status_errors()
         self._find_code_completions()
         self.completion_modal.open()
 
@@ -505,16 +504,31 @@ class CodeEditor(kx.Anchor):
         errors = []
         if self._current_file.suffix == ".py":
             errors = self.session.get_errors(self.code_entry.text)
-        if not errors:
+        self.__errors = errors
+        self._refresh_status_errors()
+
+    def _refresh_status_errors(self, *args):
+        error = self._get_next_error(include_cursor_index=True)
+        if not error:
             self.status_errors.text = "No errors :)"
             self.status_bar_errors.make_bg(STATUS_BG)
             return
-        count = len(errors)
-        first_error = errors[0]
-        line, column = first_error.line, first_error.column
-        self.__next_error_position = line, column
-        summary = f"Error @ {line},{column} :: {first_error.message}"
+        summary = f"Error @ {error.line},{error.column} :: {error.message}"
+        count = len(self.__errors)
         if count > 1:
             summary = f"{summary}  ( + {count - 1} more errors)"
         self.status_errors.text = summary
         self.status_bar_errors.make_bg(STATUS_BG_ERROR)
+
+    def _get_next_error(self, include_cursor_index: bool = True):
+        if not self.__errors:
+            return None
+        cidx = self.code_entry.cursor_index()
+        for e in self.__errors:
+            eidx = self.code_entry.cursor_index((e.column, e.line-1))
+            if (
+                (include_cursor_index and eidx >= cidx)
+                or (not include_cursor_index and eidx > cidx)
+            ):
+                return e
+        return self.__errors[0]
