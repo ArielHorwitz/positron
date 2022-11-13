@@ -124,3 +124,8 @@ custom = [
     # Display "/folder/path/file.py" as "PREFIX/file.py":
     # "/folder/path/;PREFIX",
 ]
+
+
+[debug.hotkeys]
+press = false
+release = false

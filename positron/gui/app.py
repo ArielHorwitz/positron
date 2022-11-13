@@ -1,7 +1,6 @@
 """GUI app."""
 
 from loguru import logger
-from pathlib import Path
 from . import kex as kx, FONTS_DIR
 from .editor.container import Container as EditorContainer
 from ..util.file import open_path, USER_DIR, PROJ_DIR
@@ -15,6 +14,8 @@ WINDOW_BORDERLESS = not settings.get("window.border")
 START_MAXIMIZED = settings.get("window.maximize")
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
+DEBUG_HOTKEYS_PRESS = settings.get("debug.hotkeys.press")
+DEBUG_HOTKEYS_RELEASE = settings.get("debug.hotkeys.release")
 
 
 class App(kx.App):
@@ -29,7 +30,12 @@ class App(kx.App):
             self.session.project_path,
             to_project=False,
         )
-        self.im = kx.InputManager(name="App root")
+        self.im = kx.InputManager(
+            name="App root",
+            logger=logger.debug,
+            log_press=DEBUG_HOTKEYS_PRESS,
+            log_release=DEBUG_HOTKEYS_RELEASE,
+        )
         self.panels = EditorContainer(session)
         self.root.add(self.panels)
         self.register_hotkeys()
@@ -64,7 +70,7 @@ class App(kx.App):
             ("app.restart", self.restart, "^+ w"),
             ("Open user dir", lambda: open_path(USER_DIR), "f12"),
             ("Open session dir", self._open_project_dir, "f9"),
-            ("Debug hotkeys", self._debug_hotkeys, "^!+ numlock"),
+            ("Debug hotkeys", self._debug_hotkeys, "^!+ f15"),
         ]:
             self.im.register(a, c, hk)
 
@@ -74,7 +80,7 @@ class App(kx.App):
 
     def _debug_hotkeys(self, *args):
         strs = [
-            "Currently active hotkeys:",
-            *sorted(repr(kc) for kc in self.im.get_currently_active_hotkeys()),
+            "All hotkeys:",
+            *sorted(repr(kc) for kc in self.im.get_all_hotkeys()),
         ]
         logger.debug("\n".join(strs))
