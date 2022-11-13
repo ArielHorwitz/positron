@@ -20,11 +20,16 @@ from .tree import DirectoryTree
 PROJ_PREFIX = settings.get("path_prefixes.project")
 CONFIG_PREFIX = settings.get("path_prefixes.config")
 HOME_PREFIX = settings.get("path_prefixes.home")
-PATH_PREFIXES = {}
+PATH_PREFIXES = []
 for replacement in settings.get("path_prefixes.custom"):
     original, new = replacement.split(";")
     original = Path(original).expanduser().resolve()
-    PATH_PREFIXES[original] = new
+    PATH_PREFIXES.append((original, new))
+PATH_PREFIXES = sorted(PATH_PREFIXES, key=lambda x: -len(x[0].parents))
+logger.debug(
+    "Path prefix replacements: "
+    + " ; ".join(f"{p} -> {r}" for p, r in PATH_PREFIXES)
+)
 
 SESSION_FILES_CACHE = CACHE_DIR / "sessions.json"
 RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
@@ -211,21 +216,28 @@ class Session:
         session_cache[path] = file_cursors
         file_dump(SESSION_FILES_CACHE, json.dumps(session_cache, indent=4))
 
-    def repr_full_path(self, p: Path) -> str:
+    def repr_full_path(self, p: Path, /, *, to_project: bool = True) -> str:
         p = p.expanduser().resolve()
+        ppath = self.project_path
         if p.is_relative_to(USER_DIR):
-            return f"{CONFIG_PREFIX}/{p.relative_to(USER_DIR)}"
-        if p.is_relative_to(self.project_path):
-            return f"{PROJ_PREFIX}/{p.relative_to(self.project_path)}"
-        for prefixed_path, replacement in PATH_PREFIXES.items():
+            return f"{CONFIG_PREFIX}/{_relative_without_empty(p, USER_DIR)}"
+        for prefixed_path, replacement in PATH_PREFIXES:
+            if to_project and ppath.is_relative_to(prefixed_path):
+                # Skip and prefer more direct relative path (project path)
+                continue
             if p.is_relative_to(prefixed_path):
-                relative = p.relative_to(prefixed_path)
-                if relative == Path("."):
-                    return replacement
-                return f"{replacement}/{relative}"
+                return f"{replacement}/{_relative_without_empty(p, prefixed_path)}"
+        if to_project and p.is_relative_to(ppath):
+            return f"{PROJ_PREFIX}/{_relative_without_empty(p, ppath)}"
         if p.is_relative_to(Path.home()):
-            return f"{HOME_PREFIX}/{p.relative_to(Path.home())}"
+            return f"{HOME_PREFIX}/{_relative_without_empty(p, Path.home())}"
         return str(p)
+
+
+def _relative_without_empty(p: Path, relative: Path) -> str:
+    if p == relative:
+        return ""
+    return str(p.relative_to(relative))
 
 
 def _convert_str_filecursor(s: str) -> FileCursor:

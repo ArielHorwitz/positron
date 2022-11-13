@@ -25,7 +25,10 @@ class App(kx.App):
         self.__cleaned_up = False
         self._init_window()
         self.session = session
-        self._project_path_repr = self.session.repr_full_path(self.session.project_path)
+        self._project_path_repr = self.session.repr_full_path(
+            self.session.project_path,
+            to_project=False,
+        )
         self.im = kx.InputManager(name="App root")
         self.panels = EditorContainer(session)
         self.root.add(self.panels)
