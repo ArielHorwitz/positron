@@ -64,10 +64,13 @@ exclude = [
 
 [project]
 # Default project to open
-default = "~/positron-example.txt"
-# For new projects open the following files
+default = "~/.local/share/positron/"
+# For new projects, open the following files
 open = [
-    "README.md",
+    "~/.local/share/positron/HELP.md",
+    # Paths that begin with "./" are relative to the project folder
+    # "./relative/path/from/project",
+    # "absolute/path/from/disk",
 ]
 # Ignore any file without one of the following extensions
 file_types = [

@@ -4,6 +4,7 @@ from typing import Optional, Iterable
 from loguru import logger
 from dataclasses import dataclass
 import os
+import shutil
 import subprocess
 import platform
 from pathlib import Path
@@ -178,3 +179,5 @@ PROJ_DIR = Path(__file__).parent.parent.parent
 USER_DIR = get_usr_dir("positron")
 LOGS_DIR = mkdir(USER_DIR / "logs")
 SETTINGS_DIR = mkdir(USER_DIR / "settings")
+HELP_FILE = USER_DIR / "HELP.md"
+shutil.copy(PROJ_DIR / "positron" / "HELP.md", HELP_FILE)

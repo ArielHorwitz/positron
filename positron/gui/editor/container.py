@@ -10,7 +10,7 @@ from .panel import Panel
 
 LAYOUT_COLS = settings.get("ui.cols")
 LAYOUT_ROWS = settings.get("ui.rows")
-DEFAULT_FILES = [Path(f) for f in settings.get("project.open")]
+DEFAULT_FILES = settings.get("project.open")
 MAX_EDITOR_HOTKEYS = 4
 
 
@@ -27,9 +27,10 @@ class Container(kx.Anchor):
         fcs = self.session.get_file_cursors()
         if not fcs:
             for file in DEFAULT_FILES:
-                # Try resolving files as relative to project
-                rel_file = self.session.project_path / file
-                file = rel_file if rel_file.exists() else file
+                if file.startswith("./"):
+                    file = self.session.project_path / Path(file)
+                else:
+                    file = Path(file)
                 fcs.append(FileCursor(file))
         while len(fcs) < editor_count:
             fcs.append(FileCursor(settings.SETTINGS_FILE))
