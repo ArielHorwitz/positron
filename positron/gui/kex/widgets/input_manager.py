@@ -149,16 +149,26 @@ class XInputManager(XWidget, kv.Widget):
     humanize = humanize_keys
     """Alias for `humanize_keys`."""
 
+    _all_hotkeys = []
     _currently_active_hotkeys = []
 
     @classmethod
-    def get_currently_active_hotkeys(cls) -> list[KeyControl]:
-        """Get KeyControls of all active XInputManagers.
+    def get_all_hotkeys(cls):
+        """Get KeyControls of all XInputManagers.
 
         Instead of caching instances of input managers which may disrupt garbage
         collection, we use the Window.on_key_down event and let each input manager
         handle the event to add their key controls to a class variable list.
         """
+        cls._all_hotkeys = []
+        # Dispatch a fake "meta" key press with special codepoint to call all IMs
+        kv.Window.dispatch("on_key_down", 309, 225, "COLLECT_ACTIVE_HOTKEYS", ["meta"])
+        r, cls._all_hotkeys = cls._all_hotkeys, []
+        return r
+
+    @classmethod
+    def get_currently_active_hotkeys(cls) -> list[KeyControl]:
+        """Like XInputManager.get_all_hotkeys but only for active input managers."""
         cls._currently_active_hotkeys = []
         # Dispatch a fake "meta" key press with special codepoint to call all IMs
         kv.Window.dispatch("on_key_down", 309, 225, "COLLECT_ACTIVE_HOTKEYS", ["meta"])
@@ -300,8 +310,8 @@ class XInputManager(XWidget, kv.Widget):
         codepoint: str,
         modifiers: list[str],
     ):
-        if codepoint == "COLLECT_ACTIVE_HOTKEYS" and self.active:
-            self._currently_active_hotkeys.extend(self.controls.values())
+        if codepoint == "COLLECT_ACTIVE_HOTKEYS":
+            self.__collect_hotkeys()
             return
         if not self.active or self._app_blocked:
             return
@@ -350,3 +360,8 @@ class XInputManager(XWidget, kv.Widget):
         if self.app is not None:
             return self.app.block_input
         return False
+
+    def __collect_hotkeys(self):
+        self._all_hotkeys.extend(self.controls.values())
+        if self.active:
+            self._currently_active_hotkeys.extend(self.controls.values())
