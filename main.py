@@ -22,14 +22,37 @@ Custom settings:
 
 from loguru import logger
 import sys
+import random
 from docopt import docopt
 from pathlib import Path
 from positron.util.file import LOGS_DIR
 from positron.util import settings
 
 
-logger.add(LOGS_DIR / "debug.log", level="DEBUG", rotation="1 MB")
-logger.add(LOGS_DIR / "errors.log", level="WARNING", rotation="100 KB")
+# Configure logging
+SESSION_ID = f"{random.randint(0, 10**8):x}"
+LOG_FORMAT = (
+    f"<red>{SESSION_ID}</red> | "
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level:^8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+    "<level>{message}</level>"
+)
+logger.add(
+    LOGS_DIR / "debug.log",
+    level="DEBUG",
+    format=LOG_FORMAT,
+    rotation="500 KB",
+    retention=1,
+)
+logger.add(
+    LOGS_DIR / "errors.log",
+    level="WARNING",
+    format=LOG_FORMAT,
+    rotation="500 KB",
+    retention=1,
+)
+logger.info(f"Session ID: {SESSION_ID}")
 
 
 @logger.catch
@@ -66,7 +89,7 @@ def main():
 
 
 def _run_positron(project_path: Path):
-    logger.info("\n".join(["\n", "="*50, "Starting up Positron...", "="*50, "\n"]))
+    logger.info("Starting up Positron...")
 
     # Late import since Kivy opens window on import
     from positron.analyze.session import Session
@@ -77,7 +100,7 @@ def _run_positron(project_path: Path):
     app = App(app_session)
     returncode = app.run()
     if returncode < 0:
-        logger.info("Restarting Positron...\n\n")
+        logger.info("Restarting Positron...\n")
         restart_script()
     logger.info("Quit Positron.")
 
