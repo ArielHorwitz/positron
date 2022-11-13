@@ -14,11 +14,20 @@ from loguru import logger
 from typing import Optional, Any, Iterator
 from pathlib import Path
 import shutil
-from .file import SETTINGS_DIR, PROJ_DIR, toml_load
+from .file import SETTINGS_DIR, PROJ_DIR, toml_load, file_dump
 
+
+SAMPLE_SETTINGS = """# This is your settings file.
+# Anything placed here will override the defaults. To see all available
+# settings, browse "#/settings/defaults.toml".
+# Settings files use TOML - https://toml.io
+"""
 
 SETTINGS_FILE = SETTINGS_DIR / "settings.toml"
 DEFAULT_SETTINGS_FILE = PROJ_DIR / "positron" / "default_settings.toml"
+shutil.copy(DEFAULT_SETTINGS_FILE, SETTINGS_DIR / "defaults.toml")
+if not SETTINGS_FILE.exists():
+    file_dump(SETTINGS_FILE, SAMPLE_SETTINGS)
 
 
 def _yield_flat_dict(
@@ -41,18 +50,11 @@ def _flatten_dict(d: dict) -> dict[str, Any]:
     return {path: value for path, value in _yield_flat_dict(d)}
 
 
-def _ensure_files():
-    assert DEFAULT_SETTINGS_FILE.is_file()
-    if not SETTINGS_FILE.is_file():
-        shutil.copy(DEFAULT_SETTINGS_FILE, SETTINGS_FILE)
-
-
 def _load_settings(settings_files: Optional[list[Path]] = None) -> dict[str, Any]:
     """Load settings from a list of settings files.
 
     See module documentation for details.
     """
-    _ensure_files()
     if settings_files is None:
         settings_files = []
     settings_files.append(SETTINGS_FILE)
