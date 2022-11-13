@@ -11,10 +11,13 @@ from ...util.file import USER_DIR, PROJ_DIR
 FONT = str(FONTS_DIR / settings.get("ui.font"))
 UI_FONT_SIZE = settings.get("ui.font_size")
 DEFAULT_BOOKMARKS = settings.get("project.default_bookmarks")
-BOOKMARKS = tuple(
-    Path(b).expanduser().resolve()
-    for b in settings.get("project.bookmarks")
-)
+BOOKMARKS = []
+for bm in settings.get("project.bookmarks"):
+    file, name = bm, None
+    if ";" in bm:
+        file, name = bm.rsplit(";")
+    p = Path(file).expanduser().resolve()
+    BOOKMARKS.append((p, name))
 CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
 CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 TREE_TOP_PREFIX = "╚╦═ "
@@ -71,8 +74,12 @@ class Disk(kx.Modal):
         paths = [USER_DIR]
         reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
-        paths.extend(BOOKMARKS)
-        reprs.extend(self._path_repr(b, name_only=False) for b in BOOKMARKS)
+        for p, name in BOOKMARKS:
+            paths.append(p)
+            if not name:
+                name = self._path_repr(p, name_only=False)
+            name = _wrap_color(name, _get_color(p))
+            reprs.append(name)
         # Built-in defaults
         if DEFAULT_BOOKMARKS:
             paths.extend([
@@ -159,6 +166,14 @@ class Disk(kx.Modal):
         else:
             color = MISSING_COLOR
         return _wrap_color(name, color)
+
+
+def _get_color(p: Path) -> str:
+    if p.is_dir():
+        return FOLDER_COLOR
+    elif p.is_file():
+        return FILE_COLOR
+    return MISSING_COLOR
 
 
 def _wrap_color(t, color):

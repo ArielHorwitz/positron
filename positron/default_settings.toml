@@ -78,8 +78,7 @@ file_types = [
     "json",
     "sh",
     "log",
-    # For files without extensions (like .gitignore)
-    "",
+    "",  # For files without extensions (like .gitignore)
 ]
 # Ignore any file with the following names found anywhere in the path
 ignore_names = [
@@ -105,13 +104,16 @@ max_search_results = 100
 text_search_cooldown = 0.2
 # Paths on disk for quick access in disk browser
 bookmarks = [
-    # "~/path/to/projects/",
+    # Use ";" to name the bookmark
+    # "~/projects/;My Projects",
+    # "~/projects/;[color=#bb0000]My Projects[/color]",  # Using colors
 ]
 # Include default bookmarks
 default_bookmarks = true
 # When displaying paths, replace using these prefixes (first one that matches)
 path_prefixes = [
-    # "/folder/path/;PREFIX",  # Displays "/folder/path/file.py" as "PREFIX/file.py"
+    # Display "/folder/path/file.py" as "PREFIX/file.py":
+    # "/folder/path/;PREFIX",
     "~/.local/share/positron/;$POSITRON",  # Positron config folder
     "~;~",  # Home folder
 ]
