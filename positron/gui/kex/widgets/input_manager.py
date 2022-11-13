@@ -13,10 +13,10 @@ from dataclasses import dataclass, field
 from .. import kivy as kv
 from ..util import (
     XWidget,
-    restart_script,
     _ping,
     _pong,
 )
+
 
 KEYCODE_TEXT = {v: k for k, v in kv.Keyboard.keycodes.items()}
 KeysFormat = TypeVar("KeysFormat", bound=str)
@@ -47,20 +47,37 @@ KEY2MOD = {
 }
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(frozen=True, eq=True, order=True)
 class KeyControl:
     """Represents a control for the `XInputManager`."""
 
     name: str
     """The name of this control (to be used for filtering)."""
-    callback: Callable[[], None] = field(compare=False, repr=False)
+    owner_name: str
+    """Name of XInputManager that owns this KeyControl"""
+    callback: Callable[[], None] = field(compare=False)
     """Function to call when this control is invoked."""
     keys: list[KeysFormat] = field(compare=False)
     """The keybind of this control."""
-    allow_repeat: bool = field(default=False, compare=False, repr=True)
+    allow_repeat: bool = field(default=False, compare=False)
     """Allow this control to be repeatedly invoked while holding down the keys."""
-    consume_keys: bool = field(default=True, compare=False, repr=True)
+    consume_keys: bool = field(default=True, compare=False)
     """Consume the keys (prevent others from seeing the keys)."""
+
+    def __repr__(self):
+        """Representation of the control."""
+        keys = '", "'.join(self.keys)
+        keys = f'"{keys}"'
+        meta = []
+        if self.allow_repeat:
+            meta.append("repeatable")
+        if self.consume_keys:
+            meta.append("consumes")
+        if meta:
+            meta = ", ".join(meta)
+            meta = f" ({meta})"
+        meta = meta or ""
+        return f"<KeyControl {self.owner_name}: {self.name}{meta} {keys}>"
 
 
 def _format_keys(
@@ -172,7 +189,7 @@ class XInputManager(XWidget, kv.Widget):
             consume_keys: Consume the keys.
         """
         keys = [keys] if isinstance(keys, str) else keys
-        kc = KeyControl(name, callback, keys, allow_repeat, consume_keys)
+        kc = KeyControl(name, self.name, callback, keys, allow_repeat, consume_keys)
         if kc.name in self.controls:
             if not self.allow_overwrite:
                 raise ValueError(
@@ -258,22 +275,6 @@ class XInputManager(XWidget, kv.Widget):
             f"on {len(self.control_keys)} hotkeys{cooldown} {active}>"
         )
 
-    @property
-    def _debug_str(self):
-        strs = [
-            f"{self}",
-            "Keys:",
-        ]
-        for kf, kcs in self.control_keys.items():
-            strs.extend(f"{kf:>15} : {kc}" for kc in kcs)
-        strs.extend(
-            [
-                "Controls:",
-                *(f"  {kc}" for kc in self.controls.values()),
-            ]
-        )
-        return "\n".join(strs)
-
     # Kivy key press management
     def _on_key_down(
         self,
@@ -292,7 +293,10 @@ class XInputManager(XWidget, kv.Widget):
             return
         self.__last_down_ping = _ping()
         if not is_repeat and self.log_press:
-            self.logger(f"Pressed:  |{kf}| {self}")
+            self.logger(
+                f"Pressed:  |{kf}| {self}"
+                f" ({key=} {scancode=} {codepoint=} {modifiers=})"
+            )
         consumed = False
         if kf in self.control_keys:
             for kc in self.control_keys[kf]:
