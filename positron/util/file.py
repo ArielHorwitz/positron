@@ -178,6 +178,7 @@ def mkdir(path: Path) -> Path:
 PROJ_DIR = Path(__file__).parent.parent.parent
 USER_DIR = get_usr_dir("positron")
 LOGS_DIR = mkdir(USER_DIR / "logs")
+CACHE_DIR = mkdir(USER_DIR / "cache")
 SETTINGS_DIR = mkdir(USER_DIR / "settings")
 HELP_FILE = USER_DIR / "HELP.md"
 shutil.copy(PROJ_DIR / "positron" / "HELP.md", HELP_FILE)

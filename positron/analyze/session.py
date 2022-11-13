@@ -10,7 +10,7 @@ import json
 import jedi
 from jedi import Script
 from jedi.api.classes import Name
-from ..util.file import file_load, file_dump, USER_DIR, FileCursor
+from ..util.file import file_load, file_dump, USER_DIR, CACHE_DIR, FileCursor
 from ..util.code import CodeError
 from ..util import settings
 from .linter import lint_text
@@ -26,10 +26,7 @@ for replacement in settings.get("path_prefixes.custom"):
     original = Path(original).expanduser().resolve()
     PATH_PREFIXES[original] = new
 
-SESSION_FILES_CACHE = USER_DIR / "session_cache.json"
-SESSION_FILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
-if not SESSION_FILES_CACHE.exists():
-    file_dump(SESSION_FILES_CACHE, "{}")
+SESSION_FILES_CACHE = CACHE_DIR / "sessions.json"
 RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
 RE_NEWLINE = re.compile(r"\n")
 
@@ -181,7 +178,10 @@ class Session:
         if self.__file_mode:
             return [FileCursor(self.__file_mode)]
         # Retrieve entries from cache and convert
-        session_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        if SESSION_FILES_CACHE.exists():
+            session_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        else:
+            session_cache = {}
         ppath = str(self.project_path)
         if ppath not in session_cache:
             return []
@@ -199,7 +199,10 @@ class Session:
         logger.info(f"Session {self.project_path} caching files:\n{filestr}")
         file_cursors = [_convert_filecursor_str(fc) for fc in file_cursors]
         # Find and add existing entries from cache
-        session_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        if SESSION_FILES_CACHE.exists():
+            session_cache = json.loads(file_load(SESSION_FILES_CACHE))
+        else:
+            session_cache = {}
         path = str(self.project_path)
         existing_file_cursors = session_cache.get(path, [])
         if len(existing_file_cursors) > len(file_cursors):

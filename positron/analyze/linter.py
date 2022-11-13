@@ -4,7 +4,7 @@ from loguru import logger
 from pathlib import Path
 import traceback
 import subprocess
-from ..util.file import file_dump, USER_DIR
+from ..util.file import file_dump, CACHE_DIR
 from ..util.code import CodeError
 from ..util import settings
 
@@ -14,7 +14,7 @@ EXTEND_IGNORE = settings.get("linter.ignore")
 MAX_LINE_LENGTH = settings.get("linter.max_line_length")
 MAX_COMPLEXITY = settings.get("linter.max_complexity")
 DOCSTRING_CONVENTION = settings.get("linter.docstring_convention")
-LINTER_CACHED_FILE = USER_DIR / "linter_cache.py"
+LINTER_CACHED_FILE = CACHE_DIR / "linter_cache.py"
 FILE_STR = str(LINTER_CACHED_FILE)
 FILE_STR_LEN = len(FILE_STR) + 1  # Include the ":" after the file name
 
