@@ -4,10 +4,20 @@ Usage: positron [options] [<path>]
 
 Options:
   -h, --help          Show this help and quit
-  -s, --settings <settings-file>
-                      Use a custom settings files
+  -s, --settings <settings-names>
+                      Use custom settings with comma-separated names
   -l, --lint          Run the linter on the path and quit
   --debug-args        Debug argument parsing and quit
+
+
+Custom settings:
+    Settings names can be full file paths, or the "{name}" part of
+        "$SETTINGS_DIR/settings-{name}.toml".
+
+    For example, "mini,dev,custom/settings/file.toml" will load the files
+        - "$SETTINGS_DIR/settings-mini.toml"
+        - "$SETTINGS_DIR/settings-dev.toml"
+        - "custom/settings/file.toml"
 """
 
 from loguru import logger
@@ -34,12 +44,10 @@ def main():
         quit()
 
     # Load custom settings
-    if args["--settings"] is not None:
-        custom_settings = Path(args["--settings"])
-        if custom_settings.is_file():
-            settings.load([custom_settings])
-        else:
-            logger.warning(f"Custom settings file does not exist: {custom_settings}")
+    custom_settings = args["--settings"] or []
+    if custom_settings:
+        custom_settings = custom_settings.split(",")
+    settings.load(custom_settings)
 
     # Find the path to open
     if args.path:
