@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 from .. import kex as kx, FONTS_DIR
 from ...util import settings
-from ...util.file import USER_DIR, PROJ_DIR
+from ...util.file import USER_DIR, PROJ_DIR, open_path
 
 
 FONT = str(FONTS_DIR / settings.get("ui.font"))
@@ -61,11 +61,17 @@ class Disk(kx.Modal):
         self.im.register("Browse bookmarks", self._browse_bookmarks, "home")
         self.im.register("Browse project", self._browse_project, "^ home")
         self.im.register("Open path", self._open_path, ["^ enter", "^ numpadenter"])
+        self.im.register(
+            "Explore path",
+            self._explore_path,
+            ["^+ enter", "^+ numpadenter"],
+        )
         help_label.text = "\n".join([
-            "[u]ctrl + enter[/u] : open in a new window",
-            "        [u]home[/u] : bookmarks",
-            " [u]ctrl + home[/u] : project folder",
-            "   [u]backspace[/u] : back",
+            "           [u]backspace[/u] : back",
+            "                [u]home[/u] : bookmarks",
+            "         [u]ctrl + home[/u] : project folder",
+            "        [u]ctrl + enter[/u] : open in a new window",
+            "[u]ctrl + shift + enter[/u] : open in explorer",
         ])
         help_label.set_size(y=LINE_HEIGHT * 6)
         self._browse_bookmarks()
@@ -151,6 +157,14 @@ class Disk(kx.Modal):
         command_args = [str(PROJ_DIR / "run-positron.sh"), str(path)]
         proc = subprocess.Popen(command_args)
         logger.debug(f"{proc=}")
+
+    def _explore_path(self, *args):
+        path = self._current_paths[self.tree_list.selection]
+        if not path.exists():
+            logger.debug(f"No such path: {path}")
+            return
+        logger.info(f"Exploring path: {path}")
+        open_path(path)
 
     def _get_children(self, path: Path):
         func = self.session.dir_tree.get_children_from_disk
