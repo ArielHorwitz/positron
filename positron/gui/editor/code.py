@@ -488,12 +488,7 @@ class CodeEditor(kx.Anchor):
 
     def _cursor_full(self):
         line, column = self.cursor
-        path = self._current_file
-        ppath = self.session.project_path
-        if path.is_relative_to(ppath):
-            path = f"$/{path.relative_to(ppath)}"
-        elif path.is_relative_to(Path.home()):
-            path = f"~/{path.relative_to(Path.home())}"
+        path = self.session.repr_full_path(self._current_file)
         modified = ""
         if self.__disk_modified_time:
             modified = _format_humanized(self.__disk_modified_time.humanize())

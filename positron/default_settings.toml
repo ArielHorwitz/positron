@@ -110,10 +110,14 @@ bookmarks = [
 ]
 # Include default bookmarks
 default_bookmarks = true
+
+
+[path_prefixes]
 # When displaying paths, replace using these prefixes (first one that matches)
-path_prefixes = [
+home = "~"
+config = "#"
+project = "$"
+custom = [
     # Display "/folder/path/file.py" as "PREFIX/file.py":
     # "/folder/path/;PREFIX",
-    "~/.local/share/positron/;$POSITRON",  # Positron config folder
-    "~;~",  # Home folder
 ]
