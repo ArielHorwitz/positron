@@ -149,6 +149,22 @@ class XInputManager(XWidget, kv.Widget):
     humanize = humanize_keys
     """Alias for `humanize_keys`."""
 
+    _currently_active_hotkeys = []
+
+    @classmethod
+    def get_currently_active_hotkeys(cls) -> list[KeyControl]:
+        """Get KeyControls of all active XInputManagers.
+
+        Instead of caching instances of input managers which may disrupt garbage
+        collection, we use the Window.on_key_down event and let each input manager
+        handle the event to add their key controls to a class variable list.
+        """
+        cls._currently_active_hotkeys = []
+        # Dispatch a fake "meta" key press with special codepoint to call all IMs
+        kv.Window.dispatch("on_key_down", 309, 225, "COLLECT_ACTIVE_HOTKEYS", ["meta"])
+        r, cls._currently_active_hotkeys = cls._currently_active_hotkeys, []
+        return r
+
     def __init__(
         self,
         name: str = "Unnamed",
@@ -284,6 +300,9 @@ class XInputManager(XWidget, kv.Widget):
         codepoint: str,
         modifiers: list[str],
     ):
+        if codepoint == "COLLECT_ACTIVE_HOTKEYS" and self.active:
+            self._currently_active_hotkeys.extend(self.controls.values())
+            return
         if not self.active or self._app_blocked:
             return
         key_name = KEYCODE_TEXT.get(key, "")

@@ -61,9 +61,17 @@ class App(kx.App):
             ("app.restart", self.restart, "^+ w"),
             ("Open user dir", lambda: open_path(USER_DIR), "f12"),
             ("Open session dir", self._open_project_dir, "f9"),
+            ("Debug hotkeys", self._debug_hotkeys, "^!+ numlock"),
         ]:
             self.im.register(a, c, hk)
 
     def update(self, dt: float):
         winsize = f"{kx.Window.kivy.width}×{kx.Window.kivy.height}"
         self.title = f"Positron :: {self._project_path_repr} :: {winsize}"
+
+    def _debug_hotkeys(self, *args):
+        strs = [
+            "Currently active hotkeys:",
+            *sorted(repr(kc) for kc in self.im.get_currently_active_hotkeys()),
+        ]
+        logger.debug("\n".join(strs))
