@@ -6,9 +6,10 @@ from itertools import islice
 from dataclasses import dataclass
 import fuzzysearch
 import fuzzysearch.common
-from .file import PROJ_DIR, USER_DIR, toml_load
+from .file import PROJ_DIR, SETTINGS_DIR, toml_load
 
 
+SNIPPETS_FILE = SETTINGS_DIR / "snippets.toml"
 MAX_RESULTS = 20
 
 
@@ -26,11 +27,10 @@ class Snippet:
 
 
 def _load_snippets() -> dict[str, Snippet]:
-    snippets_file = USER_DIR / "snippets.toml"
-    if not snippets_file.exists():
+    if not SNIPPETS_FILE.exists():
         defaults_file = PROJ_DIR / "positron" / "default_snippets.toml"
-        shutil.copy(defaults_file, snippets_file)
-    user_snippets = toml_load(snippets_file)
+        shutil.copy(defaults_file, SNIPPETS_FILE)
+    user_snippets = toml_load(SNIPPETS_FILE)
     return {k: Snippet(k, **v) for k, v in user_snippets.items()}
 
 

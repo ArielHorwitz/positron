@@ -1,3 +1,6 @@
+# The snippets file defines shortcuts for inserting text.
+# There are no underlying defaults and so whatever is defined in this file
+# are the only snippets recognized by Positron.
 
 ["args kwargs"]
 text = "*args, **kwargs"
