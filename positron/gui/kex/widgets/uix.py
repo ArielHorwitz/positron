@@ -363,10 +363,13 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     def _shift_lines_custom(self, direction: int):
         # Custom `rows` init
         start, end = self.selected_line_range()
-        if direction > 0:
+        last_line = len(self._lines) - 1
+        if direction > 0 and end < last_line:
             rows = (start, end), (end, end + 1)
-        else:
+        elif direction < 0 and start > 0:
             rows = (start, end), (start - 1, start)
+        else:
+            return
         self._shift_lines(direction, rows=rows)
 
     def _shift_lines(  # noqa: C901
