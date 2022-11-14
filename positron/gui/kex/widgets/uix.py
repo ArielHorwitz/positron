@@ -23,8 +23,12 @@ class XLabel(XWidget, kv.Label):
             "valign": "center",
         } | kwargs
         super().__init__(**kwargs)
+        self._trigger_fix_height = kv.Clock.create_trigger(self._fix_height)
         if fixed_width:
-            self.bind(size=self._fix_height, text=self._fix_height)
+            self.bind(
+                size=self._trigger_fix_height,
+                text=self._trigger_fix_height,
+            )
         else:
             self.bind(size=self._on_size)
 
