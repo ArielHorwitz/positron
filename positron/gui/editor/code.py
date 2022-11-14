@@ -24,12 +24,12 @@ if STYLE_NAME not in STYLE_MAP:
     STYLE_NAME = "default"
 logger.info(f"Chosen style: {STYLE_NAME}")
 AUTO_LOAD = settings.get("editor.auto_load")
-GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
 GUTTER_WIDTH = settings.get("editor.gutter_width")
-GUTTER_COLOR = settings.get("editor.gutter_color")
+GUTTER_BG_COLOR = settings.get("editor.gutter_bg_color")
+GUTTER_TEXT_COLOR = settings.get("editor.gutter_text_color")
 BACKGROUND_COLOR = kx.XColor(*settings.get("editor.bg_color"))
 DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
 ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
@@ -102,19 +102,15 @@ class CodeEditor(kx.Anchor):
             selection_text=self._on_selection_text,
         )
         # Gutter
-        line_gutter_top_padding = kx.Anchor()
-        line_gutter_top_padding.set_size(y=GUTTER_PADDING)
         self.line_gutter = kx.Label(
             valign="top",
             halign="right",
+            color=GUTTER_TEXT_COLOR,
+            padding_y=self.code_entry.padding[1],
             **FONT_KW,
         )
-        line_gutter_frame = kx.Box(orientation="vertical")
-        line_gutter_frame.make_bg(kx.XColor(*GUTTER_COLOR))
-        line_gutter_frame.set_size(x=GUTTER_WIDTH)
-        line_gutter_frame.add(line_gutter_top_padding, self.line_gutter)
-        code_frame = kx.Box()
-        code_frame.add(line_gutter_frame, self.code_entry)
+        self.line_gutter.make_bg(kx.XColor(*GUTTER_BG_COLOR))
+        self.line_gutter.set_size(x=GUTTER_WIDTH * CHAR_WIDTH)
         # Cursor status bar
         self.status_cursor_context = kx.Label(halign="left", **STATUS_FONT_KW)
         self.status_cursor_context.set_size(hx=0.95)
@@ -134,6 +130,8 @@ class CodeEditor(kx.Anchor):
             ERROR_CHECK_COOLDOWN,
         )
         # Assemble
+        code_frame = kx.Box()
+        code_frame.add(self.line_gutter, self.code_entry)
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(self.status_bar_cursor, code_frame, self.status_bar_errors)
         self.add(main_frame)
@@ -446,7 +444,8 @@ class CodeEditor(kx.Anchor):
         start, finish = self.code_entry.visible_line_range()
         finish = min(finish, len(self.code_entry._lines))
         self.line_gutter.text = "\n".join(
-            f"{i+1:>4}" for i in range(start, finish)
+            f"{str(i+1)[:GUTTER_WIDTH]:>{GUTTER_WIDTH}}"
+            for i in range(start, finish)
         )
 
     def _on_size(self, w, size):

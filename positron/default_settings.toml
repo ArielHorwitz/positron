@@ -23,12 +23,12 @@ bg_color = [0.025, 0.1, 0.125]
 defocus_brightness = 0.5
 # Color of the max line length hint
 line_width_color = [0.5, 0, 0, 0.5]
-# Number of pixels to vertically offset line gutter
-gutter_padding = 4
-# Width of line gutter in pixels
-gutter_width = 50
-# Color of line gutter
-gutter_color = [0.04, 0.15, 0.15]
+# Width of line gutter in characters
+gutter_width = 4
+# Color of line gutter numbers
+gutter_text_color = [0.9, 1, 0.9]
+# Color of line gutter background
+gutter_bg_color = [0.05, 0.1, 0.05]
 # Number of seconds between checking difference from disk
 disk_diff_interval = 1.0
 # Number of seconds to show popup on cursor
