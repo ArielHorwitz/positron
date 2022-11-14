@@ -12,7 +12,7 @@ from pygments.styles import STYLE_MAP
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.markup import MarkdownLexer
 from jedi.api.classes import Completion
-from .. import kex as kx, FONT_KW, CHAR_WIDTH, LINE_HEIGHT
+from .. import kex as kx, FONT_KW, UI_FONT_KW, CHAR_WIDTH, LINE_HEIGHT
 from ...util import settings
 from ...util.file import file_load, file_dump
 from ...util.snippets import find_snippets, Snippet
@@ -41,6 +41,11 @@ STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
 MAX_LINE_LENGTH = settings.get("linter.max_line_length")
 LINE_LENGTH_HINT_COLOR = settings.get("editor.line_width_color")
 MAX_LINE_WIDTH = CHAR_WIDTH * (MAX_LINE_LENGTH + 1)
+STATUS_FONT_KW = dict(
+    font_name=UI_FONT_KW["font_name"],
+    font_size=FONT_KW["font_size"],
+    italic=True,
+)
 
 
 def _timestamp():
@@ -111,15 +116,15 @@ class CodeEditor(kx.Anchor):
         code_frame = kx.Box()
         code_frame.add(line_gutter_frame, self.code_entry)
         # Cursor status bar
-        self.status_cursor_context = kx.Label(halign="left", **FONT_KW)
+        self.status_cursor_context = kx.Label(halign="left", **STATUS_FONT_KW)
         self.status_cursor_context.set_size(hx=0.95)
-        self.status_file_cursor = kx.Label(halign="right", **FONT_KW)
+        self.status_file_cursor = kx.Label(halign="right", **STATUS_FONT_KW)
         self.status_file_cursor.set_size(hx=0.95)
-        self.status_bar_cursor = kx.Anchor()
-        self.status_bar_cursor.set_size(y=LINE_HEIGHT)
-        self.status_bar_cursor.add(self.status_cursor_context, self.status_file_cursor)
+        self.status_bar_cursor = kx.Box(orientation="vertical")
+        self.status_bar_cursor.set_size(y=LINE_HEIGHT * 2)
+        self.status_bar_cursor.add(self.status_file_cursor, self.status_cursor_context)
         # Errors status bar
-        self.status_errors = kx.Label(halign="center", **FONT_KW)
+        self.status_errors = kx.Label(halign="center", **STATUS_FONT_KW)
         self.status_errors.set_size(hx=0.95)
         self.status_bar_errors = kx.Anchor()
         self.status_bar_errors.set_size(y=LINE_HEIGHT)
