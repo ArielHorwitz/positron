@@ -8,8 +8,6 @@ fps = 10
 
 
 [ui]
-font = "firacode-mono.ttf"
-font_size = 18
 cols = 2
 rows = 1
 # Background colors of the status bar
@@ -19,8 +17,6 @@ status.error = [0.25, 0, 0]
 
 
 [editor]
-font = "firacode-mono.ttf"
-font_size = 16
 style = "one-dark"
 bg_color = [0.025, 0.1, 0.125]
 # Background relative brightness when defocused
@@ -43,6 +39,22 @@ cursor_scroll_offset = 10
 error_check_cooldown = 2
 # Automatically load the file on startup
 auto_load = true
+
+
+# Fonts - pass full path to font: "/path/to/font.ttf" or leave blank for builtins
+[fonts.code]
+size = 16
+regular = ""
+italic = ""
+bold = ""
+bolditalic = ""
+
+[fonts.ui]
+size = 20
+regular = ""
+italic = ""
+bold = ""
+bolditalic = ""
 
 
 [linter]  # Settings for the linter (flake8).
