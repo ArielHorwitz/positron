@@ -8,7 +8,6 @@ from .code import CodeEditor
 from .tree import ProjectTree
 from .find import Find
 from .goto import Goto
-from .snippets import Snippets
 from .analysis import Analysis
 from .errors import Errors
 from .search import Search
@@ -31,7 +30,6 @@ class Panel(kx.Anchor):
             (ProjectTree, "tree", "^ t"),
             (Find, "find", "^ f"),
             (Goto, "goto", "^ g"),
-            (Snippets, "snippets", "^ spacebar"),
             (Analysis, "analysis", "^+ a"),
             (Errors, "errors", "^+ e"),
             (Search, "search", "^+ f"),

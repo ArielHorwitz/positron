@@ -317,8 +317,6 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
             write_tab=write_tab,
             **kwargs,
         )
-        if not multiline:
-            self.set_size(y=35)
 
 
 RE_LEADING_WS = re.compile(r"\s*.")  # noqa: W605

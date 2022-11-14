@@ -34,10 +34,10 @@ class Disk(kx.Modal):
         super().__init__(**kwargs)
         self.set_size(hx=0.85, hy=0.8)
         self.make_bg(kx.get_color("yellow", v=0.1))
-        title = kx.Label(text="Disk Browser", **UI_FONT_KW)
+        title = kx.Label(text="Disk Browser", bold=True, **UI_FONT_KW)
         title.make_bg(kx.get_color("orange", v=0.3))
-        title.set_size(y=50)
-        help_label = kx.Label(halign="left", **UI_FONT_KW)
+        title.set_size(y=UI_LINE_HEIGHT * 2)
+        help_label = kx.Label(halign="left", italic=True, **UI_FONT_KW)
         self.tree_list = kx.List(item_height=UI_LINE_HEIGHT, **UI_FONT_KW)
         # Assemble
         widget_frame = kx.Anchor(anchor_y="top")

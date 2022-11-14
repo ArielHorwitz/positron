@@ -29,8 +29,8 @@ class ProjectTree(kx.Modal):
         self.title.set_size(y=UI_LINE_HEIGHT * 2)
 
         # Quick results
-        self.quick_label = kx.Label(**UI_FONT_KW)
-        self.quick_label.set_size(y=40)
+        self.quick_label = kx.Label(bold=True, **UI_FONT_KW)
+        self.quick_label.set_size(y=UI_LINE_HEIGHT)
 
         # Search
         self.search_entry = kx.Entry(
@@ -40,7 +40,7 @@ class ProjectTree(kx.Modal):
             multiline=False,
             **UI_FONT_KW,
         )
-        self.search_entry.set_size(y=40)
+        self.search_entry.set_size(y=UI_LINE_HEIGHT + self.search_entry.padding[1] * 2)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
@@ -169,7 +169,8 @@ class ProjectTree(kx.Modal):
         file_count = sum(p.is_file() for p in self.dtree.all_paths)
         fuzzy_warn = "" if self.fuzzy_enabled else " (no fuzzy search)"
         self.title.text = (
-            f"[u]Project Tree:[/u] {file_count} files{fuzzy_warn}\n{self.dtree.root}"
+            f"[b]Project Tree: {file_count}[/b] files{fuzzy_warn}\n"
+            f"[i]{self.dtree.root}[/i]"
         )
 
     @property

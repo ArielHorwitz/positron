@@ -20,18 +20,20 @@ class Search(kx.Modal):
         self._results = []
         self.set_size(hx=0.8, hy=0.8)
         self.make_bg(kx.get_color("cyan", v=0.2))
-        self.title = kx.Label(text="Search Project")
-        self.title.set_size(y=40)
+        self.title = kx.Label(text="Search Project", bold=True, **UI_FONT_KW)
+        self.title.set_size(y=UI_LINE_HEIGHT)
 
         # Search
         self.search_entry = kx.Entry(
             halign="center",
             write_tab=False,
+            select_on_focus=True,
+            text_validate_unfocus=False,
             background_color=(0.04, 0.12, 0.2, 1),
             multiline=False,
             **UI_FONT_KW,
         )
-        self.search_entry.set_size(y=40)
+        self.search_entry.set_size(y=UI_LINE_HEIGHT + self.search_entry.padding[1] * 2)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
@@ -56,8 +58,7 @@ class Search(kx.Modal):
             REFRESH_DELAY,
         )
         self.bind(parent=self._on_parent)
-        self.im.register("Load", self._do_load, "enter")
-        self.im.register("Load (2)", self._do_load, "numpadenter")
+        self.im.register("Load", self._do_load, ["enter", "numpadenter"])
         self.im.register("Focus ", self._on_down_arrow, "down")
 
     def _do_load(self, result=None):
@@ -130,8 +131,10 @@ class Search(kx.Modal):
         super()._on_parent(w, parent)
         if parent is None:
             return
-        self.search_entry.set_focus()
-        self.search_entry.select_all()
+        selected_text = self.container.code_editor.selected_text
+        if selected_text:
+            self.search_entry.text = selected_text
+        self.search_entry.focus = True
         self._on_search_text()
 
 

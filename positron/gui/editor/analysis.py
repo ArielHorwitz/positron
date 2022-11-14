@@ -2,23 +2,24 @@
 
 from loguru import logger
 import traceback
-from .. import kex as kx, UI_FONT_KW
+from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 
 
 class Analysis(kx.FocusBehavior, kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
-        self.set_size(hx=0.85, hy=0.8)
-        self.make_bg(kx.get_color("navy", v=0.2, a=0.9))
+        self.set_size(hx=0.95, hy=0.8)
+        self.make_bg(kx.get_color("navy", v=0.3))
         # Widgets
-        title = kx.Label(text="Code analysis")
-        title.set_size(y=50)
+        title = kx.Label(text="Code analysis", bold=True, **UI_FONT_KW)
+        title.set_size(y=UI_LINE_HEIGHT)
         self.analysis_label = kx.Label(
             halign="left",
             valign="top",
             fixed_width=True,
-            color=(0.5, 1, 0, 1),
+            color=kx.get_color("cyan").rgba,
+            padding=(10, 10),
             **UI_FONT_KW,
         )
         self.analysis_scroll = kx.Scroll(view=self.analysis_label)

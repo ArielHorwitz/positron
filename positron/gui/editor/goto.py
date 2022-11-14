@@ -1,21 +1,21 @@
 """Goto dialog for line number in code editor."""
 
 from loguru import logger
-from .. import kex as kx, UI_FONT_KW
+from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 
 
 class Goto(kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
-        self.set_size(x=200, y=100)
-        title = kx.Label(text="Goto line number")
+        self.set_size(hx=0.5, y=UI_LINE_HEIGHT * 3)
+        title = kx.Label(text="Goto line", bold=True, **UI_FONT_KW)
         title.make_bg(kx.get_color("black", a=0.5))
         self.line_number_entry = kx.CodeEntry(
             select_on_focus=True,
             write_tab=False,
             text_validate_unfocus=False,
             style_name="solarized-dark",
-            background_color=kx.XColor(0.12, 0.04, 0.2, 0.5).rgba,
+            background_color=kx.XColor(0.12, 0.04, 0.2, 0.75).rgba,
             multiline=False,
             halign="center",
             **UI_FONT_KW,
@@ -24,8 +24,12 @@ class Goto(kx.Modal):
         main_frame.add(title, self.line_number_entry)
         self.add(main_frame)
         self.bind(parent=self._on_parent)
-        self.im.register("Goto line", self.goto, "enter")
-        self.im.register("Goto line start", self.goto_start, "^ enter")
+        self.im.register("Goto line", self.goto, ["enter", "numpadenter"])
+        self.im.register(
+            "Goto line start",
+            self.goto_start,
+            ["+ enter", "+ numpadenter"],
+        )
 
     def goto(self, *args, end: bool = True):
         line_num = self.line_number_entry.text

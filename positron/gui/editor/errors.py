@@ -10,13 +10,14 @@ class Errors(kx.FocusBehavior, kx.Modal):
         self.set_size(hx=0.85, hy=0.8)
         self.make_bg(kx.get_color("navy", v=0.2, a=0.9))
         # Widgets
-        title = kx.Label(text="Code Errors")
+        title = kx.Label(text="Code Errors", bold=True, **UI_FONT_KW)
         title.set_size(y=50)
         self.summary_label = kx.Label(
             halign="left",
             valign="top",
             fixed_width=True,
-            color=(0.5, 1, 0, 1),
+            color=kx.get_color("magenta").rgba,
+            padding=(10, 10),
             **UI_FONT_KW,
         )
         self.scroll_frame = kx.Scroll(view=self.summary_label)
