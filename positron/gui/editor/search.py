@@ -43,7 +43,7 @@ class Search(kx.Modal):
 
         # Tree
         self.results_list = kx.List(
-            font=FONT,
+            font_name=FONT,
             font_size=UI_FONT_SIZE,
             on_invoke=self._on_invoke,
             item_height=LINE_HEIGHT * 4,

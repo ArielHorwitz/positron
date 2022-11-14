@@ -54,7 +54,7 @@ class ProjectTree(kx.Modal):
         # Tree
         self.tree_list = kx.List(
             item_height=LINE_HEIGHT,
-            font=FONT,
+            font_name=FONT,
             font_size=UI_FONT_SIZE,
         )
 

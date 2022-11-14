@@ -18,8 +18,8 @@ cache_remove = kv.Cache.remove
 
 class XList(kv.FocusBehavior, XRelative):
 
-    font = kv.StringProperty()
-    font_size = kv.NumericProperty()
+    font_name = kv.StringProperty("Roboto")
+    font_size = kv.NumericProperty(12)
     item_height = kv.NumericProperty(35)
     items = kv.ListProperty()
     selection = kv.NumericProperty(0)
@@ -32,8 +32,8 @@ class XList(kv.FocusBehavior, XRelative):
     enable_shifting = kv.BooleanProperty(False)
     _label_kwargs = kv.DictProperty()
 
-    def __init__(self, font: str, font_size: int, **kwargs):
-        super().__init__(font=font, font_size=font_size, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._rects = []
         self._scroll = 0
         self.items = ["placeholder"]
@@ -50,7 +50,7 @@ class XList(kv.FocusBehavior, XRelative):
             pos=self._on_geometry,
             selection=self._on_selection,
             item_height=self._refresh_label_kwargs,
-            font=self._refresh_label_kwargs,
+            font_name=self._refresh_label_kwargs,
             font_size=self._refresh_label_kwargs,
             indicator_color=self._refresh_scroll_indicator_color,
             _label_kwargs=self._on_label_kwargs,
@@ -177,7 +177,7 @@ class XList(kv.FocusBehavior, XRelative):
 
     def _refresh_label_kwargs(self, *args):
         self._label_kwargs = dict(
-            font_name=self.font,
+            font_name=self.font_name,
             font_size=self.font_size,
             text_size=(self.width, self.item_height),
             valign="middle",

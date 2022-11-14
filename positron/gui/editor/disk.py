@@ -44,7 +44,7 @@ class Disk(kx.Modal):
         help_label = kx.Label(font_name=FONT, font_size=UI_FONT_SIZE, halign="left")
         self.tree_list = kx.List(
             item_height=LINE_HEIGHT,
-            font=FONT,
+            font_name=FONT,
             font_size=UI_FONT_SIZE,
         )
         # Assemble
