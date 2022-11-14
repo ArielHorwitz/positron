@@ -17,10 +17,10 @@ __default_font_styles = {
     "code.italic": "firacode-light",
     "code.bolditalic": "firacode-bold",
     # UI
-    "ui.regular": "firacode-regular",
-    "ui.bold": "firacode-semibold",
-    "ui.italic": "firacode-light",
-    "ui.bolditalic": "firacode-bold",
+    "ui.regular": "sourcecodepro-regular",
+    "ui.bold": "sourcecodepro-bold",
+    "ui.italic": "sourcecodepro-italic",
+    "ui.bolditalic": "sourcecodepro-bolditalic",
 }
 
 
