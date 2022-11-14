@@ -1,13 +1,8 @@
 """Snippets dialog for inserting preset text in code editor."""
 
-import shutil
-from .. import kex as kx, FONTS_DIR
+from .. import kex as kx, UI_FONT_KW
 from ...util import settings
 from ...util.snippets import find_snippets
-
-
-FONT = str(FONTS_DIR / settings.get("editor.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
 
 
 class Snippets(kx.Modal):
@@ -21,19 +16,17 @@ class Snippets(kx.Modal):
         title = kx.Label(text="Insert snippet")
         title.set_size(y=50)
         self.snippet_entry = kx.Entry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             select_on_focus=True,
             write_tab=False,
             text_validate_unfocus=False,
             background_color=kx.XColor(0.12, 0.04, 0.2, 0.5).rgba,
             multiline=False,
+            **UI_FONT_KW,
         )
         self.snippet_label = kx.Label(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             halign="left",
             valign="top",
+            **UI_FONT_KW,
         )
 
         # Assemble

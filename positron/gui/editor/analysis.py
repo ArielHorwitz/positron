@@ -2,12 +2,7 @@
 
 from loguru import logger
 import traceback
-from .. import kex as kx, FONTS_DIR
-from ...util import settings
-
-
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-FONT_SIZE = settings.get("ui.font_size")
+from .. import kex as kx, UI_FONT_KW
 
 
 class Analysis(kx.FocusBehavior, kx.Modal):
@@ -20,12 +15,11 @@ class Analysis(kx.FocusBehavior, kx.Modal):
         title = kx.Label(text="Code analysis")
         title.set_size(y=50)
         self.analysis_label = kx.Label(
-            font_name=FONT,
-            font_size=FONT_SIZE,
             halign="left",
             valign="top",
             fixed_width=True,
             color=(0.5, 1, 0, 1),
+            **UI_FONT_KW,
         )
         self.analysis_scroll = kx.Scroll(view=self.analysis_label)
         # Assemble

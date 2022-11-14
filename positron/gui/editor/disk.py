@@ -3,13 +3,11 @@
 from loguru import logger
 from pathlib import Path
 import subprocess
-from .. import kex as kx, FONTS_DIR
+from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
 from ...util.file import USER_DIR, PROJ_DIR, open_path
 
 
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
 DEFAULT_BOOKMARKS = settings.get("project.default_bookmarks")
 BOOKMARKS = []
 for bm in settings.get("project.bookmarks"):
@@ -18,8 +16,6 @@ for bm in settings.get("project.bookmarks"):
         file, name = bm.rsplit(";")
     p = Path(file).expanduser().resolve()
     BOOKMARKS.append((p, name))
-CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
-CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 TREE_TOP_PREFIX = "╚╦═ "
 TREE_CHILD_PREFIX = " ╠═══ "
 TREE_CHILD_PREFIX_LAST = " ╚═══ "
@@ -38,15 +34,11 @@ class Disk(kx.Modal):
         super().__init__(**kwargs)
         self.set_size(hx=0.85, hy=0.8)
         self.make_bg(kx.get_color("yellow", v=0.1))
-        title = kx.Label(text="Disk Browser")
+        title = kx.Label(text="Disk Browser", **UI_FONT_KW)
         title.make_bg(kx.get_color("orange", v=0.3))
         title.set_size(y=50)
-        help_label = kx.Label(font_name=FONT, font_size=UI_FONT_SIZE, halign="left")
-        self.tree_list = kx.List(
-            item_height=LINE_HEIGHT,
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
-        )
+        help_label = kx.Label(halign="left", **UI_FONT_KW)
+        self.tree_list = kx.List(item_height=UI_LINE_HEIGHT, **UI_FONT_KW)
         # Assemble
         widget_frame = kx.Anchor(anchor_y="top")
         widget_frame.add(self.tree_list)
@@ -73,7 +65,7 @@ class Disk(kx.Modal):
             "        [u]ctrl + enter[/u] : open in a new window",
             "[u]ctrl + shift + enter[/u] : open in explorer",
         ])
-        help_label.set_size(y=LINE_HEIGHT * 6)
+        help_label.set_size(y=UI_LINE_HEIGHT * 5)
         self._browse_bookmarks()
 
     def _create_bookmarks(self):

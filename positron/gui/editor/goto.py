@@ -1,11 +1,7 @@
 """Goto dialog for line number in code editor."""
 
 from loguru import logger
-from .. import kex as kx, FONTS_DIR
-from ...util import settings
-
-FONT = str(FONTS_DIR / settings.get("editor.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
+from .. import kex as kx, UI_FONT_KW
 
 
 class Goto(kx.Modal):
@@ -15,8 +11,6 @@ class Goto(kx.Modal):
         title = kx.Label(text="Goto line number")
         title.make_bg(kx.get_color("black", a=0.5))
         self.line_number_entry = kx.CodeEntry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             select_on_focus=True,
             write_tab=False,
             text_validate_unfocus=False,
@@ -24,6 +18,7 @@ class Goto(kx.Modal):
             background_color=kx.XColor(0.12, 0.04, 0.2, 0.5).rgba,
             multiline=False,
             halign="center",
+            **UI_FONT_KW,
         )
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(title, self.line_number_entry)

@@ -1,10 +1,6 @@
 """Find dialog for searching text in code editor."""
 
-from .. import kex as kx, FONTS_DIR
-from ...util import settings
-
-FONT = str(FONTS_DIR / settings.get("editor.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
+from .. import kex as kx, UI_FONT_KW
 
 
 class Find(kx.Modal):
@@ -14,14 +10,13 @@ class Find(kx.Modal):
         title = kx.Label(text="Find")
         title.make_bg(kx.get_color("black", a=0.5))
         self.pattern_entry = kx.CodeEntry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             select_on_focus=True,
             write_tab=False,
             text_validate_unfocus=False,
             style_name="solarized-dark",
             background_color=kx.XColor(0.12, 0.04, 0.2, 0.5).rgba,
             multiline=False,
+            **UI_FONT_KW,
         )
         main_frame = kx.Box(orientation="vertical")
         main_frame.add(title, self.pattern_entry)

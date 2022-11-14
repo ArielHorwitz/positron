@@ -1,7 +1,7 @@
 """GUI app."""
 
 from loguru import logger
-from . import kex as kx, FONTS_DIR
+from . import kex as kx
 from .editor.container import Container as EditorContainer
 from ..util.file import open_path, USER_DIR, PROJ_DIR
 from ..util import settings
@@ -12,8 +12,6 @@ WINDOW_SIZE = settings.get("window.size")
 WINDOW_POS = settings.get("window.offset")
 WINDOW_BORDERLESS = not settings.get("window.border")
 START_MAXIMIZED = settings.get("window.maximize")
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
 DEBUG_HOTKEYS_PRESS = settings.get("debug.hotkeys.press")
 DEBUG_HOTKEYS_RELEASE = settings.get("debug.hotkeys.release")
 

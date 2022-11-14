@@ -4,17 +4,13 @@ from loguru import logger
 import arrow
 from pathlib import Path
 import fuzzysearch
-from .. import kex as kx, FONTS_DIR
+from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
 
 
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
 REFRESH_DELAY = settings.get("project.tree_search_cooldown")
 FUZZY_LDIST = settings.get("project.tree_search_fuzziness")
 FUZZY_THRESHOLD_COUNT = settings.get("project.tree_fuzzy_threshold_count")
-CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="a")
-CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 MISSING_COLOR = "#ff0000"
 FOLDER_COLOR = "#0066ff"
 FILE_COLOR = "#00ff66"
@@ -29,34 +25,26 @@ class ProjectTree(kx.Modal):
         self._quick_file = None
         self.set_size(hx=0.8, hy=0.9)
         self.make_bg(kx.get_color("cyan", v=0.2))
-        self.title = kx.Label(font_name=FONT, font_size=UI_FONT_SIZE)
-        self.title.set_size(y=LINE_HEIGHT * 3)
+        self.title = kx.Label(**UI_FONT_KW)
+        self.title.set_size(y=UI_LINE_HEIGHT * 2)
 
         # Quick results
-        self.quick_label = kx.Label(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
-        )
+        self.quick_label = kx.Label(**UI_FONT_KW)
         self.quick_label.set_size(y=40)
 
         # Search
         self.search_entry = kx.Entry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             halign="center",
             background_color=kx.XColor(0.2, 0.6, 1, v=0.2).rgba,
             select_on_focus=True,
             multiline=False,
+            **UI_FONT_KW,
         )
         self.search_entry.set_size(y=40)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
-        self.tree_list = kx.List(
-            item_height=LINE_HEIGHT,
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
-        )
+        self.tree_list = kx.List(item_height=UI_LINE_HEIGHT, **UI_FONT_KW)
 
         # Assemble
         self.search_entry.focus_next = self.tree_list

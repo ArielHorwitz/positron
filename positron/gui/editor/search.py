@@ -1,19 +1,13 @@
 """Project search."""
 
 from loguru import logger
-from .. import kex as kx, FONTS_DIR
+from .. import kex as kx, UI_FONT_KW, UI_CHAR_WIDTH, UI_LINE_HEIGHT
 from ...util import settings
 from ...util.file import file_load, search_text
 
 
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-UI_FONT_SIZE = settings.get("ui.font_size")
 MAX_RESULTS = settings.get("project.max_search_results")
 REFRESH_DELAY = settings.get("project.text_search_cooldown")
-# TODO find more reliable method - CHAR_WIDTH may only work with the builtin font
-CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=UI_FONT_SIZE).get_extents(text="A")
-CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
-CHAR_WIDTH -= 1
 DESCRIPTION_COLOR = "#44dd44"
 LOCATION_COLOR = "#bb44bb"
 CONTEXT_COLOR = "#22bbbb"
@@ -31,22 +25,20 @@ class Search(kx.Modal):
 
         # Search
         self.search_entry = kx.Entry(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             halign="center",
             write_tab=False,
             background_color=(0.04, 0.12, 0.2, 1),
             multiline=False,
+            **UI_FONT_KW,
         )
         self.search_entry.set_size(y=40)
         self.search_entry.bind(text=self._on_search_text)
 
         # Tree
         self.results_list = kx.List(
-            font_name=FONT,
-            font_size=UI_FONT_SIZE,
             on_invoke=self._on_invoke,
-            item_height=LINE_HEIGHT * 4,
+            item_height=UI_LINE_HEIGHT * 3,
+            **UI_FONT_KW,
         )
 
         # Assemble
@@ -106,7 +98,7 @@ class Search(kx.Modal):
         if not self._results:
             self.results_list.items = ["No results."]
             return
-        line_width = int(self.results_list.width / CHAR_WIDTH) - 1
+        line_width = int(self.results_list.width / UI_CHAR_WIDTH)
         get_context = self.session.get_context
         for location, text in self._results:
             if location.file.suffix == ".py":

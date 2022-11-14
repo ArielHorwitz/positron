@@ -12,7 +12,7 @@ from pygments.styles import STYLE_MAP
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.markup import MarkdownLexer
 from jedi.api.classes import Completion
-from .. import kex as kx, FONTS_DIR
+from .. import kex as kx, FONT_KW, CHAR_WIDTH, LINE_HEIGHT
 from ...util import settings
 from ...util.file import file_load, file_dump
 from ...util.snippets import find_snippets, Snippet
@@ -23,8 +23,6 @@ logger.info(f"Available styles: {list(STYLE_MAP.keys())}")
 if STYLE_NAME not in STYLE_MAP:
     STYLE_NAME = "default"
 logger.info(f"Chosen style: {STYLE_NAME}")
-FONT = str(FONTS_DIR / settings.get("editor.font"))
-FONT_SIZE = settings.get("editor.font_size")
 AUTO_LOAD = settings.get("editor.auto_load")
 GUTTER_PADDING = settings.get("editor.gutter_padding")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
@@ -42,8 +40,6 @@ STATUS_BG_WARN = kx.XColor(*settings.get("ui.status.warn"))
 STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
 MAX_LINE_LENGTH = settings.get("linter.max_line_length")
 LINE_LENGTH_HINT_COLOR = settings.get("editor.line_width_color")
-CHAR_SIZE = kx.CoreLabel(font=FONT, font_size=FONT_SIZE).get_extents(text="a")
-CHAR_WIDTH, LINE_HEIGHT = CHAR_SIZE
 MAX_LINE_WIDTH = CHAR_WIDTH * (MAX_LINE_LENGTH + 1)
 
 
@@ -81,8 +77,6 @@ class CodeEditor(kx.Anchor):
         self.im = kx.InputManager(name=f"Code editor {uid}")
         # Code
         self.code_entry = kx.CodeEntry(
-            font_name=FONT,
-            font_size=FONT_SIZE,
             auto_indent=True,
             do_wrap=False,
             style_name=STYLE_NAME,
@@ -91,6 +85,7 @@ class CodeEditor(kx.Anchor):
             cursor_pause_timeout=CURSOR_PAUSE_TIMEOUT,
             cursor_scroll_offset=CURSOR_SCROLL_OFFSET,
             _focus_brightness_diff=DEFOCUS_BRIGHTNESS,
+            **FONT_KW,
         )
         self.code_entry.focus = True
         self.code_entry.bind(
@@ -105,10 +100,9 @@ class CodeEditor(kx.Anchor):
         line_gutter_top_padding = kx.Anchor()
         line_gutter_top_padding.set_size(y=GUTTER_PADDING)
         self.line_gutter = kx.Label(
-            font_name=FONT,
-            font_size=FONT_SIZE,
             valign="top",
             halign="right",
+            **FONT_KW,
         )
         line_gutter_frame = kx.Box(orientation="vertical")
         line_gutter_frame.make_bg(kx.XColor(*GUTTER_COLOR))
@@ -117,16 +111,15 @@ class CodeEditor(kx.Anchor):
         code_frame = kx.Box()
         code_frame.add(line_gutter_frame, self.code_entry)
         # Cursor status bar
-        status_kw = {"font_name": FONT, "font_size": FONT_SIZE}
-        self.status_cursor_context = kx.Label(halign="left", **status_kw)
+        self.status_cursor_context = kx.Label(halign="left", **FONT_KW)
         self.status_cursor_context.set_size(hx=0.95)
-        self.status_file_cursor = kx.Label(halign="right", **status_kw)
+        self.status_file_cursor = kx.Label(halign="right", **FONT_KW)
         self.status_file_cursor.set_size(hx=0.95)
         self.status_bar_cursor = kx.Anchor()
         self.status_bar_cursor.set_size(y=LINE_HEIGHT)
         self.status_bar_cursor.add(self.status_cursor_context, self.status_file_cursor)
         # Errors status bar
-        self.status_errors = kx.Label(halign="center", **status_kw)
+        self.status_errors = kx.Label(halign="center", **FONT_KW)
         self.status_errors.set_size(hx=0.95)
         self.status_bar_errors = kx.Anchor()
         self.status_bar_errors.set_size(y=LINE_HEIGHT)
@@ -150,12 +143,7 @@ class CodeEditor(kx.Anchor):
             size=self._reposition_line_width_hint,
         )
         # Completion popup
-        self.completion_label = kx.Label(
-            halign="left",
-            font_name=FONT,
-            font_size=FONT_SIZE,
-            fixed_width=True,
-        )
+        self.completion_label = kx.Label(halign="left", fixed_width=True, **FONT_KW)
         self.completion_label.make_bg(kx.get_color("blue", v=0.2, a=0.4))
         self.completion_label.set_size(x=300, y=30)
         completion_layout = kx.Relative()

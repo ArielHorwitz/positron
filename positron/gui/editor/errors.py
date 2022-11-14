@@ -1,11 +1,6 @@
 """Code errors modal."""
 
-from .. import kex as kx, FONTS_DIR
-from ...util import settings
-
-
-FONT = str(FONTS_DIR / settings.get("ui.font"))
-FONT_SIZE = settings.get("ui.font_size")
+from .. import kex as kx, UI_FONT_KW
 
 
 class Errors(kx.FocusBehavior, kx.Modal):
@@ -18,12 +13,11 @@ class Errors(kx.FocusBehavior, kx.Modal):
         title = kx.Label(text="Code Errors")
         title.set_size(y=50)
         self.summary_label = kx.Label(
-            font_name=FONT,
-            font_size=FONT_SIZE,
             halign="left",
             valign="top",
             fixed_width=True,
             color=(0.5, 1, 0, 1),
+            **UI_FONT_KW,
         )
         self.scroll_frame = kx.Scroll(view=self.summary_label)
         # Assemble
