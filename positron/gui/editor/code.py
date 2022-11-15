@@ -181,6 +181,7 @@ class CodeEditor(kx.Anchor):
             ("Next error", self.scroll_to_error, "^ e", True),
             ("Comment", self.make_comment, "^ \\"),
             ("Toggle case", self.code_entry.toggle_case, "^ u"),
+            ("Join/split lines", self.code_entry.join_split_lines, "^+ j"),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:

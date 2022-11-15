@@ -366,6 +366,64 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             self.insert_text(text.upper())
         self.select_text(min(selection), max(selection))
 
+    def join_split_lines(self, *args):
+        start, end = self.selected_line_range()
+        if start == end:
+            self._split_line(start)
+            return
+        else:
+            self._join_lines(start, end)
+
+    def _split_line(
+        self,
+        line: int,
+        sep: str = ",",
+        split_first: str = "(",
+        split_last: str = ")",
+    ):
+        self.select_full_lines(line, line)
+        text = self.selection_text
+        if not any(p in text for p in (sep, split_first, split_last)):
+            return
+        ws_len = len(re.match(r" *", text).group())
+        ws = " " * ws_len
+        ws_indented = " " * (ws_len + 4)
+        first_line, *lines = text.split(sep)
+        if split_first in first_line:
+            fsplit_index = first_line.index(split_first) + 1
+            lines.insert(0, first_line[fsplit_index:])
+            first_line = first_line[:fsplit_index]
+        else:
+            first_line = f"{first_line}{sep}"
+        last_line = lines.pop()
+        if split_last in last_line:
+            lsplit_index = last_line.index(split_last)
+            lines.append(last_line[:lsplit_index])
+            last_line = last_line[lsplit_index:]
+            last_line = f"{ws}{last_line}"
+        lines = [f"{ws_indented}{_.strip()}{sep}" for _ in lines]
+        final_lines = [first_line, *lines, last_line]
+        final_text = "\n".join(final_lines)
+        self.delete_selection()
+        self.insert_text(final_text)
+        self.select_full_lines(line, line + len(final_lines) - 1)
+
+    def _join_lines(self, start: int, end: int, join_with: str = ", "):
+        self.select_full_lines(start, end)
+        text = self.selection_text
+        first_line, *lines = text.split("\n")
+        lines = [_.strip() for _ in lines]
+        last_line = lines.pop()
+        lines = [
+            line.removesuffix(join_with).removesuffix(",")
+            for line in lines
+        ]
+        reduced = join_with.join(lines)
+        final_text = f"{first_line}{reduced}{last_line}"
+        self.delete_selection()
+        self.insert_text(final_text)
+        self.select_full_lines(start, start)
+
     def shift_lines(self, direction: int):
         self._shift_lines(direction)
         kv.Clock.schedule_once(lambda *a: self._shift_lines_custom(direction))
