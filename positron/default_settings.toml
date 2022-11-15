@@ -120,11 +120,10 @@ text_search_cooldown = 0.2
 # Paths on disk for quick access in disk browser
 bookmarks = [
     # Use ";" to name the bookmark
-    # "~/projects/;My Projects",
-    # "~/projects/;[color=#bb0000]My Projects[/color]",  # Using colors
+    # "~/path/to/folder/or/file;[color=#ffffff]Bookmark Name[/color]",
+    "~/;Home folder",
+    "~/.local/share/positron/;Positron config",
 ]
-# Include default bookmarks
-default_bookmarks = true
 
 
 [path_prefixes]

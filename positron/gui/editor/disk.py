@@ -8,7 +8,6 @@ from ...util import settings
 from ...util.file import USER_DIR, PROJ_DIR, open_path
 
 
-DEFAULT_BOOKMARKS = settings.get("project.default_bookmarks")
 BOOKMARKS = []
 for bm in settings.get("project.bookmarks"):
     file, name = bm, None
@@ -69,7 +68,7 @@ class Disk(kx.Modal):
         self._browse_bookmarks()
 
     def _create_bookmarks(self):
-        paths = [USER_DIR]
+        paths = [None]
         reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
         for p, name in BOOKMARKS:
@@ -78,18 +77,8 @@ class Disk(kx.Modal):
                 name = self._path_repr(p, name_only=False)
             name = _wrap_color(name, _get_color(p))
             reprs.append(name)
-        # Built-in defaults
-        if DEFAULT_BOOKMARKS:
-            paths.extend([
-                self.session.dir_tree.root,
-                Path.home(),
-                USER_DIR,
-            ])
-            reprs.extend([
-                _wrap_color("Project folder", FOLDER_COLOR),
-                _wrap_color("Home folder", FOLDER_COLOR),
-                _wrap_color("Positron config folder", FOLDER_COLOR),
-            ])
+        paths.append(self.session.dir_tree.root)
+        reprs.append(_wrap_color("Project folder", FOLDER_COLOR))
         self._bookmark_paths = paths
         self._bookmark_reprs = reprs
 
@@ -119,7 +108,9 @@ class Disk(kx.Modal):
         self.tree_list.items = items
 
     def _browse_back(self, *args):
-        self._set_dir(self._current_paths[0])
+        p = self._current_paths[0]
+        if p is not None:
+            self._set_dir(p)
 
     def _browse_project(self, *args):
         self._set_dir(self.session.dir_tree.root)
