@@ -77,6 +77,7 @@ def _load_settings(settings_files: Optional[list[Path]] = None) -> dict[str, Any
 
 class _Settings:
     _SETTINGS = None
+    _USED_SETTINGS = set()
 
     @classmethod
     def load(cls, settings_names: Optional[list[str]] = None, /):
@@ -103,12 +104,19 @@ class _Settings:
     def get(cls, setting_name: str) -> Any:
         """Get the value of *setting_name*."""
         try:
+            cls._USED_SETTINGS.add(setting_name)
             return cls._SETTINGS[setting_name]
         except TypeError:
             raise RuntimeError("Settings uninitialized")
         except ValueError:
             raise ValueError(f"Unknown setting: {setting_name}")
 
+    @classmethod
+    def get_unused(cls) -> list[str]:
+        """List of settings names whose values were not yet requested."""
+        return [s for s in cls._SETTINGS.keys() if s not in cls._USED_SETTINGS]
+
 
 load = _Settings.load
 get = _Settings.get
+unused = _Settings.get_unused

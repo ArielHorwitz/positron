@@ -99,6 +99,9 @@ def _run_positron(project_path: Path):
     app_session = Session(project_path)
     app = App(app_session)
     returncode = app.run()
+    unused_settings = settings.unused()
+    if unused_settings:
+        logger.warning(f"Unused settings: {unused_settings}")
     if returncode < 0:
         logger.info("Restarting Positron...\n")
         restart_script()
