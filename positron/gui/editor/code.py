@@ -2,6 +2,7 @@
 
 from loguru import logger
 from typing import Optional
+import traceback
 import re
 import os.path
 import arrow
@@ -256,9 +257,14 @@ class CodeEditor(kx.Anchor):
             self.load()
 
     def _get_disk_content(self, file: Path) -> str:
-        if not file.exists():
-            return None
-        return file_load(file)
+        try:
+            return file_load(file)
+        except UnicodeDecodeError as e:
+            lmsg = "\n".join(traceback.format_exception(e))
+            logger.warning(f"Failed to load file {file}, see traceback:\n{lmsg}")
+        except FileNotFoundError:
+            pass
+        return None
 
     def _get_disk_mod_date(self, file: Path):
         return arrow.get(os.path.getmtime(file)) if file.exists() else None
