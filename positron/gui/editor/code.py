@@ -24,6 +24,7 @@ if STYLE_NAME not in STYLE_MAP:
     STYLE_NAME = "default"
 logger.info(f"Chosen style: {STYLE_NAME}")
 AUTO_LOAD = settings.get("editor.auto_load")
+MAX_FILE_SIZE_KB = settings.get("editor.max_file_size_kb")
 DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
 CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
 CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
@@ -216,6 +217,13 @@ class CodeEditor(kx.Anchor):
     ):
         if file is None:
             file = self._current_file
+        if file.exists():
+            fsize_kb = file.stat().st_size / 2**10
+            if fsize_kb > MAX_FILE_SIZE_KB:
+                logger.warning(
+                    f"Cannot open {file} due to large size: {fsize_kb:.2f} KB"
+                )
+                return
         self._current_file = file
         self._update_lexer()
         text = self._get_disk_content(file)

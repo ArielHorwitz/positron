@@ -37,6 +37,8 @@ cursor_pause_timeout = 0.25
 cursor_scroll_offset = 10
 # Never check for errors more than once per this many seconds
 error_check_cooldown = 2
+# Maximum file size to allow loading in editor in KB
+max_file_size_kb = 500
 # Automatically load the file on startup
 auto_load = true
 
