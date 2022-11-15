@@ -180,6 +180,7 @@ class CodeEditor(kx.Anchor):
             ("Scroll down code comps", self._scroll_down_completions, "! down", True),
             ("Next error", self.scroll_to_error, "^ e", True),
             ("Comment", self.make_comment, "^ \\"),
+            ("Toggle case", self.code_entry.toggle_case, "^ u"),
         ]:
             self.im.register(*reg_args)
         if AUTO_LOAD:

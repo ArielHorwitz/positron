@@ -354,6 +354,18 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         # Select pasted lines
         self.select_text(select_from, select_to)
 
+    def toggle_case(self, *args):
+        text = self.selection_text
+        if not text:
+            return
+        selection = self.selection_from, self.selection_to
+        self.delete_selection()
+        if text == text.upper():
+            self.insert_text(text.lower())
+        else:
+            self.insert_text(text.upper())
+        self.select_text(min(selection), max(selection))
+
     def shift_lines(self, direction: int):
         self._shift_lines(direction)
         kv.Clock.schedule_once(lambda *a: self._shift_lines_custom(direction))
