@@ -110,6 +110,14 @@ def _format_keys(
     return f"{mod_str} {key_name}"
 
 
+def _fix_modifier_order(k: str) -> str:
+    if " " not in k:
+        return k
+    mods, key = k.split(" ")
+    sorted_mods = "".join(sorted(mods, key=lambda x: MODIFIER_SORT.index(x)))
+    return f"{sorted_mods} {key}"
+
+
 def humanize_keys(keys: KeysFormat) -> str:
     """Return a more human-readable string from a KeysFormat."""
     mods, key = keys.split(" ") if " " in keys else ([], keys)
@@ -215,6 +223,7 @@ class XInputManager(XWidget, kv.Widget):
             consume_keys: Consume the keys.
         """
         keys = [keys] if isinstance(keys, str) else keys
+        keys = [_fix_modifier_order(k) for k in keys]
         kc = KeyControl(name, self.name, callback, keys, allow_repeat, consume_keys)
         if kc.name in self.controls:
             if not self.allow_overwrite:
