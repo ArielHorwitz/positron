@@ -4,7 +4,6 @@ maximize = true
 border = true
 size = [1280, 800]
 offset = [-1, -1]
-fps = 10
 
 
 [ui]

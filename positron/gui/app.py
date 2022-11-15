@@ -7,13 +7,10 @@ from ..util.file import open_path, USER_DIR, PROJ_DIR
 from ..util import settings
 
 
-FPS = settings.get("window.fps")
+WINDOW_TITLE_REFRESH_FPS = 10
 WINDOW_SIZE = settings.get("window.size")
 WINDOW_POS = settings.get("window.offset")
-WINDOW_BORDERLESS = not settings.get("window.border")
 START_MAXIMIZED = settings.get("window.maximize")
-DEBUG_HOTKEYS_PRESS = settings.get("debug.hotkeys.press")
-DEBUG_HOTKEYS_RELEASE = settings.get("debug.hotkeys.release")
 
 
 class App(kx.App):
@@ -28,24 +25,36 @@ class App(kx.App):
             self.session.project_path,
             to_project=False,
         )
+        self.panels = EditorContainer(session)
+        self.root.add(self.panels)
         self.im = kx.InputManager(
             name="App root",
             logger=logger.debug,
-            log_press=DEBUG_HOTKEYS_PRESS,
-            log_release=DEBUG_HOTKEYS_RELEASE,
+            log_press=settings.get("debug.hotkeys.press"),
+            log_release=settings.get("debug.hotkeys.release"),
         )
-        self.panels = EditorContainer(session)
-        self.root.add(self.panels)
         self.register_hotkeys()
-        self.hook(self.update, FPS)
-        logger.info("Finished initialization.")
+        self.hook(self.update, WINDOW_TITLE_REFRESH_FPS)
         self.bind(current_focus=self._debug_focus)
+        for n in (
+            "debug.hotkeys.press",
+            "debug.hotkeys.release",
+            "window.border",
+        ):
+            settings.bind(n, self._update_settings)
+        logger.info("Finished initialization.")
+
+    def _update_settings(self, *args):
+        logger.debug("App updating settings")
+        self.im.log_press = settings.get("debug.hotkeys.press")
+        self.im.log_release = settings.get("debug.hotkeys.release")
+        kx.Window.toggle_borderless(not settings.get("window.border"))
 
     def _debug_focus(self, w, focus):
         logger.debug(f"{focus=}")
 
     def _init_window(self):
-        kx.Window.toggle_borderless(WINDOW_BORDERLESS)
+        kx.Window.toggle_borderless(not settings.get("window.border"))
         kx.schedule_once(lambda _: kx.Window.set_size(*WINDOW_SIZE))
         if any(c >= 0 for c in WINDOW_POS):
             kx.schedule_once(lambda _: kx.Window.set_position(*WINDOW_POS))
@@ -63,14 +72,15 @@ class App(kx.App):
 
     def register_hotkeys(self):
         self.im.remove_all()
-        for a, c, hk in [
+        for args in [
             ("app.quit", self.stop, "^+ q"),
             ("app.restart", self.restart, "^+ w"),
+            ("Reload settings", settings.load, "^+ f5", False, False),
             ("Open user dir", lambda: open_path(USER_DIR), "f12"),
             ("Open session dir", self._open_project_dir, "f9"),
             ("Debug hotkeys", self._debug_hotkeys, "^!+ f15"),
         ]:
-            self.im.register(a, c, hk)
+            self.im.register(*args)
 
     def update(self, dt: float):
         winsize = f"{kx.Window.kivy.width}×{kx.Window.kivy.height}"
@@ -82,3 +92,4 @@ class App(kx.App):
             *sorted(repr(kc) for kc in self.im.get_all_hotkeys()),
         ]
         logger.debug("\n".join(strs))
+        settings.debug_bindings()
