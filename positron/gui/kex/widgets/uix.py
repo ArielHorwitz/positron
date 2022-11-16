@@ -332,6 +332,11 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
         self.cursor_width = "2sp"
         self.cursor_color = 1, 1, 0, 1
 
+    def _get_line_options(self):
+        kw = super()._get_line_options()
+        kw['style_name'] = self.style_name
+        return kw
+
     def _on_window_focus(self, w, focus):
         self.cursor_blink = focus
 
