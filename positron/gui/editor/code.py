@@ -19,30 +19,9 @@ from ...util.file import file_load, file_dump
 from ...util.snippets import find_snippets, Snippet
 
 
-STYLE_NAME = settings.get("editor.style")
 logger.info(f"Available styles: {list(STYLE_MAP.keys())}")
-if STYLE_NAME not in STYLE_MAP:
-    STYLE_NAME = "default"
-logger.info(f"Chosen style: {STYLE_NAME}")
-AUTO_LOAD = settings.get("editor.auto_load")
-MAX_FILE_SIZE_KB = settings.get("editor.max_file_size_kb")
-DISK_DIFF_INTERVAL = settings.get("editor.disk_diff_interval")
-CURSOR_PAUSE_TIMEOUT = settings.get("editor.cursor_pause_timeout")
-CURSOR_SCROLL_OFFSET = settings.get("editor.cursor_scroll_offset")
-GUTTER_WIDTH = settings.get("editor.gutter_width")
-GUTTER_BG_COLOR = settings.get("editor.gutter_bg_color")
-GUTTER_TEXT_COLOR = settings.get("editor.gutter_text_color")
-BACKGROUND_COLOR = kx.XColor(*settings.get("editor.bg_color"))
-DEFOCUS_BRIGHTNESS = settings.get("editor.defocus_brightness")
-ERROR_CHECK_COOLDOWN = settings.get("editor.error_check_cooldown")
 MAX_COMPLETIONS = 10
 COMPLETION_DISABLE_AFTER = set(" \t\n\r!#$%&()*+,-/:;<=>?@[\]^{|}~")  # noqa: W605
-STATUS_BG = kx.XColor(*settings.get("ui.status.normal"))
-STATUS_BG_WARN = kx.XColor(*settings.get("ui.status.warn"))
-STATUS_BG_ERROR = kx.XColor(*settings.get("ui.status.error"))
-MAX_LINE_LENGTH = settings.get("linter.max_line_length")
-LINE_LENGTH_HINT_COLOR = settings.get("editor.line_width_color")
-MAX_LINE_WIDTH = CHAR_WIDTH * (MAX_LINE_LENGTH + 1)
 STATUS_FONT_KW = dict(
     font_name=UI_FONT_KW["font_name"],
     font_size=FONT_KW["font_size"],
@@ -75,23 +54,25 @@ class CodeEditor(kx.Anchor):
         self.__uid = uid
         assert isinstance(file, Path)
         self._current_file = file.expanduser().resolve()
+        self.__gutter_width = 3  # Any int, should be updated with settings refresh
+        self.__max_line_width = 1  # Any int, should be updated with settings refresh
         self.__disk_modified_time = None
         self.__disk_diff = False
         self.__disk_cache = None
         self.__find_text = ""
-        self.__errors = None
+        self.__errors = []
+        self.__last_errors_hash = None
         self.__cached_selected_text = ""
+        self.__status_bg = kx.XColor(*settings.get("ui.status.normal"))
+        self.__status_bg_warn = kx.XColor(*settings.get("ui.status.warn"))
+        self.__status_bg_error = kx.XColor(*settings.get("ui.status.error"))
         self.im = kx.InputManager(name=f"Code editor {uid}")
         # Code
         self.code_entry = kx.CodeEntry(
             auto_indent=True,
             do_wrap=False,
-            style_name=STYLE_NAME,
-            background_color=BACKGROUND_COLOR.rgba,
+            style_name=settings.get("editor.style"),
             scroll_distance=750,
-            cursor_pause_timeout=CURSOR_PAUSE_TIMEOUT,
-            cursor_scroll_offset=CURSOR_SCROLL_OFFSET,
-            _focus_brightness_diff=DEFOCUS_BRIGHTNESS,
             **FONT_KW,
         )
         self.code_entry.focus = True
@@ -107,12 +88,9 @@ class CodeEditor(kx.Anchor):
         self.line_gutter = kx.Label(
             valign="top",
             halign="right",
-            color=GUTTER_TEXT_COLOR,
             padding_y=self.code_entry.padding[1],
             **FONT_KW,
         )
-        self.line_gutter.make_bg(kx.XColor(*GUTTER_BG_COLOR))
-        self.line_gutter.set_size(x=GUTTER_WIDTH * CHAR_WIDTH)
         # Cursor status bar
         self.status_cursor_context = kx.Label(halign="left", **STATUS_FONT_KW)
         self.status_cursor_context.set_size(hx=0.95)
@@ -127,9 +105,9 @@ class CodeEditor(kx.Anchor):
         self.status_bar_errors = kx.Anchor()
         self.status_bar_errors.set_size(y=LINE_HEIGHT)
         self.status_bar_errors.add(self.status_errors)
-        self.__update_errors_trigger = kx.create_trigger(
-            self._update_errors,
-            ERROR_CHECK_COOLDOWN,
+        self.__update_errors_trigger = kx.snoozing_trigger(
+            self.update_errors,
+            settings.get("editor.error_check_cooldown"),
         )
         # Assemble
         code_frame = kx.Box()
@@ -139,7 +117,7 @@ class CodeEditor(kx.Anchor):
         self.add(main_frame)
         # Line length hint
         with self.canvas.after:
-            kx.Color(*LINE_LENGTH_HINT_COLOR)
+            self.line_width_hint_color = kx.Color()
             self.line_width_hint = kx.Rectangle(size=(2, 10_000))
             kx.Color()
         self._reposition_line_width_hint()
@@ -186,9 +164,17 @@ class CodeEditor(kx.Anchor):
             ("Join/split lines", self.code_entry.join_split_lines, "^+ j"),
         ]:
             self.im.register(*reg_args)
-        if AUTO_LOAD:
+        # Bind to settings
+        self._do_trigger_refresh_settings = kx.create_trigger(self._refresh_settings)
+        for setting_name in self._refresh_settings_bound_names:
+            settings.bind(setting_name, self._trigger_refresh_settings)
+        self._trigger_refresh_settings()
+        if settings.get("editor.auto_load"):
             self.load()
-        kx.schedule_interval(self._check_disk_diff, DISK_DIFF_INTERVAL)
+        self.__disk_diff_ev = kx.schedule_interval(
+            self._check_disk_diff,
+            settings.get("editor.disk_diff_interval"),
+        )
 
     # File management
     @property
@@ -220,7 +206,7 @@ class CodeEditor(kx.Anchor):
             file = self._current_file
         if file.exists():
             fsize_kb = file.stat().st_size / 2**10
-            if fsize_kb > MAX_FILE_SIZE_KB:
+            if fsize_kb > settings.get("editor.max_file_size_kb"):
                 logger.warning(
                     f"Cannot open {file} due to large size: {fsize_kb:.2f} KB"
                 )
@@ -377,6 +363,7 @@ class CodeEditor(kx.Anchor):
                 return text
 
     def scroll_to_error(self):
+        self.update_errors()
         next_error = self._get_next_error(include_cursor_index=False)
         if next_error:
             self.set_cursor(next_error.line, next_error.column)
@@ -460,7 +447,7 @@ class CodeEditor(kx.Anchor):
         start, finish = self.code_entry.visible_line_range()
         finish = min(finish, len(self.code_entry._lines))
         self.line_gutter.text = "\n".join(
-            f"{str(i+1)[:GUTTER_WIDTH]:>{GUTTER_WIDTH}}"
+            f"{str(i+1)[:self.__gutter_width]:>{self.__gutter_width}}"
             for i in range(start, finish)
         )
 
@@ -471,17 +458,14 @@ class CodeEditor(kx.Anchor):
 
     def _reposition_line_width_hint(self, *args):
         code = self.code_entry
-        self.line_width_hint.pos = code.x + MAX_LINE_WIDTH, code.y
+        self.line_width_hint.pos = code.x + self.__max_line_width, code.y
         self.line_width_hint.size = 2, code.height
 
     def _on_focus(self, w, focus):
         self.im.active = focus
 
     def _on_text(self, *a):
-        ev = self.__update_errors_trigger
-        if ev.is_triggered:
-            ev.cancel()
-        ev()
+        self.__update_errors_trigger()
         self._on_cursor()
         kx.schedule_once(self._refresh_line_gutters)
 
@@ -491,7 +475,7 @@ class CodeEditor(kx.Anchor):
 
     def _refresh_status_diff(self, *a):
         self.status_file_cursor.text = self._cursor_full()
-        bg = STATUS_BG_WARN if self.__disk_diff else STATUS_BG
+        bg = self.__status_bg_warn if self.__disk_diff else self.__status_bg
         self.status_bar_cursor.make_bg(bg)
 
     def _cursor_full(self):
@@ -515,25 +499,34 @@ class CodeEditor(kx.Anchor):
             context = context.full_name[len(context.module_name) + 1:] or "__module__"
         self.status_cursor_context.text = context
 
-    def _update_errors(self, *args):
-        errors = []
+    def update_errors(self, *args):
         if self._current_file.suffix == ".py":
-            errors = self.session.get_errors(self.code_entry.text)
+            code = self.code_entry.text
+            code_hash = hash(code)
+            if self.__last_errors_hash != code_hash:
+                logger.debug(f"Getting errors for {code_hash=}")
+                self.__last_errors_hash = code_hash
+                errors = self.session.get_errors(code)
+            else:
+                errors = self.__errors
+        else:
+            errors = []
         self.__errors = errors
         self._refresh_status_errors()
+        return errors
 
     def _refresh_status_errors(self, *args):
         error = self._get_next_error(include_cursor_index=True)
         if not error:
             self.status_errors.text = "No errors :)"
-            self.status_bar_errors.make_bg(STATUS_BG)
+            self.status_bar_errors.make_bg(self.__status_bg)
             return
         summary = f"Error @ {error.line},{error.column} :: {error.message}"
         count = len(self.__errors)
         if count > 1:
             summary = f"{summary}  ( + {count - 1} more errors)"
         self.status_errors.text = summary
-        self.status_bar_errors.make_bg(STATUS_BG_ERROR)
+        self.status_bar_errors.make_bg(self.__status_bg_error)
 
     def _get_next_error(self, include_cursor_index: bool = True):
         if not self.__errors:
@@ -547,3 +540,47 @@ class CodeEditor(kx.Anchor):
             ):
                 return e
         return self.__errors[0]
+
+    def _trigger_refresh_settings(self, *args):
+        self._do_trigger_refresh_settings()
+
+    def _refresh_settings(self, *args):
+        logger.debug("Code editor refreshing settings")
+        entry = self.code_entry
+        entry.style_name = settings.get("editor.style")
+        entry.cursor_pause_timeout = settings.get("editor.cursor_pause_timeout")
+        entry.cursor_scroll_offset = settings.get("editor.cursor_scroll_offset")
+        entry.defocus_brightness = settings.get("editor.defocus_brightness")
+        entry.set_background(kx.XColor(*settings.get("editor.bg_color")).rgba)
+        self.__gutter_width = settings.get("editor.gutter_width")
+        line_gutter = self.line_gutter
+        line_gutter.set_size(x=self.__gutter_width * CHAR_WIDTH)
+        line_gutter.make_bg(kx.XColor(*settings.get("editor.gutter_bg_color")))
+        line_gutter.color = settings.get("editor.gutter_text_color")
+        self._refresh_line_gutters()
+        errors_trigger = self.__update_errors_trigger.ev
+        errors_trigger.timeout = settings.get("editor.error_check_cooldown")
+        self.__disk_diff_ev.timeout = settings.get("editor.disk_diff_interval")
+        self.__status_bg = kx.XColor(*settings.get("ui.status.normal"))
+        self.__status_bg_warn = kx.XColor(*settings.get("ui.status.warn"))
+        self.__status_bg_error = kx.XColor(*settings.get("ui.status.error"))
+        self.__max_line_width = (
+            CHAR_WIDTH * (settings.get("linter.max_line_length") + 1)
+        )
+        lhint_color = settings.get("editor.line_width_hint_color")
+        self.line_width_hint_color.rgba = kx.XColor(*lhint_color).rgba
+
+    _refresh_settings_bound_names = (
+        "editor.style",
+        "editor.bg_color",
+        "editor.cursor_pause_timeout",
+        "editor.cursor_scroll_offset",
+        "editor.defocus_brightness",
+        "editor.gutter_width",
+        "editor.gutter_bg_color",
+        "editor.gutter_text_color",
+        "editor.error_check_cooldown",
+        "editor.disk_diff_interval",
+        "editor.line_width_hint_color",
+        "linter.max_line_length",
+    )

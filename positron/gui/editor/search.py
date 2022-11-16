@@ -6,8 +6,6 @@ from ...util import settings
 from ...util.file import file_load, search_text
 
 
-MAX_RESULTS = settings.get("project.max_search_results")
-REFRESH_DELAY = settings.get("project.text_search_cooldown")
 DESCRIPTION_COLOR = "#44dd44"
 LOCATION_COLOR = "#bb44bb"
 CONTEXT_COLOR = "#22bbbb"
@@ -55,11 +53,15 @@ class Search(kx.Modal):
         # Events
         self._refresh_results = kx.snoozing_trigger(
             self._do_refresh_results,
-            REFRESH_DELAY,
+            settings.get("project.text_search_cooldown"),
         )
+        settings.bind("project.text_search_cooldown", self._refresh_search_cooldown)
         self.bind(parent=self._on_parent)
         self.im.register("Load", self._do_load, ["enter", "numpadenter"])
         self.im.register("Focus ", self._on_down_arrow, "down")
+
+    def _refresh_search_cooldown(self, *args):
+        self._refresh_results.timeout = settings.get("project.text_search_cooldown")
 
     def _do_load(self, result=None):
         if result is None:
@@ -86,7 +88,7 @@ class Search(kx.Modal):
             results = search_text(
                 pattern,
                 self.session.dir_tree.all_paths,
-                max_results=MAX_RESULTS,
+                max_results=settings.get("project.max_search_results"),
             )
         logger.debug(f"{len(results)=}" if results else "No results")
         self._results = results

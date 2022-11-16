@@ -17,19 +17,35 @@ from .linter import lint_text
 from .tree import DirectoryTree
 
 
-PROJ_PREFIX = settings.get("path_prefixes.project")
-CONFIG_PREFIX = settings.get("path_prefixes.config")
-HOME_PREFIX = settings.get("path_prefixes.home")
-PATH_PREFIXES = []
-for replacement in settings.get("path_prefixes.custom"):
-    original, new = replacement.split(";")
-    original = Path(original).expanduser().resolve()
-    PATH_PREFIXES.append((original, new))
-PATH_PREFIXES = sorted(PATH_PREFIXES, key=lambda x: -len(x[0].parents))
-logger.debug(
-    "Path prefix replacements: "
-    + " ; ".join(f"{p} -> {r}" for p, r in PATH_PREFIXES)
-)
+class _Prefixes:
+    @classmethod
+    def _update_settings(cls, *args):
+        logger.debug("Session _Prefixes updating settings")
+        cls.proj = settings.get("path_prefixes.project")
+        cls.config = settings.get("path_prefixes.config")
+        cls.home = settings.get("path_prefixes.home")
+        paths = []
+        paths = []
+        for replacement in settings.get("path_prefixes.custom"):
+            original, new = replacement.split(";")
+            original = Path(original).expanduser().resolve()
+            paths.append((original, new))
+        paths = sorted(paths, key=lambda x: -len(x[0].parents))
+        logger.debug(
+            f"Prefixes - "
+            f"project: {cls.proj!r}, config: {cls.config!r}, home: {cls.home!r}"
+        )
+        logger.debug(
+            "Path prefix replacements: "
+            + " ; ".join(f"{p} -> {r}" for p, r in paths)
+        )
+        cls.paths = paths
+
+
+# Bind settings
+for n in filter(lambda x: x.startswith("path_prefixes."), settings.get_names()):
+    settings.bind(n, _Prefixes._update_settings)
+_Prefixes._update_settings()
 
 SESSION_FILES_CACHE = CACHE_DIR / "sessions.json"
 RE_TRAILING_WHITESPACE = re.compile(r"( +)\n")
@@ -199,17 +215,17 @@ class Session:
         p = p.expanduser().resolve()
         ppath = self.project_path
         if p.is_relative_to(USER_DIR):
-            return f"{CONFIG_PREFIX}/{_relative_without_empty(p, USER_DIR)}"
-        for prefixed_path, replacement in PATH_PREFIXES:
+            return f"{_Prefixes.config}/{_relative_without_empty(p, USER_DIR)}"
+        for prefixed_path, replacement in _Prefixes.paths:
             if to_project and ppath.is_relative_to(prefixed_path):
                 # Skip and prefer more direct relative path (project path)
                 continue
             if p.is_relative_to(prefixed_path):
                 return f"{replacement}/{_relative_without_empty(p, prefixed_path)}"
         if to_project and p.is_relative_to(ppath):
-            return f"{PROJ_PREFIX}/{_relative_without_empty(p, ppath)}"
+            return f"{_Prefixes.proj}/{_relative_without_empty(p, ppath)}"
         if p.is_relative_to(Path.home()):
-            return f"{HOME_PREFIX}/{_relative_without_empty(p, Path.home())}"
+            return f"{_Prefixes.home}/{_relative_without_empty(p, Path.home())}"
         return str(p)
 
 

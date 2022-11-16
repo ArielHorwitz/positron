@@ -8,9 +8,6 @@ from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
 
 
-REFRESH_DELAY = settings.get("project.tree_search_cooldown")
-FUZZY_LDIST = settings.get("project.tree_search_fuzziness")
-FUZZY_THRESHOLD_COUNT = settings.get("project.tree_fuzzy_threshold_count")
 MISSING_COLOR = "#ff0000"
 FOLDER_COLOR = "#0066ff"
 FILE_COLOR = "#00ff66"
@@ -60,14 +57,21 @@ class ProjectTree(kx.Modal):
         self._refresh_title()
 
         # Events
-        self._refresh_tree = kx.snoozing_trigger(self._do_refresh_tree, REFRESH_DELAY)
+        self._refresh_tree = kx.snoozing_trigger(
+            self._do_refresh_tree,
+            settings.get("project.tree_search_cooldown"),
+        )
         self._do_refresh_tree()
+        settings.bind("project.tree_search_cooldown", self._refresh_settings)
         self.bind(parent=self._on_parent)
         self.im.register("Load", self._on_enter, "enter")
         self.im.register("Load (2)", self._on_enter, "numpadenter")
         self.im.register("New", self._on_enter_new, "^ enter")
         self.im.register("New (2)", self._on_enter_new, "^ numpadenter")
         self.im.register("Focus tree", self._on_down, "down")
+
+    def _refresh_settings(self):
+        self._refresh_tree.timeout = settings.get("project.tree_search_cooldown")
 
     @property
     def dtree(self):
@@ -142,6 +146,7 @@ class ProjectTree(kx.Modal):
         pattern = self.search_entry.text.lower()
         files = all_paths = self.dtree.all_paths
         do_fuzzy = self.fuzzy_enabled
+        fuzzy_ldist = settings.get("project.tree_search_fuzziness")
         if pattern:
             files = []
             append = files.append
@@ -151,9 +156,9 @@ class ProjectTree(kx.Modal):
                     match = fuzzysearch.find_near_matches(
                         pattern,
                         path_str,
-                        max_l_dist=FUZZY_LDIST,
+                        max_l_dist=fuzzy_ldist,
                         max_deletions=0,
-                        max_insertions=FUZZY_LDIST,
+                        max_insertions=fuzzy_ldist,
                         max_substitutions=0,
                     )
                 else:
@@ -175,7 +180,8 @@ class ProjectTree(kx.Modal):
 
     @property
     def fuzzy_enabled(self):
-        return len(self.dtree.all_paths) <= FUZZY_THRESHOLD_COUNT
+        threshold = settings.get("project.tree_fuzzy_threshold_count")
+        return len(self.dtree.all_paths) <= threshold
 
 
 def _wrap_color(t, color):

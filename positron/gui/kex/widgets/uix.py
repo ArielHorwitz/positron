@@ -141,27 +141,41 @@ class XImageButton(XWidget, kv.ButtonBehavior, kv.Image):
 class XEntryMixin:
 
     select_on_focus = kv.BooleanProperty(False)
-    focus_brighter = kv.BooleanProperty(True)
-    _focus_brightness_diff = kv.NumericProperty(0.5)
-    _background_color_focused = kv.ObjectProperty(None)
-    _background_color_unfocused = kv.ObjectProperty(None)
+    defocus_brightness = kv.NumericProperty(0.5)
     deselect_on_escape = kv.BooleanProperty(False)
     cursor_pause_timeout = kv.NumericProperty(0.5)
     cursor_scroll_offset = kv.NumericProperty(5)
 
     def __init__(self, *args, fix_scroll_to_line: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
-        self._on_any_focus()
+        self._background_color_focused = None
+        self._background_color_unfocused = None
+        self._refresh_background()
         self.register_event_type("on_cursor_pause")
         self._reset_cursor_pause_trigger()
         self.bind(
             cursor=self._on_cursor_for_pause,
             cursor_pause_timeout=self._reset_cursor_pause_trigger,
+            defocus_brightness=self._refresh_background,
             focus=self._on_any_focus,
         )
         kv.Window.bind(focus=self._on_any_focus)
         if fix_scroll_to_line:
             self.bind(scroll_y=self._on_scroll_y, size=self._on_size_fix_scroll)
+
+    def _refresh_background(self, *args):
+        self.set_background()
+
+    def set_background(self, color=None):
+        """Set the background color (that will change based on `defocus_brightness`)."""
+        if color is None:
+            color = self._background_color_focused or self.background_color
+        self._background_color_focused = XColor(*color).rgba
+        self._background_color_unfocused = XColor(
+            *self._background_color_focused,
+            v=self.defocus_brightness,
+        ).rgba
+        self._on_any_focus()
 
     def visible_line_range(self):
         top_line = round(self.scroll_y / self.line_height)
@@ -226,16 +240,6 @@ class XEntryMixin:
 
     def _on_any_focus(self, *args):
         focus = kv.Window.focus and self.focus
-        if not self.focus_brighter:
-            return
-        if self._background_color_focused is None:
-            self._background_color_focused = self.background_color
-        if self._background_color_unfocused is None:
-            unfbg = XColor(
-                *self._background_color_focused,
-                v=self._focus_brightness_diff,
-            )
-            self._background_color_unfocused = unfbg.rgba
         if focus:
             self.background_color = self._background_color_focused
         else:

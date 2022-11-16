@@ -9,39 +9,44 @@ from ..util.code import CodeError
 from ..util import settings
 
 
-EXTEND_EXCLUDE = ",".join(settings.get("linter.exclude"))
-EXTEND_IGNORE = settings.get("linter.ignore")
-MAX_LINE_LENGTH = settings.get("linter.max_line_length")
-MAX_COMPLEXITY = settings.get("linter.max_complexity")
-DOCSTRING_CONVENTION = settings.get("linter.docstring_convention")
 LINTER_CACHED_FILE = CACHE_DIR / "linter_cache.py"
 FILE_STR = str(LINTER_CACHED_FILE)
 FILE_STR_LEN = len(FILE_STR) + 1  # Include the ":" after the file name
 
 
-def lint_path(
-    path: Path,
-    max_line_length: int = MAX_LINE_LENGTH,
-    max_complexity: int = MAX_COMPLEXITY,
-    docstring_convention: str = DOCSTRING_CONVENTION,
-    capture_output: bool = True,
-) -> str:
+class _Linter:
+    flake8_args = tuple()
+
+    @classmethod
+    def _update_settings(cls, *args):
+        cls.flake8_args = (
+            "--extend-exclude",
+            ",".join(settings.get("linter.exclude")),
+            "--extend-ignore",
+            settings.get("linter.ignore"),
+            "--max-line-length",
+            str(settings.get("linter.max_line_length")),
+            "--max-complexity",
+            str(settings.get("linter.max_complexity")),
+            "--docstring-convention",
+            settings.get("linter.docstring_convention"),
+        )
+
+
+# Bind settings
+for n in filter(lambda x: x.startswith("linter."), settings.get_names()):
+    settings.bind(n, _Linter._update_settings)
+_Linter._update_settings()
+
+
+def lint_path(path: Path, *, capture_output: bool = True) -> str:
     """Run flake8 on a path."""
     command_args = [
         "python",
         "-m",
         "flake8",
         str(path),
-        "--extend-exclude",
-        EXTEND_EXCLUDE,
-        "--extend-ignore",
-        EXTEND_IGNORE,
-        "--max-line-length",
-        str(max_line_length),
-        "--max-complexity",
-        str(max_complexity),
-        "--docstring-convention",
-        docstring_convention,
+        *_Linter.flake8_args,
     ]
     if not capture_output:
         return subprocess.run(command_args)

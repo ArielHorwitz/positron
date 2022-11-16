@@ -5,16 +5,9 @@ from pathlib import Path
 import subprocess
 from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
-from ...util.file import USER_DIR, PROJ_DIR, open_path
+from ...util.file import PROJ_DIR, open_path
 
 
-BOOKMARKS = []
-for bm in settings.get("project.bookmarks"):
-    file, name = bm, None
-    if ";" in bm:
-        file, name = bm.rsplit(";")
-    p = Path(file).expanduser().resolve()
-    BOOKMARKS.append((p, name))
 TREE_TOP_PREFIX = "╚╦═ "
 TREE_CHILD_PREFIX = " ╠═══ "
 TREE_CHILD_PREFIX_LAST = " ╚═══ "
@@ -71,12 +64,15 @@ class Disk(kx.Modal):
         paths = [None]
         reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
-        for p, name in BOOKMARKS:
-            paths.append(p)
+        for bm in settings.get("project.bookmarks"):
+            file, name = bm, None
+            if ";" in bm:
+                file, name = bm.rsplit(";")
+            p = Path(file).expanduser().resolve()
             if not name:
                 name = self._path_repr(p, name_only=False)
-            name = _wrap_color(name, _get_color(p))
-            reprs.append(name)
+            paths.append(p)
+            reprs.append(_wrap_color(name, _get_color(p)))
         paths.append(self.session.dir_tree.root)
         reprs.append(_wrap_color("Project folder", FOLDER_COLOR))
         self._bookmark_paths = paths

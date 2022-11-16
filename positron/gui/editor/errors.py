@@ -29,11 +29,7 @@ class Errors(kx.FocusBehavior, kx.Modal):
 
     def get_errors(self, *args):
         self.summary_label.scroll_y = 1
-        errors = []
-        is_python = self.container.code_editor._current_file.suffix == ".py"
-        if is_python:
-            code = self.container.code_editor.code_entry.text
-            errors = self.session.get_errors(code)
+        errors = self.container.code_editor.update_errors()
         if errors:
             summary = "\n".join((
                 f"{error.line:>5},{error.column:>3} :: {error.message}"
