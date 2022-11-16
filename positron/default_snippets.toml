@@ -1,73 +1,77 @@
-# The snippets file defines shortcuts for inserting text.
-# There are no underlying defaults and so whatever is defined in this file
-# are the only snippets recognized by Positron.
+# Snippets are shortcuts for inserting text.
+# Add or remove snippets from this file to make changes. Delete the file and restart
+# Positron to get the defaults.
+
+
+# Debugging
+["print fstring"]
+text = 'print(f"")'
+move = 2
+
+["logger fstring"]
+text = 'logger.debug(f"")'
+move = 2
+
+["print debug"]
+text = 'print(f"{expr=}")'
+move = 4
+select = 4
+
+["logger debug"]
+text = 'logger.debug(f"{expr=}")'
+move = 4
+select = 4
+
+# Classes and methods
+["class"]
+text = "\nclass ClassName:\n    def __init__(self):\n        pass\n"
+move = 39
+select = 9
+
+["class verbose"]
+text = "\nclass ClassName(object):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n"
+move = 93
+select = 9
+
+["method"]
+text = "\n    def method(self):\n        pass\n"
+move = 21
+select = 6
+
+["class method"]
+text = "\n    @classmethod\n    def method(cls):\n        pass\n"
+move = 20
+select = 6
+
+["static method"]
+text = "\n    @staticmethod\n    def method():\n        pass\n"
+move = 17
+select = 6
+
+["property"]
+text = "\n    @property\n    def property(self):\n        pass\n"
+move = 21
+select = 8
 
 ["args kwargs"]
 text = "*args, **kwargs"
 select = -1
 
-["method"]
-text = """
-
-    def method(self):
-        pass
-"""
-move = 21
-select = 6
-
-["print fstring"]
-text = 'print(f"{expr=}")'
-move = 4
-select = 4
-
-["property"]
-text = """
-
-    @property
-    def property(self):
-        pass
-"""
-move = 21
-select = 8
-
-["class"]
-text = """
-
-class ClassName:
-    def __init__(self):
-        pass
-"""
-move = 39
-select = 9
-
-["class verbose"]
-text = """
-
-class ClassName:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-"""
-move = 85
-select = 9
-
+# Documentation
 ["docstring"]
 text = '"""Docstring"""'
 move = 3
 select = 9
 
-["code snippet"]
-text = """
+# Miscallaneous
+["fstring"]
+text = 'f""'
+move = 1
 
-```
-```
-"""
+["code snippet"]
+text = "\n```\n```\n"
 move = 5
 
 ["code snippet python"]
-text = """
-
-```python
-
-```
-"""
+text = "\n```python\n\n```\n"
 move = 5
