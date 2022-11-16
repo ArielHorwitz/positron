@@ -91,57 +91,36 @@ class Session:
         append = strs.append
         extend = strs.extend
 
-        # Syntax errors
-        syntax_errors = script.get_syntax_errors()
-        if syntax_errors:
-            append(_title_break("Syntax Errors"))
-            extend(_format_syntax_error(err) for err in syntax_errors)
-
         # Definitions
-        append(_title_break("Definitions"))
         names = list(script.help(line, col))
         if names:
+            append(_title_break(f"{len(names)} Definitions"))
             append("\n==========\n".join(_format_object(script, n) for n in names))
             debug_strs.append(_format_object_debug(names[0]))
-        else:
-            append("No definitions found.")
 
         # References
-        append(_title_break("References"))
         refs = list(script.get_references(line, col))
         if refs:
+            append(_title_break(f"{len(refs)} References"))
             extend(_format_object_short(script, r) for r in refs)
-        else:
-            append("No references found.")
 
-        # Context
-        append(_title_break("Context"))
-        context = script.get_context(line, col)
-        append(_format_object_short(script, context))
-
-        # Code completion
-        completions = script.complete(line, col)
-        if completions:
-            append(_title_break("Code completions"))
-            extend(
-                f"{comp.name}  ¬{comp.complete}"
-                for comp in islice(completions, 20)
-            )
+        # Debug
+        if debug_strs:
+            append(_title_break("Debug"))
+            extend(debug_strs)
 
         # All module names
-        append(_title_break("All definitions"))
-        names = list(script.get_names(all_scopes=True))
-        if names:
-            extend(
-                _format_object_short(script, n)
-                for n in names
-                if n.type in {"class", "function"}
-            )
-        else:
-            append("No names found...")
-
-        append(_title_break("Debug"))
-        extend(debug_strs)
+        if not names and not refs:
+            names = list(script.get_names(all_scopes=True))
+            append(_title_break(f"All {len(names)} module definitions"))
+            if names:
+                extend(
+                    _format_object_short(script, n)
+                    for n in names
+                    if n.type in {"class", "function"}
+                )
+            else:
+                append("No names found...")
 
         return "\n".join(strs)
 
