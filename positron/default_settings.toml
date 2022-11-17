@@ -16,7 +16,7 @@ status.error = [0.25, 0, 0]
 
 
 [editor]
-style = "one-dark"
+style = "solarized-dark"
 bg_color = [0.025, 0.1, 0.125]
 # Background relative brightness when defocused
 defocus_brightness = 0.5
@@ -51,7 +51,7 @@ bold = ""
 bolditalic = ""
 
 [fonts.ui]
-size = 20
+size = 24
 regular = ""
 italic = ""
 bold = ""
