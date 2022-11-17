@@ -34,8 +34,8 @@ disk_diff_interval = 1.0
 cursor_pause_timeout = 0.25
 # Number of lines to offset when scrolling to cursor
 cursor_scroll_offset = 10
-# Never check for errors more than once per this many seconds
-error_check_cooldown = 2
+# Check automatically for errors once per this many seconds
+error_check_cooldown = 5.0
 # Maximum file size to allow loading in editor in KB
 max_file_size_kb = 500
 # Automatically load the file on startup
