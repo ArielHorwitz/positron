@@ -494,13 +494,16 @@ class CodeEditor(kx.Anchor):
         return f"[{modified}{diff}] {icon} :: {path} ::{line:>4},{column:<3}"
 
     def _refresh_context(self, *a):
+        if self._current_file.suffix != ".py":
+            self.status_cursor_context.text = "__file__"
+            return
         code = self.code_entry
         line, col = self.cursor
         context = self.session.get_context(self.file, code.text, line, col)
         if context is None:
             context = "__ unknown context __"
         elif context.full_name is None:
-            context = f"__unknown_context__.{context.name}"
+            context = f"__ unknown context __.{context.name}"
         else:
             context = context.full_name[len(context.module_name) + 1:] or "__module__"
         self.status_cursor_context.text = context
