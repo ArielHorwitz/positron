@@ -290,10 +290,6 @@ class XWidget:
         """Get the running app."""
         return kv.App.get_running_app()
 
-    def logger(self, message: str):
-        """Log a message in the XApp's logger."""
-        kv.App.logger(message)
-
 
 get_color = XColor.from_name
 random_color = XColor.from_random

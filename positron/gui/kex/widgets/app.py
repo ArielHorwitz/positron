@@ -49,18 +49,8 @@ class XApp(XWidget, kv.App):
     block_input = kv.BooleanProperty(False)
     """If all user input should be blocked."""
 
-    def __init__(
-        self,
-        logger: Optional[Callable[[str], None]] = None,
-        escape_exits: bool = False,
-        **kwargs,
-    ):
-        """Initialize the class.
-
-        Args:
-            logger: Logging function for XWidgets. Used internally for debugging.
-            escape_exits: Enable exiting when the escape key is pressed.
-        """
+    def __init__(self, escape_exits: bool = False, **kwargs):
+        """Initialize the class."""
         self.__window_focus_path = WindowFocusPatch()
         super().__init__(**kwargs)
         XWindow.enable_escape_exit(escape_exits)
@@ -87,11 +77,6 @@ class XApp(XWidget, kv.App):
     def restart(self, *args):
         self.__restart_flag = True
         self.stop()
-
-    def logger(self, message: str):
-        """Log a message in the app's logger."""
-        if self.logger:
-            self.logger(message)
 
     def hook(self, func: Callable[[float], None], fps: float):
         """Schedule *func* to be called *fps* times per seconds."""
