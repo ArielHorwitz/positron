@@ -4,7 +4,7 @@ from loguru import logger
 from pathlib import Path
 from .. import kex as kx
 from ...util import settings
-from ...util.file import FileCursor, USER_DIR
+from ...util.file import FileCursor
 from .panel import Panel
 
 
@@ -22,7 +22,7 @@ class Container(kx.Anchor):
         super().__init__()
         self.im = kx.InputManager(name="Panel container")
         self.session = session
-        editor_count = LAYOUT_COLS * LAYOUT_ROWS
+        panel_count = LAYOUT_COLS * LAYOUT_ROWS
         # Collect files to open
         fcs = self.session.get_file_cursors()
         if not fcs:
@@ -32,22 +32,22 @@ class Container(kx.Anchor):
                 else:
                     file = Path(file)
                 fcs.append(FileCursor(file))
-        while len(fcs) < editor_count:
+        while len(fcs) < panel_count:
             fcs.append(FileCursor(settings.SETTINGS_FILE))
-        fcs = fcs[:editor_count]
+        fcs = fcs[:panel_count]
         # Create widgets
-        self.editors = []
+        self.panels = []
         for i, fc in enumerate(fcs):
             panel = Panel(i, self, self.session, fc.file)
             panel.code_editor.set_cursor(*fc.cursor)
-            self.editors.append(panel)
+            self.panels.append(panel)
         # Assemble
-        main_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_ROWS)
-        main_frame.add(*self.editors)
-        self.add(main_frame)
+        self.panel_frame = kx.Grid(cols=LAYOUT_COLS, rows=LAYOUT_ROWS)
+        self.panel_frame.add(*self.panels)
+        self.add(self.panel_frame)
         self.register_hotkeys()
         self.app.bind(current_focus=self._check_focus)
-        kx.schedule_once(self.editors[0].set_focus)
+        kx.schedule_once(self.panels[0].set_focus)
 
     def _check_focus(self, w, current_focus):
         panel = current_focus
@@ -73,21 +73,21 @@ class Container(kx.Anchor):
 
     def register_hotkeys(self):
         self.im.remove_all()
-        for editor in self.editors[:MAX_EDITOR_HOTKEYS]:
+        for panel in self.panels[:MAX_EDITOR_HOTKEYS]:
             self.im.register(
-                f"Focus Editor {editor.uid}",
-                editor.set_focus,
-                f"f{editor.uid+1}",
+                f"Focus Editor {panel.uid}",
+                panel.set_focus,
+                f"f{panel.uid+1}",
             )
         self.im.register("Reload all", self.reload_all, "^ f5")
 
     def reload_all(self):
-        for editor in self.editors:
-            editor.reload()
+        for panel in self.panels:
+            panel.reload()
 
     def clean_up(self):
         fcs = [
-            FileCursor(editor.code_editor.file, editor.code_editor.cursor)
-            for editor in self.editors
+            FileCursor(panel.code_editor.file, panel.code_editor.cursor)
+            for panel in self.panels
         ]
         self.session.save_file_cursors(fcs)
