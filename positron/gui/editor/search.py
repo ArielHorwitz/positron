@@ -37,6 +37,7 @@ class Search(kx.Modal):
         # Tree
         self.results_list = kx.List(
             on_invoke=self._on_invoke,
+            shorten=False,
             item_height=UI_LINE_HEIGHT * 3,
             **UI_FONT_KW,
         )

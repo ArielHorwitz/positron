@@ -26,6 +26,8 @@ class XList(kv.FocusBehavior, XRelative):
     paging_size = kv.NumericProperty(None)
     indicator_width = kv.NumericProperty(5)
     indicator_color = kv.ColorProperty([0.5, 0.5, 0.5, 0.5])
+    shorten = kv.BooleanProperty(True)
+    shorten_from = kv.StringProperty("center")
     # TODO implement bg colors
     bg_color = kv.ColorProperty([0.05, 0.075, 0.1, 1])
     bg_color_alt = kv.ColorProperty([0.05, 0.1, 0.075, 1])
@@ -52,6 +54,8 @@ class XList(kv.FocusBehavior, XRelative):
             item_height=self._refresh_label_kwargs,
             font_name=self._refresh_label_kwargs,
             font_size=self._refresh_label_kwargs,
+            shorten=self._refresh_label_kwargs,
+            shorten_from=self._refresh_label_kwargs,
             indicator_color=self._refresh_scroll_indicator_color,
             _label_kwargs=self._on_label_kwargs,
         )
@@ -180,16 +184,19 @@ class XList(kv.FocusBehavior, XRelative):
             font_name=self.font_name,
             font_size=self.font_size,
             text_size=(self.width, self.item_height),
+            shorten=self.shorten,
+            shorten_from=self.shorten_from,
             valign="middle",
         )
 
     def _get_texture(self, text: str):
-        texture = cache_get("XList", text)
+        texture_id = f"{text}{self._label_kwargs}"
+        texture = cache_get("XList", texture_id)
         if texture is None:
             label = kv.CoreMarkupLabel(text=text, **self._label_kwargs)
             label.refresh()
             texture = label.texture
-            cache_append("XList", text, texture)
+            cache_append("XList", texture_id, texture)
         return texture
 
     def _get_scroll(self):
