@@ -78,7 +78,7 @@ class CodeEditor(kx.Anchor):
         )
         self.code_entry.focus = True
         self.code_entry.bind(
-            scroll_y=self._on_scroll,
+            scroll_y=self._refresh_line_gutters,
             size=self._on_size,
             focus=self._on_focus,
             cursor=self._on_cursor,
@@ -129,6 +129,7 @@ class CodeEditor(kx.Anchor):
         self.code_entry.bind(
             pos=self._reposition_line_width_hint,
             size=self._reposition_line_width_hint,
+            scroll_x=self._reposition_line_width_hint,
         )
         # Completion popup
         self.completion_label = kx.Label(halign="left", fixed_width=True, **FONT_KW)
@@ -446,9 +447,6 @@ class CodeEditor(kx.Anchor):
         fixed_cpos = self.to_widget(*cpos, relative=True)
         self.completion_label.pos = self.to_widget(*fixed_cpos)
 
-    def _on_scroll(self, w, scroll):
-        self._refresh_line_gutters()
-
     def _refresh_line_gutters(self, *a):
         start, finish = self.code_entry.visible_line_range()
         finish = min(finish, len(self.code_entry._lines))
@@ -464,7 +462,8 @@ class CodeEditor(kx.Anchor):
 
     def _reposition_line_width_hint(self, *args):
         code = self.code_entry
-        self.line_width_hint.pos = code.x + self.__max_line_width, code.y
+        x = code.x + self.__max_line_width - code.scroll_x
+        self.line_width_hint.pos = x, code.y
         self.line_width_hint.size = 2, code.height
 
     def _on_focus(self, w, focus):
