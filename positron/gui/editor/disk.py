@@ -59,8 +59,9 @@ class Disk(kx.Modal):
         ])
         help_label.set_size(y=UI_LINE_HEIGHT * 5)
         self._browse_bookmarks()
+        settings.bind("project.bookmarks", self._create_bookmarks)
 
-    def _create_bookmarks(self):
+    def _create_bookmarks(self, *args):
         paths = [None]
         reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
