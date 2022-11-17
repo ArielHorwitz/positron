@@ -243,7 +243,7 @@ class CodeEditor(kx.Anchor):
         self.load(reset_cursor=False)
 
     def delete_file(self):
-        if self._current_file.exists():
+        if self._current_file.is_file():
             self._current_file.unlink()
             logger.info(f"Deleted @ {_timestamp()} file: {self._current_file}")
             self.load()

@@ -65,7 +65,7 @@ def lint_text(code: str, *args, **kwargs) -> list[CodeError]:
         logger.warning("".join(traceback.format_exception(e)))
         logger.warning("Failed to run linter, see traceback above.")
         return []
-    LINTER_CACHED_FILE.unlink()
+    LINTER_CACHED_FILE.unlink(missing_ok=True)
     results = []
     append = results.append
     for line in r.split("\n"):
