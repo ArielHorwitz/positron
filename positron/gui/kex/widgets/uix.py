@@ -405,7 +405,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             first_line = f"{first_line}{sep}"
         last_line = lines.pop()
         if split_last in last_line:
-            lsplit_index = last_line.index(split_last)
+            lsplit_index = last_line.rfind(split_last)
             lines.append(last_line[:lsplit_index])
             last_line = last_line[lsplit_index:]
             last_line = f"{ws}{last_line}"
@@ -523,6 +523,8 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     def indent(self, *args):
         start, end = self.selected_line_range()
         for lidx in range(start, end + 1):
+            if not self._lines[lidx]:
+                continue
             self.cursor = 0, lidx
             self.insert_text("    ")
         self.select_full_lines(start, end)
@@ -546,6 +548,7 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
     def select_full_lines(self, start_row, end_row):
         start = self.cursor_index((0, start_row))
         end = self.cursor_index((len(self._lines[end_row]), end_row))
+        self.cursor = self.get_cursor_from_index(end)
         self.select_text(start, end)
 
     def keyboard_on_key_down(self, window, keycode, text, modifiers):
