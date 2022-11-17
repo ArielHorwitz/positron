@@ -24,6 +24,7 @@ class App(kx.App):
         self._project_path_repr = self.session.repr_full_path(
             self.session.project_path,
             to_project=False,
+            include_icon=False,
         )
         self.panels = EditorContainer(session)
         self.root.add(self.panels)

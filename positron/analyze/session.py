@@ -17,6 +17,53 @@ from .linter import lint_text
 from .tree import DirectoryTree
 
 
+FILE_TYPE_ICONS = {
+    # Languages
+    ".py": "",  # 
+    ".pyc": "",
+    ".pyx": "",
+    ".pxd": "",
+    ".js": "",
+    ".ts": "",
+    ".rs": "",
+    ".c": "",
+    ".cpp": "",
+    ".php": "",
+    ".html": "",
+    ".css": "",
+    # Archives
+    ".zip": "",
+    ".tar.gz": "",
+    ".7zip": "",
+    # Audio
+    ".wav": "ﱘ",
+    ".mp3": "ﱘ",
+    ".flac": "ﱘ",
+    ".ogg": "ﱘ",
+    ".m4a": "ﱘ",
+    # Images
+    ".png": "",
+    ".jpg": "",
+    ".jpeg": "",
+    # Video
+    ".mp4": "辶",
+    ".ogv": "辶",
+    ".mkv": "辶",
+    # Configs
+    ".yml": "",
+    ".yaml": "",
+    ".toml": "",
+    ".ini": "",
+    ".cfg": "",
+    # Miscallaneous
+    ".md": "",
+    ".json": "ﬥ",
+    ".log": "",
+    ".sh": "",
+    ".bak": "",
+}
+
+
 class _Prefixes:
     @classmethod
     def _update_settings(cls, *args):
@@ -211,22 +258,43 @@ class Session:
         session_cache[path] = file_cursors
         file_dump(SESSION_FILES_CACHE, json.dumps(session_cache, indent=4))
 
-    def repr_full_path(self, p: Path, /, *, to_project: bool = True) -> str:
+    def repr_full_path(
+        self,
+        p: Path,
+        /,
+        *,
+        to_project: bool = True,
+        include_icon: bool = True,
+    ) -> str:
         p = p.expanduser().resolve()
+        icon = f"{self.get_path_icon(p)} " if include_icon else ""
         ppath = self.project_path
         if p.is_relative_to(USER_DIR):
-            return f"{_Prefixes.config}/{_relative_without_empty(p, USER_DIR)}"
+            return f"{icon}{_Prefixes.config}/{_relative_without_empty(p, USER_DIR)}"
         for prefixed_path, replacement in _Prefixes.paths:
             if to_project and ppath.is_relative_to(prefixed_path):
                 # Skip and prefer more direct relative path (project path)
                 continue
             if p.is_relative_to(prefixed_path):
-                return f"{replacement}/{_relative_without_empty(p, prefixed_path)}"
+                return (
+                    f"{icon}{replacement}/"
+                    f"{_relative_without_empty(p, prefixed_path)}"
+                )
         if to_project and p.is_relative_to(ppath):
-            return f"{_Prefixes.proj}/{_relative_without_empty(p, ppath)}"
+            return f"{icon}{_Prefixes.proj}/{_relative_without_empty(p, ppath)}"
         if p.is_relative_to(Path.home()):
-            return f"{_Prefixes.home}/{_relative_without_empty(p, Path.home())}"
+            return f"{icon}{_Prefixes.home}/{_relative_without_empty(p, Path.home())}"
         return str(p)
+
+    @staticmethod
+    def get_path_icon(p: Path, /) -> str:
+        if ".git" in p.name:
+            return ""
+        if "LICENSE" in p.name:
+            return ""
+        if p.is_dir():
+            return "" if p == Path.home() else ""
+        return FILE_TYPE_ICONS.get(p.suffix, "")
 
 
 def _relative_without_empty(p: Path, relative: Path) -> str:

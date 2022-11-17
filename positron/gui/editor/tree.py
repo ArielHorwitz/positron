@@ -118,6 +118,7 @@ class ProjectTree(kx.Modal):
 
     def _do_refresh_tree(self, *args):
         root = self.dtree.root
+        get_icon = self.session.get_path_icon
         items = [str(root)]
         self._quick_file = None
         self._files = self._get_tree_files()
@@ -126,7 +127,7 @@ class ProjectTree(kx.Modal):
             items = []
             append = items.append
             for f in self._files:
-                path_str = kx.escape_markup(f"$/{f.relative_to(root)}")
+                path_str = kx.escape_markup(f"{get_icon(f)} $/{f.relative_to(root)}")
                 color = MISSING_COLOR
                 if f.is_dir():
                     color = FOLDER_COLOR

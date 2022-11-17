@@ -63,14 +63,16 @@ class Disk(kx.Modal):
 
     def _create_bookmarks(self, *args):
         paths = [None]
-        reprs = [_wrap_color("BOOKMARKS", PARENT_COLOR)]
+        reprs = [_wrap_color(" BOOKMARKS", PARENT_COLOR)]
         # User defind bookmarks
         for bm in settings.get("project.bookmarks"):
             file, name = bm, None
             if ";" in bm:
                 file, name = bm.rsplit(";")
             p = Path(file).expanduser().resolve()
-            if not name:
+            if name:
+                name = f"{self.session.get_path_icon(p)} {name}"
+            else:
                 name = self._path_repr(p, name_only=False)
             paths.append(p)
             reprs.append(_wrap_color(name, _get_color(p)))
@@ -151,7 +153,10 @@ class Disk(kx.Modal):
         return func(path, use_file_types=False, use_path_filter=False)
 
     def _path_repr(self, p: Path, name_only: bool) -> str:
-        name = p.name if name_only else self.session.repr_full_path(p)
+        if name_only:
+            name = f"{self.session.get_path_icon(p)} {p.name}"
+        else:
+            name = self.session.repr_full_path(p)
         if p.is_dir():
             color = FOLDER_COLOR
             name = f"{name}/"
