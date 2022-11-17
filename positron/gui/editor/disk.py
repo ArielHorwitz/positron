@@ -76,8 +76,10 @@ class Disk(kx.Modal):
                 name = self._path_repr(p, name_only=False)
             paths.append(p)
             reprs.append(_wrap_color(name, _get_color(p)))
-        paths.append(self.session.dir_tree.root)
-        reprs.append(_wrap_color("Project folder", FOLDER_COLOR))
+        root_path = self.session.dir_tree.root
+        root_icon = self.session.get_path_icon(root_path)
+        paths.append(root_path)
+        reprs.append(_wrap_color(f"{root_icon} Project folder", FOLDER_COLOR))
         self._bookmark_paths = paths
         self._bookmark_reprs = reprs
 
