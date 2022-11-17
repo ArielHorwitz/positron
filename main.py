@@ -92,12 +92,10 @@ def _run_positron(project_path: Path):
     logger.info("Starting up Positron...")
 
     # Late import since Kivy opens window on import
-    from positron.analyze.session import Session
     from positron.gui.app import App
     from positron.gui.kex import restart_script
 
-    app_session = Session(project_path)
-    app = App(app_session)
+    app = App(project_path)
     returncode = app.run()
     unused_settings = settings.unused()
     if unused_settings:

@@ -1,7 +1,9 @@
 """GUI app."""
 
 from loguru import logger
-from . import kex as kx
+from pathlib import Path
+from positron.analyze.session import Session
+from . import kex as kx, UI_LINE_HEIGHT, UI_CHAR_WIDTH, UI_FONT_KW
 from .editor.container import Container as EditorContainer
 from ..util.file import open_path, USER_DIR, PROJ_DIR
 from ..util import settings
@@ -14,20 +16,46 @@ START_MAXIMIZED = settings.get("window.maximize")
 
 
 class App(kx.App):
-    def __init__(self, session):
-        logger.info("Starting GUI.")
+    def __init__(self, project_path: Path):
+        logger.info("Initializing GUI.")
         super().__init__()
+        self.title = "Positron loading..."
         self.icon = str(PROJ_DIR / "icon.png")
+        self.__project_path = project_path
+        p = project_path.expanduser().resolve()
+        loading_title = f" [u]Loading:[/u] [i]{p}[/i]"
+        line_width = max(40, len(loading_title) + 4)
+        loading_win_size = UI_CHAR_WIDTH * line_width, UI_LINE_HEIGHT * 7
+        kx.Window.set_size(*loading_win_size)
+        self._loading_label = kx.Label(
+            halign="left",
+            valign="top",
+            **UI_FONT_KW,
+            text=f"{loading_title}\n Indexing project...",
+            color=(0.9, 0.2, 1),
+        )
+        self._loading_label.set_size(
+            x=loading_win_size[0] - (UI_CHAR_WIDTH * 2),
+            y=loading_win_size[1] - (UI_LINE_HEIGHT / 2),
+        )
+        self.root.make_bg(kx.get_color("purple", v=0.3))
+        self.root.add(self._loading_label)
+        kx.schedule_once(self._init_session, 1)
+
+    def _init_session(self, *args):
+        logger.info("Creating session...")
+        self.session = Session(self.__project_path)
+        self._loading_label.text += "\nﰪ Creating widgets..."
+        kx.schedule_once(self._init_widgets)
+
+    def _init_widgets(self, *args):
+        logger.info("Initializing widgets...")
         self.__cleaned_up = False
-        self._init_window()
-        self.session = session
         self._project_path_repr = self.session.repr_full_path(
             self.session.project_path,
             to_project=False,
             include_icon=False,
         )
-        self.panels = EditorContainer(session)
-        self.root.add(self.panels)
         self.im = kx.InputManager(
             name="App root",
             logger=logger.debug,
@@ -43,6 +71,33 @@ class App(kx.App):
             "window.border",
         ):
             settings.bind(n, self._update_settings)
+        self._loading_label.text += "\n Opening editors..."
+        kx.schedule_once(self._init_panels)
+
+    def _init_panels(self, *args):
+        logger.info("Initializing panels...")
+        self.panels = EditorContainer(self.session)
+        kx.Window.toggle_borderless(not settings.get("window.border"))
+        self._loading_label.text += "\n Configuring window..."
+        kx.schedule_once(self._init_window)
+
+    def _init_window(self, *args):
+        logger.info("Initializing window...")
+        if any(c >= 0 for c in WINDOW_POS):
+            kx.Window.set_position(*WINDOW_POS)
+        kx.Window.set_size(*WINDOW_SIZE)
+        kx.schedule_once(self._init_window2)
+
+    def _init_window2(self, *args):
+        if START_MAXIMIZED:
+            kx.Window.maximize()
+        self._loading_label.text += "\n拓 Assembling GUI..."
+        kx.schedule_once(self._finalize_init)
+
+    def _finalize_init(self, *args):
+        self.root.clear_widgets()
+        self.root.add(self.panels)
+        del self._loading_label
         logger.info("Finished initialization.")
 
     def _update_settings(self, *args):
@@ -53,14 +108,6 @@ class App(kx.App):
 
     def _debug_focus(self, w, focus):
         logger.debug(f"{focus=}")
-
-    def _init_window(self):
-        kx.Window.toggle_borderless(not settings.get("window.border"))
-        kx.schedule_once(lambda _: kx.Window.set_size(*WINDOW_SIZE))
-        if any(c >= 0 for c in WINDOW_POS):
-            kx.schedule_once(lambda _: kx.Window.set_position(*WINDOW_POS))
-        if START_MAXIMIZED:
-            kx.schedule_once(kx.Window.maximize)
 
     def _open_project_dir(self):
         open_path(self.session.project_path)
