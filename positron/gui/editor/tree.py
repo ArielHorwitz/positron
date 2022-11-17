@@ -64,11 +64,10 @@ class ProjectTree(kx.Modal):
         self._do_refresh_tree()
         settings.bind("project.tree_search_cooldown", self._refresh_settings)
         self.bind(parent=self._on_parent)
-        self.im.register("Load", self._on_enter, "enter")
-        self.im.register("Load (2)", self._on_enter, "numpadenter")
-        self.im.register("New", self._on_enter_new, "^ enter")
-        self.im.register("New (2)", self._on_enter_new, "^ numpadenter")
+        self.im.register("Load", self._on_enter, ["enter", "numpadenter"])
+        self.im.register("New", self._on_enter_new, ["^ enter", "^ numpadenter"])
         self.im.register("Focus tree", self._on_down, "down")
+        self.im.register("Project root", self._clear_search, "home")
 
     def _refresh_settings(self):
         self._refresh_tree.timeout = settings.get("project.tree_search_cooldown")
@@ -183,6 +182,10 @@ class ProjectTree(kx.Modal):
     def fuzzy_enabled(self):
         threshold = settings.get("project.tree_fuzzy_threshold_count")
         return len(self.dtree.all_paths) <= threshold
+
+    def _clear_search(self, *args):
+        self.search_entry.text = ""
+        self.search_entry.focus = True
 
 
 def _wrap_color(t, color):
