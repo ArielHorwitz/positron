@@ -75,3 +75,8 @@ move = 5
 ["code snippet python"]
 text = "\n```python\n\n```\n"
 move = 5
+
+["if name main"]
+text = "\ndef main():\n    pass\n\n\nif __name__ == \"__main__\":\n    main()\n"
+move = 41
+select = 4
