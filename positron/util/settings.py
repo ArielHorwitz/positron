@@ -210,10 +210,11 @@ class _Settings:
             new_value = new_settings[name]
             if old_value != new_value:
                 logger.debug(f"Setting {name}: {old_value!r} -> {new_value!r}")
-                callbacks = cls._BINDINGS[name].get_all()
+                callbacks = tuple(cls._BINDINGS[name].get_all())
                 if not callbacks:
                     logger.debug("No callbacks for settings change.")
                 for func in callbacks:
+                    logger.debug(f"Calling: {func.func} {func.args}")
                     func(name, old_value, new_value)
 
     @classmethod
