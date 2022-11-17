@@ -6,7 +6,6 @@ import traceback
 import re
 import os.path
 import arrow
-import functools
 from pathlib import Path
 from pygments.util import ClassNotFound as LexerClassNotFound
 from pygments.styles import STYLE_MAP
@@ -26,6 +25,7 @@ STATUS_FONT_KW = dict(
     font_name=UI_FONT_KW["font_name"],
     font_size=FONT_KW["font_size"],
     italic=True,
+    shorten=True,
 )
 
 
@@ -33,16 +33,17 @@ def _timestamp():
     return arrow.now().format("HH:mm:ss")
 
 
-@functools.cache
-def _format_humanized(m):
-    if m is None:
-        return ""
-    m = m.removesuffix(' ago')
-    if m == "a minute":
-        m = "1m"
-    m = m.replace(" seconds", "s").replace(" minutes", "m").replace(" hours", "h")
-    m = m.replace(" days", "D").replace(" months", "M").replace(" years", "Y")
-    return f"[{m}] "
+def _format_humanized(a: arrow.Arrow, /) -> str:
+    now = arrow.now()
+    assert a < now
+    h = a.humanize().removesuffix(' ago')
+    if h == "just now":
+        diff = now - a
+        seconds = round(diff.total_seconds())
+        return f"{seconds} seconds"
+    if h.startswith("a "):
+        h = f"1 {h[2:]}s"
+    return h
 
 
 class CodeEditor(kx.Anchor):
@@ -56,7 +57,7 @@ class CodeEditor(kx.Anchor):
         self._current_file = file.expanduser().resolve()
         self.__gutter_width = 3  # Any int, should be updated with settings refresh
         self.__max_line_width = 1  # Any int, should be updated with settings refresh
-        self.__disk_modified_time = None
+        self.__disk_modified_time: Optional[arrow.Arrow] = None
         self.__disk_diff = False
         self.__disk_cache = None
         self.__find_text = ""
@@ -100,7 +101,11 @@ class CodeEditor(kx.Anchor):
         self.status_bar_cursor.set_size(y=LINE_HEIGHT * 2)
         self.status_bar_cursor.add(self.status_file_cursor, self.status_cursor_context)
         # Errors status bar
-        self.status_errors = kx.Label(halign="center", **STATUS_FONT_KW)
+        self.status_errors = kx.Label(
+            halign="left",
+            shorten_from="right",
+            **STATUS_FONT_KW,
+        )
         self.status_errors.set_size(hx=0.95)
         self.status_bar_errors = kx.Anchor()
         self.status_bar_errors.set_size(y=LINE_HEIGHT)
@@ -232,6 +237,7 @@ class CodeEditor(kx.Anchor):
         else:
             self.code_entry.cursor = old_cursor
         self.code_entry.cancel_cursor_pause()
+        self.update_errors()
 
     def reload(self, *args):
         self.load(reset_cursor=False)
@@ -480,12 +486,13 @@ class CodeEditor(kx.Anchor):
 
     def _cursor_full(self):
         line, column = self.cursor
-        path = self.session.repr_full_path(self._current_file)
+        path = self.session.repr_full_path(self._current_file, include_icon=False)
+        icon = self.session.get_path_icon(self._current_file)
         modified = ""
         if self.__disk_modified_time:
-            modified = _format_humanized(self.__disk_modified_time.humanize())
+            modified = _format_humanized(self.__disk_modified_time)
         diff = "*" if self.__disk_diff else ""
-        return f"{modified}{path}{diff} ::{line:>4},{column:<3}"
+        return f"[{modified}{diff}] {icon} :: {path} ::{line:>4},{column:<3}"
 
     def _refresh_context(self, *a):
         code = self.code_entry
@@ -521,11 +528,11 @@ class CodeEditor(kx.Anchor):
             self.status_errors.text = "No errors :)"
             self.status_bar_errors.make_bg(self.__status_bg)
             return
-        summary = f"Error @ {error.line},{error.column} :: {error.message}"
         count = len(self.__errors)
-        if count > 1:
-            summary = f"{summary}  ( + {count - 1} more errors)"
-        self.status_errors.text = summary
+        self.status_errors.text = (
+            f"[b]{str(count):>3} errors[/b], next @ "
+            f"{error.line},{error.column} :: {error.message}"
+        )
         self.status_bar_errors.make_bg(self.__status_bg_error)
 
     def _get_next_error(self, include_cursor_index: bool = True):
