@@ -266,7 +266,7 @@ class CodeEditor(kx.Anchor):
             if modified_time != self.__disk_modified_time:
                 self.__disk_cache = self._get_disk_content(self._current_file)
                 self.__disk_modified_time = modified_time
-                logger.info(f"Cached @ {_timestamp()} for: {self._current_file}")
+                # logger.info(f"Cached @ {_timestamp()} for: {self._current_file}")
             self.__disk_diff = self.__disk_cache != self.code_entry.text
         self._refresh_status_diff()
 
