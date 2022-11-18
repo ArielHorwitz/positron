@@ -374,6 +374,46 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             self.insert_text(text.upper())
         self.select_text(min(selection), max(selection))
 
+    def join_split_lines_len(self, length: int = 80, sep: str = " "):
+        start, end = self.selected_line_range()
+        if start == end:
+            self._split_line_len(start, length, sep)
+        else:
+            self._join_lines_len(start, end, sep)
+
+    def _join_lines_len(self, start, end, sep):
+        self.select_full_lines(start, end)
+        text = self.selection_text
+        self.delete_selection()
+        ws = " " * len(re.match(" *", text).group())
+        new_text = ws + sep.join(line.strip() for line in text.split("\n"))
+        self.insert_text(new_text)
+        self.select_full_lines(start, start)
+
+    def _split_line_len(self, line, length, sep):
+        self.select_full_lines(line, line)
+        text = self.selection_text
+        self.delete_selection()
+        text_parts = text.split(sep)
+        ws = " " * len(re.match(" *", text).group())
+        new_lines = [ws]
+        sep_len = len(sep)
+        while text_parts:
+            next_part = text_parts.pop(0)
+            if not next_part:
+                continue
+            last_line_size = len(new_lines[-1])
+            len_after_add = last_line_size + sep_len + len(next_part)
+            # If too long, start a new line unless it is already a new line
+            if last_line_size and len_after_add > length:
+                new_lines.append(ws)
+            if len(new_lines[-1]) > 0:
+                new_lines[-1] = f"{new_lines[-1]}{sep}{next_part}"
+            else:
+                new_lines[-1] = f"{ws}{next_part}"
+        self.insert_text("\n".join(new_lines))
+        self.select_full_lines(line, line + len(new_lines) - 1)
+
     def join_split_lines(self, *args):
         start, end = self.selected_line_range()
         if start == end:

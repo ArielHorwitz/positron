@@ -167,7 +167,9 @@ class CodeEditor(kx.Anchor):
             ("Next error", self.scroll_to_error, "^ e", True),
             ("Comment", self.make_comment, "^ \\"),
             ("Toggle case", self.code_entry.toggle_case, "^ u"),
-            ("Join/split lines", self.code_entry.join_split_lines, "^+ j"),
+            ("Join/split lines", self.code_entry.join_split_lines, "^ j"),
+            ("Join/split lines to len", self._join_split_lines_len, "^+ j"),
+
         ]:
             self.im.register(*reg_args)
         # Bind to settings
@@ -442,6 +444,11 @@ class CodeEditor(kx.Anchor):
         if self._cached_code_completions:
             p = self._cached_code_completions.pop()
             self._cached_code_completions.insert(0, p)
+
+    def _join_split_lines_len(self, *args):
+        length = settings.get("linter.max_line_length")
+        self.code_entry.join_split_lines_len(length=length)
+        self.code_entry.scroll_x = 0
 
     def _on_cursor_pos(self, w, cpos):
         fixed_cpos = self.to_widget(*cpos, relative=True)

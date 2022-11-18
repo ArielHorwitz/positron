@@ -47,7 +47,8 @@ Some hotkeys:
     * `^ ]` / `^ [`      find next/previous
     * `^ \`              toggle comments
     * `^ u`              toggle upper/lower case
-    * `^+ j`             join/split lines
+    * `^ j`              join/split lines
+    * `^+ j`             join/split lines to length
     * `! enter/up/down`  use code completions
 
 
