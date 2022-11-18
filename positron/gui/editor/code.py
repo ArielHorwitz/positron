@@ -457,10 +457,16 @@ class CodeEditor(kx.Anchor):
     def _refresh_line_gutters(self, *a):
         start, finish = self.code_entry.visible_line_range()
         finish = min(finish, len(self.code_entry._lines))
-        self.line_gutter.text = "\n".join(
-            f"{str(i+1)[:self.__gutter_width]:>{self.__gutter_width}}"
-            for i in range(start, finish)
-        )
+        error_lines = set(e.line for e in self.__errors)
+        gutter_text = []
+        append = gutter_text.append
+        gutter_width = self.__gutter_width
+        for line_num in range(start + 1, finish + 1):
+            s = f"{str(line_num)[:gutter_width]:>{gutter_width}}"
+            if line_num in error_lines:
+                s = f"[color=#ff0000]{s}[/color]"
+            append(s)
+        self.line_gutter.text = "\n".join(gutter_text)
 
     def _on_size(self, w, size):
         self._refresh_line_gutters()
@@ -529,6 +535,7 @@ class CodeEditor(kx.Anchor):
             errors = []
         self.__errors = errors
         self._refresh_status_errors()
+        self._refresh_line_gutters()
         return errors
 
     def _refresh_status_errors(self, *args):
