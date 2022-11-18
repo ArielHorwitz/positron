@@ -12,11 +12,12 @@ Options:
 
 Custom settings:
     Settings names can be full file paths, or the "{name}" part of
-        "$SETTINGS_DIR/settings-{name}.toml".
+        "#/settings/{name}.toml", where "#/" represents the positron
+        configuration folder.
 
-    For example, "mini,dev,custom/settings/file.toml" will load the files
-        - "$SETTINGS_DIR/settings-mini.toml"
-        - "$SETTINGS_DIR/settings-dev.toml"
+    For example, "laptop,dev,custom/settings/file.toml" will load the files:
+        - "#/settings/laptop.toml"
+        - "#/settings/dev.toml"
         - "custom/settings/file.toml"
 """
 
