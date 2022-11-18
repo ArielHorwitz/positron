@@ -23,14 +23,14 @@ from .file import SETTINGS_DIR, PROJ_DIR, toml_load, file_dump
 
 
 SAMPLE_SETTINGS = """# This is your settings file.
-# Anything placed here will override the defaults. To see all available
-# settings, browse "#/settings/defaults.toml".
+# Anything placed here will override the defaults.
+# To see all available settings, browse "#/settings/__defaults__.toml".
 # Settings files use TOML - https://toml.io
 """
 
-SETTINGS_FILE = SETTINGS_DIR / "settings.toml"
+SETTINGS_FILE = SETTINGS_DIR / "__global__.toml"
 DEFAULT_SETTINGS_FILE = PROJ_DIR / "positron" / "default_settings.toml"
-shutil.copy(DEFAULT_SETTINGS_FILE, SETTINGS_DIR / "settings-defaults.toml")
+shutil.copy(DEFAULT_SETTINGS_FILE, SETTINGS_DIR / "__defaults__.toml")
 if not SETTINGS_FILE.exists():
     file_dump(SETTINGS_FILE, SAMPLE_SETTINGS)
 
@@ -157,7 +157,7 @@ class _Settings:
         for file_name in file_names:
             f = Path(file_name)
             if not f.is_file():
-                f = SETTINGS_DIR / f"settings-{file_name}.toml"
+                f = SETTINGS_DIR / f"{file_name}.toml"
             if not f.is_file():
                 raise FileNotFoundError(f"Unknown settings name: {f}")
             settings_files.append(f)

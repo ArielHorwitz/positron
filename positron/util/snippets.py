@@ -9,7 +9,7 @@ import fuzzysearch.common
 from .file import PROJ_DIR, SETTINGS_DIR, toml_load
 
 
-SNIPPETS_FILE = SETTINGS_DIR / "snippets.toml"
+SNIPPETS_FILE = SETTINGS_DIR / "__snippets__.toml"
 MAX_RESULTS = 20
 
 
