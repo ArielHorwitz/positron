@@ -42,6 +42,7 @@ class ProjectTree(kx.Modal):
 
         # Tree
         self.tree_list = kx.List(item_height=UI_LINE_HEIGHT, **UI_FONT_KW)
+        help_label = kx.Label(halign="left", italic=True, **UI_FONT_KW)
 
         # Assemble
         self.search_entry.focus_next = self.tree_list
@@ -52,6 +53,7 @@ class ProjectTree(kx.Modal):
             self.quick_label,
             self.search_entry,
             self.tree_list,
+            help_label,
         )
         self.add(main_frame)
         self._refresh_title()
@@ -68,6 +70,11 @@ class ProjectTree(kx.Modal):
         self.im.register("New", self._on_enter_new, ["^ enter", "^ numpadenter"])
         self.im.register("Focus tree", self._on_down, "down")
         self.im.register("Project root", self._clear_search, "home")
+        help_label.text = "\n".join([
+            "                [u]home[/u] : project root",
+            "        [u]ctrl + enter[/u] : force open / create new file",
+        ])
+        help_label.set_size(y=UI_LINE_HEIGHT * 2)
 
     def _refresh_settings(self):
         self._refresh_tree.timeout = settings.get("project.tree_search_cooldown")
