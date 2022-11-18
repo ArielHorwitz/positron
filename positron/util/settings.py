@@ -13,7 +13,7 @@ All settings files are configured using TOML.
 
 
 from loguru import logger
-from typing import Optional, Any, Iterator, Iterable, Callable, NamedTuple
+from typing import Optional, Any, Iterator, Callable, NamedTuple
 import functools
 import weakref
 from collections import defaultdict
@@ -187,16 +187,10 @@ class _Settings:
         Bounded callbacks are not called when the settings are first loaded, only when
         they are changed via reloading.
         """
-        logger.debug(f"Binding setting {name!r} to {callback=}")
+        # logger.debug(f"Binding setting {name!r} to {callback=}")
         current_value = cls.get(name)
         cls._BINDINGS[name].add(callback)
         return current_value
-
-    @classmethod
-    def bind_many(cls, callback: SettingsCallback, names: Iterable[str], /):
-        """Bind each name with the callback."""
-        for name in names:
-            cls.bind(name, callback)
 
     @classmethod
     def get_unused(cls) -> list[str]:
