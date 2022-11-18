@@ -7,6 +7,7 @@ Options:
   -s, --settings <settings-names>
                       Use custom settings with comma-separated names
   -l, --lint          Run the linter on the path and quit
+  --config            Open the config folder and quit
   --debug-args        Debug argument parsing and quit
 
 
@@ -26,7 +27,7 @@ import sys
 import random
 from docopt import docopt
 from pathlib import Path
-from positron.util.file import LOGS_DIR
+from positron.util.file import LOGS_DIR, USER_DIR, open_path
 from positron.util import settings
 
 
@@ -65,6 +66,11 @@ def main():
     # Debug argument parsing
     if args.debug_args:
         _debug_args(args)
+        quit()
+
+    # Open config
+    if args.config:
+        open_path(USER_DIR)
         quit()
 
     # Load custom settings

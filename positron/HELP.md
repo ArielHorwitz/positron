@@ -54,13 +54,15 @@ Some hotkeys:
 ## Configuration and settings
 
 The Positron configuration folder (shortened to `#/` by default) contains all of your
-personal configuration files for Positron: settings, cached session data, logs, etc.
+personal configuration files for Positron: settings, cached session data, logs, etc. You
+can browse this folder using the command line argument (see `positron --help`), or via
+hotkey (see above).
 
 Browsing the default settings file (`#/settings/__defaults__.toml`) will give you some
 idea of what can be done with positron. Settings are loaded from custom files first (as
 provided from command line), then from `__global__` and then from the builtin defaults.
 This allows you to modify settings globally, but also override them by combining custom
-settings (see `run-positron.sh --help` in command line).
+settings (see `positron --help`).
 
 
 ## Troubleshooting
