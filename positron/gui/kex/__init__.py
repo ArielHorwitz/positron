@@ -17,6 +17,7 @@ __os.environ["KCFG_KIVY_LOG_LEVEL"] = "warning"  # no spamming console on startu
 
 
 from .kivy import (
+    EventDispatcher,
     ButtonBehavior,
     FocusBehavior,
     ToggleButtonBehavior,
