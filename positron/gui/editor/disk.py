@@ -3,6 +3,7 @@
 from loguru import logger
 from pathlib import Path
 import subprocess
+from . import MODAL_SIZE_KW
 from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
 from ...util.file import PROJ_DIR, open_path
@@ -24,7 +25,7 @@ class Disk(kx.Modal):
         self._current_reprs = []
         self._create_bookmarks()
         super().__init__(**kwargs)
-        self.set_size(hx=0.85, hy=0.8)
+        self.set_size(**MODAL_SIZE_KW)
         self.make_bg(kx.get_color("yellow", v=0.1))
         title = kx.Label(text="Disk Browser", bold=True, **UI_FONT_KW)
         title.make_bg(kx.get_color("orange", v=0.3))
@@ -42,8 +43,8 @@ class Disk(kx.Modal):
         self.bind(parent=self._on_parent)
         self.tree_list.bind(on_invoked=self._on_invoked)
         self.im.register("Browse back", self._browse_back, "backspace")
-        self.im.register("Browse bookmarks", self._browse_bookmarks, "home")
-        self.im.register("Browse project", self._browse_project, "^ home")
+        self.im.register("Browse bookmarks", self._browse_bookmarks, "^ home")
+        self.im.register("Browse project", self._browse_project, "^+ home")
         self.im.register("Open path", self._open_path, ["^ enter", "^ numpadenter"])
         self.im.register(
             "Explore path",
@@ -52,8 +53,8 @@ class Disk(kx.Modal):
         )
         help_label.text = "\n".join([
             "           [u]backspace[/u] : back",
-            "                [u]home[/u] : bookmarks",
-            "         [u]ctrl + home[/u] : project folder",
+            "         [u]ctrl + home[/u] : bookmarks",
+            " [u]ctrl + shift + home[/u] : project folder",
             "        [u]ctrl + enter[/u] : open in a new window",
             "[u]ctrl + shift + enter[/u] : open in explorer",
         ])

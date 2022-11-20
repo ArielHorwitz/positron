@@ -4,6 +4,7 @@ from loguru import logger
 import arrow
 from pathlib import Path
 import fuzzysearch
+from . import MODAL_SIZE_KW
 from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 from ...util import settings
 
@@ -20,7 +21,7 @@ class ProjectTree(kx.Modal):
         self.session = session
         self._last_modified = self.dtree.last_modified.shift(seconds=-1)
         self._quick_file = None
-        self.set_size(hx=0.8, hy=0.9)
+        self.set_size(**MODAL_SIZE_KW)
         self.make_bg(kx.get_color("cyan", v=0.2))
         self.title = kx.Label(**UI_FONT_KW)
         self.title.set_size(y=UI_LINE_HEIGHT * 2)
@@ -69,10 +70,10 @@ class ProjectTree(kx.Modal):
         self.im.register("Load", self._on_enter, ["enter", "numpadenter"])
         self.im.register("New", self._on_enter_new, ["^ enter", "^ numpadenter"])
         self.im.register("Focus tree", self._on_down, "down")
-        self.im.register("Project root", self._clear_search, "home")
+        self.im.register("Project root", self._clear_search, "^ home")
         help_label.text = "\n".join([
-            "                [u]home[/u] : project root",
-            "        [u]ctrl + enter[/u] : force open / create new file",
+            "        [u]home[/u] : project root",
+            "[u]ctrl + enter[/u] : force open / create new file",
         ])
         help_label.set_size(y=UI_LINE_HEIGHT * 2)
 
@@ -101,8 +102,10 @@ class ProjectTree(kx.Modal):
                 self.search_entry.text = str(file.relative_to(self.dtree.root))
 
     def _on_enter_new(self):
-        if self.search_entry.focus:
-            file = self.dtree.root / Path(self.search_entry.text)
+        if not self.search_entry.focus:
+            return
+        file = self.dtree.root / Path(self.search_entry.text)
+        if not file.is_dir():
             self._do_load(file)
 
     def _on_down(self, *args):

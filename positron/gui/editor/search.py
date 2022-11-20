@@ -1,6 +1,7 @@
 """Project search."""
 
 from loguru import logger
+from . import MODAL_SIZE_KW
 from .. import kex as kx, UI_FONT_KW, UI_CHAR_WIDTH, UI_LINE_HEIGHT
 from ...util import settings
 from ...util.file import file_load, search_text
@@ -16,7 +17,7 @@ class Search(kx.Modal):
         super().__init__(**kwargs)
         self.session = session
         self._results = []
-        self.set_size(hx=0.8, hy=0.8)
+        self.set_size(**MODAL_SIZE_KW)
         self.make_bg(kx.get_color("cyan", v=0.2))
         self.title = kx.Label(text="Search Project", bold=True, **UI_FONT_KW)
         self.title.set_size(y=UI_LINE_HEIGHT)

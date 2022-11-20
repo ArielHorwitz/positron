@@ -1,5 +1,6 @@
 """Code errors modal."""
 
+from . import MODAL_SIZE_KW
 from .. import kex as kx, UI_FONT_KW
 
 
@@ -7,7 +8,7 @@ class Errors(kx.FocusBehavior, kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
-        self.set_size(hx=0.85, hy=0.8)
+        self.set_size(**MODAL_SIZE_KW)
         self.make_bg(kx.get_color("navy", v=0.2, a=0.9))
         # Widgets
         title = kx.Label(text="Code Errors", bold=True, **UI_FONT_KW)

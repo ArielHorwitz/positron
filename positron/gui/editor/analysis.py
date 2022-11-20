@@ -2,6 +2,7 @@
 
 from loguru import logger
 import traceback
+from . import MODAL_SIZE_KW
 from .. import kex as kx, UI_FONT_KW, UI_LINE_HEIGHT
 
 
@@ -9,7 +10,7 @@ class Analysis(kx.FocusBehavior, kx.Modal):
     def __init__(self, session, **kwargs):
         super().__init__(**kwargs)
         self.session = session
-        self.set_size(hx=0.95, hy=0.8)
+        self.set_size(**MODAL_SIZE_KW)
         self.make_bg(kx.get_color("navy", v=0.3))
         # Widgets
         title = kx.Label(text="Code analysis", bold=True, **UI_FONT_KW)
