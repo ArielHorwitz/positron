@@ -34,11 +34,14 @@ class Analysis(kx.FocusBehavior, kx.Modal):
         file = self.container.code_editor.file
         code = self.container.code_editor.code_entry
         col, row = code.cursor
-        try:
-            info = self.session.get_info(file, code.text, row+1, col)
-        except Exception as e:
-            info = "Analysis failed!\nPlease see logs."
-            logger.warning("".join(traceback.format_exception(e)))
+        if file.suffix == ".py":
+            try:
+                info = self.session.get_info(file, code.text, row+1, col)
+            except Exception as e:
+                info = "Analysis failed!\nPlease see logs."
+                logger.warning("".join(traceback.format_exception(e)))
+        else:
+            info = "Not a Python file..."
         self.analysis_label.text = info
         self.analysis_label.scroll_y = 1
 

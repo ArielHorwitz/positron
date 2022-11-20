@@ -174,14 +174,14 @@ class Session:
 
         # All module names
         if not names and not refs:
-            names = list(script.get_names(all_scopes=True))
+            names = tuple(
+                _format_object_short(script, n)
+                for n in script.get_names(all_scopes=True)
+                if n.type in {"class", "function"}
+            )
             append(_title_break(f"All {len(names)} module definitions"))
             if names:
-                extend(
-                    _format_object_short(script, n)
-                    for n in names
-                    if n.type in {"class", "function"}
-                )
+                extend(names)
             else:
                 append("No names found...")
 
