@@ -322,7 +322,7 @@ class XEntry(XEntryMixin, XWidget, kv.TextInput):
         )
 
 
-RE_LEADING_WS = re.compile(r"\s*.")  # noqa: W605
+RE_LEADING_WS = re.compile(r"^\s*")  # noqa: W605
 
 
 class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
@@ -542,21 +542,37 @@ class XCodeEntry(XEntryMixin, XWidget, kv.CodeInput):
             self.select_text(start, end)
         return start, end
 
-    def toggle_prepend(self, prepend: str):
-        start, end = self.selected_line_range()
+    def toggle_prepend(self, prepend: str, /):
         cursor = self.cursor
-        for lidx in range(start, end + 1):
-            line_text = self._lines[lidx]
-            line_ws = RE_LEADING_WS.match(line_text).group()
-            line_start = len(line_ws) - 1
-            line_text_stripped = line_text[line_start:]
-            if line_text_stripped.startswith(prepend):
-                line_start_cursor = self.cursor_index((line_start , lidx))
-                self.select_text(line_start_cursor, line_start_cursor + len(prepend))
-                self.delete_selection()
+        start, end = self.selected_line_range()
+        self.select_full_lines(start, end)
+        lines = self.selection_text.split("\n")
+        rstripped_prepend = prepend.rstrip()
+        prep_len = len(prepend)
+        # Find lowest indentation as anchor for all lines
+        leading_ws = (RE_LEADING_WS.match(line).group() for line in lines)
+        prep_start = min(len(lws) for lws in leading_ws)
+        lstripped_lines = [line[prep_start:] for line in lines]
+        indent = " " * prep_start
+        # Toggling on if not all lines start with the prepend
+        toggle_on = False
+        for lsline in lstripped_lines:
+            empty_line = not lsline or lsline == rstripped_prepend
+            prep = prepend if not empty_line else rstripped_prepend
+            if not lsline.startswith(prep):
+                toggle_on = True
+        # Collect the modified lines with/without their respective prepend
+        new_lines = []
+        for lsline in lstripped_lines:
+            empty_line = len(lsline) == 0
+            if toggle_on:
+                new_line = f"{prepend}{lsline}" if not empty_line else rstripped_prepend
             else:
-                self.cursor = line_start, lidx
-                self.insert_text(prepend)
+                new_line = lsline[prep_len:] if not empty_line else ""
+            new_lines.append(f"{indent}{new_line}")
+        # Finally modify the text in the widget
+        self.delete_selection()
+        self.insert_text("\n".join(new_lines))
         self.select_full_lines(start, end)
         self.cursor = cursor
 
