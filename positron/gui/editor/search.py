@@ -107,12 +107,13 @@ class Search(kx.Modal):
         get_context = self.session.get_context
         for location, text in self._results:
             if location.file.suffix == ".py":
-                context = get_context(
+                ctx = get_context(
                     path=location.file,
                     code=file_load(location.file),
                     line=location.cursor[0],
                     col=location.cursor[1],
-                ).full_name
+                )
+                context = ctx.full_name or f"?.{ctx.name}"
             else:
                 context = location.file.name
             context = context[-line_width:]
