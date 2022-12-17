@@ -272,7 +272,9 @@ class Session:
         if p.is_relative_to(USER_DIR):
             return f"{icon}{_Prefixes.config}/{_relative_without_empty(p, USER_DIR)}"
         for prefixed_path, replacement in _Prefixes.paths:
-            if to_project and ppath.is_relative_to(prefixed_path):
+            is_in_ppath = p.is_relative_to(ppath)
+            can_shorten_ppath = ppath.is_relative_to(prefixed_path)
+            if to_project and is_in_ppath and can_shorten_ppath:
                 # Skip and prefer more direct relative path (project path)
                 continue
             if p.is_relative_to(prefixed_path):
