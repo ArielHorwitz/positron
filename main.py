@@ -31,6 +31,7 @@ from positron.util.file import LOGS_DIR, USER_DIR, open_path
 from positron.util import settings
 
 
+DOC = __doc__
 # Configure logging
 SESSION_ID = f"{random.randint(0, 10**8):x}"
 LOG_FORMAT = (
@@ -61,7 +62,7 @@ logger.info(f"Session ID: {SESSION_ID}")
 def main():
     """Main script entry point."""
     logger.debug(f"{sys.argv=}")
-    args = docopt(options_first=True, more_magic=True)
+    args = docopt(DOC, options_first=True)
 
     # Debug argument parsing
     if args.debug_args:
