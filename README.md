@@ -2,13 +2,14 @@
 
 Positron is an IDE for Python written in Python using Positron.
 
+> Note: This project is no longer being maintained. While I enjoyed it while it lasted, I have moved on to [lite-xl](https://github.com/lite-xl/lite-xl).
+
 Developed as a hobby project for personal use and released to the public domain.
 Positron relies heavily on
 [Kivy](https://kivy.org/),
 [jedi](https://github.com/davidhalter/jedi),
 [flake8](https://github.com/pycqa/flake8),
 and more. A massive shoutout to these projects!
-
 
 ## Features
 
